@@ -4,6 +4,8 @@
 
 LSDF is a Docker-first OpenAI-compatible proxy you put between your app and the model. It is built for developers running local LLM agents, tool-calling apps, RAG workflows, or provider gateways who need secrets, PII, PHI, reasoning fields, tool-call arguments, streaming chunks, and trace/log payloads inspected before they leak.
 
+Background article: [The Safety Map](https://www.linkedin.com/pulse/safety-map-what-does-doesnt-transfer-llm-handling-al-zubaidi-g0v8e). See also the [research papers](#research-and-publications).
+
 ## Start Here
 
 Install [Docker with Compose](https://docs.docker.com/compose/install/) and Git, and start Docker with Linux containers. Get the release source and enter its directory:
@@ -123,6 +125,13 @@ docker compose run --rm cli quickstart-report --gateway-base-url http://gateway:
 docker compose run --rm cli smoke --gateway-base-url http://gateway:8080
 ```
 
+## Research and Publications
+
+LSDF is developed by Broadnet and productises the sensitive-data leakage research published by its co-founder, who advised the project.
+
+- [How to Evaluate an LLM for Sensitive Data Safety Before Deploying It](https://doi.org/10.5281/zenodo.19574049) (2026). DOI: `10.5281/zenodo.19574049`.
+- [The Safety Map: What Does and Doesn't Transfer in LLM Sensitive-Data Handling](https://doi.org/10.5281/zenodo.19688433) (2026). DOI: `10.5281/zenodo.19688433`.
+
 ## Proven Against Real-World Leaks
 
 Release-gated profiles must hold value-level recall **>= 0.90** on their stated promise corpora and benign specificity **>= 0.95**. The recorded `EVAL.md` snapshot reports `broad-pii` and `broad-pii-ml` passing on piece_b_replay, medical_phi_replay, and BR-Agentic-PII. Nemotron-PII is bundled characterization evidence for those broad tiers. The healthcare profile retains its five-corpus promise, including the operator-supplied ai4privacy benchmark: evaluating healthcare with only the bundled corpora fails its gate because that required corpus is missing.
@@ -142,8 +151,6 @@ docker compose --profile optional run --rm optional-cli eval evals/piece_b_repla
 A 6-case follow-up corpus (`evals/piece_b_replay_ml_pii.json`) targets ML-only PII shapes the regex layer cannot catch: international phone formats and multi-cultural given names. Across all four candidate `score_threshold` values (0.50 / 0.70 / 0.85 / 0.95), `sensitive_values_leaked_after` stays at **0**. See `docs/fp-lever-sweep-2026-04-29.md` for the full sweep.
 
 The standard evaluation and comparison commands use the four bundled threat corpora and produce reports without raw fixture values. `EVAL.md` and `docs/comparative-protection.md` retain explicitly labeled historical external benchmark metrics; reproducing those rows requires the separately licensed local benchmark. `docs/performance.md` records latency on its stated payloads.
-
-LSDF is developed by Broadnet and productises the sensitive-data leakage research published by its co-founder, who advised the project. Research provenance: [10.5281/zenodo.19574049](https://doi.org/10.5281/zenodo.19574049) (MoE credential leak) and [10.5281/zenodo.19688433](https://doi.org/10.5281/zenodo.19688433) (data-sensitivity battery).
 
 ## Multilingual PII Detection
 
