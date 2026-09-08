@@ -19,12 +19,12 @@ LSDF is the gateway, not a model server. The source demo includes a synthetic up
 Install Git, then run:
 
 ```bash
-git clone --branch v0.3.1 --depth 1 https://github.com/brntech/lsdf.git
+git clone --branch v0.3.2 --depth 1 https://github.com/brntech/lsdf.git
 cd lsdf
 docker compose build cli
 ```
 
-Alternatively, download `lsdf-0.3.1-source.zip` from the [v0.3.1 release](https://github.com/brntech/lsdf/releases/tag/v0.3.1), extract it, and open a terminal inside `lsdf-0.3.1`, where `docker-compose.yml` lives. Run `docker compose build cli` there. The tag checkout is detached; contributors should create a branch before editing.
+Alternatively, download `lsdf-0.3.2-source.zip` from the [v0.3.2 release](https://github.com/brntech/lsdf/releases/tag/v0.3.2), extract it, and open a terminal inside `lsdf-0.3.2`, where `docker-compose.yml` lives. Run `docker compose build cli` there. The tag checkout is detached; contributors should create a branch before editing.
 
 The default `docker-compose.yml` builds `lsdf:dev` from source. You do not need to pull a GHCR image for these commands. Run source commands from this directory; a downloaded container image alone does not provide the demo files, evaluation corpora, or Compose configuration.
 
@@ -48,7 +48,7 @@ Use `vllm`, `litellm`, or `openrouter` instead of `lmstudio` as appropriate. For
 
 ## Prebuilt release image
 
-Create a directory for the deployment. Download `compose.release.yaml` and `release.env.example` from the [v0.3.1 release assets](https://github.com/brntech/lsdf/releases/tag/v0.3.1) into it. They are also included at the root of the source archive. Copy `release.env.example` to `.lsdf.env`, then edit that file in your text editor.
+Create a directory for the deployment. Download `compose.release.yaml` and `release.env.example` from the [v0.3.2 release assets](https://github.com/brntech/lsdf/releases/tag/v0.3.2) into it. They are also included at the root of the source archive. Copy `release.env.example` to `.lsdf.env`, then edit that file in your text editor.
 
 Set `LSDF_UPSTREAM_BASE_URL` to your running model server. The example uses LM Studio at `http://host.docker.internal:1234`. Add `LSDF_UPSTREAM_API_KEY` if the upstream requires authentication. Keep this file private. The gateway starts with the dependency-light `default` policy.
 
@@ -79,11 +79,11 @@ docker compose --env-file .lsdf.env -f compose.release.yaml cp gateway:/workspac
 
 | Image | Purpose |
 | --- | --- |
-| `ghcr.io/brntech/lsdf:v0.3.1` | Lightweight gateway release. |
-| `ghcr.io/brntech/lsdf:v0.3.1-ml` | Same gateway plus ML dependencies and the spaCy model. GLiNER/privacy-filter weights still need preparation. |
-| `lsdf:dev`, `lsdf:optional`, `lsdf:runtime` | Local image names built by the source Compose file. They are not GHCR downloads. |
+| `ghcr.io/brntech/lsdf:v0.3.2` | Lightweight gateway release. |
+| `ghcr.io/brntech/lsdf:v0.3.2-ml` | Same gateway plus ML dependencies and the spaCy model. GLiNER/privacy-filter weights still need preparation. |
+| `lsdf:dev`, `lsdf:optional`, `lsdf:runtime`, `lsdf:runtime-optional` | Local image names built by the source Compose file. They are not GHCR downloads. |
 
-Both published variants belong to the single `ghcr.io/brntech/lsdf` package and start with `default`. An optional image does not automatically enable an ML policy. Set `LSDF_IMAGE` in `.lsdf.env` to select a versioned image, or pin an immutable reference from the release's `image-digests.txt`. `latest` and `latest-ml` are moving aliases; use a version or digest for repeatable deployments.
+Both published variants belong to the single `ghcr.io/brntech/lsdf` package and start with `default`. The ML image does not automatically enable an ML policy. Set `LSDF_IMAGE` in `.lsdf.env` to select a versioned image, or pin an immutable reference from the release's `image-digests.txt`. `latest` and `latest-ml` are moving aliases; use a version or digest for repeatable deployments.
 
 ## Check the connection
 
@@ -111,6 +111,14 @@ On native Linux, the host model server must listen on an address reachable from 
 
 Examples such as `NAME=value docker compose ...` use Bash syntax. On PowerShell, use `$env:NAME = "value"` first, or put settings in `.lsdf.env` and supply `--env-file .lsdf.env` on every relevant Compose command. A Compose env file supplies interpolation values; it does not automatically pass every variable into containers. For one-off CLI commands that need keys, explicitly use `run -e VARIABLE_NAME`. See [vault operations](production-operations.md#encrypted-token-vault).
 
+On native Linux, source-mounted commands run as container root by default and can create root-owned host files. For commands such as `init`, use your host UID/GID in Bash:
+
+```bash
+docker compose run --rm --user "$(id -u):$(id -g)" cli init --upstream lmstudio --output .lsdf.env
+```
+
+This ownership option applies to source-mounted CLI output. Docker Desktop manages bind-mount ownership differently.
+
 ## Optional ML
 
 Optional dependencies and models have separate licenses; read [third-party notices](../THIRD_PARTY_NOTICES.md). The default path needs no model download. The optional image includes CPU dependencies; it does not include the GLiNER or privacy-filter weights.
@@ -123,7 +131,7 @@ docker compose --profile optional run --rm -e LSDF_GLINER_LOCAL_FILES_ONLY=false
 docker compose --profile optional run --rm -e LSDF_GLINER_LOCAL_FILES_ONLY=true -e LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY=true optional-cli doctor --profile broad-pii-ml --format json
 ```
 
-For the prebuilt deployment, set `LSDF_IMAGE=ghcr.io/brntech/lsdf:v0.3.1-ml` and `LSDF_PROFILE=broad-pii-ml` in `.lsdf.env`, then use the release service with the same download and offline checks:
+For the prebuilt deployment, set `LSDF_IMAGE=ghcr.io/brntech/lsdf:v0.3.2-ml` and `LSDF_PROFILE=broad-pii-ml` in `.lsdf.env`, then use the release service with the same download and offline checks:
 
 ```bash
 docker compose --env-file .lsdf.env -f compose.release.yaml pull
@@ -141,6 +149,12 @@ docker compose --env-file .lsdf.env --profile optional up -d gateway-ml
 ```
 For the prebuilt configuration, use `docker compose --env-file .lsdf.env -f compose.release.yaml up -d`.
 Stop any existing gateway before starting another on the same host port. Run representative evaluations before enforcement; the release's fresh default/balanced report is not an optional-ML accuracy result.
+
+The privacy-filter subprocess serializes requests. `LSDF_OPENAI_PRIVACY_FILTER_STARTUP_TIMEOUT_SECONDS` defaults to 300 seconds; `LSDF_OPENAI_PRIVACY_FILTER_INFERENCE_TIMEOUT_SECONDS` defaults to 60 seconds and includes queueing plus the request/response exchange. A replacement worker starts under a separate startup budget, so a request that reloads a crashed worker can take up to startup plus inference time (360 seconds by default); concurrent callers can exhaust their queue budget during that reload. Set larger inference budgets after measuring large RAG payloads or concurrent traffic on your hardware. Both settings must be positive finite numbers; blank environment values use defaults.
+
+A queue timeout leaves the active exchange alone. An active exchange timeout resets the worker. Either timeout fails inspection: before response headers, the gateway returns a raw-value-safe HTTP 500 `inspection_error`; after SSE begins, it emits a terminal error and withholds pending content without `[DONE]`. It does not silently drop the detector and continue. Enabled telemetry records `inspection_failed` audit events. Before headers it increments `gateway_inspection_errors_total`; during SSE it records `gateway_stream_terminal_total` with `stream_state=inspection_failed`. Both paths increment block counters. Worker stderr is discarded to avoid retaining raw model diagnostics.
+
+`required: false` covers model unavailability at construction, not malformed configuration or inference failures. An explicitly unusable `LSDF_OPENAI_PRIVACY_FILTER_PYTHON` path is a configuration error. The images supply this path internally; setting it only in a host shell or `.lsdf.env` does not replace that value because the bundled Compose services do not forward it. To override it deliberately, use `run -e LSDF_OPENAI_PRIVACY_FILTER_PYTHON=...` or a service `environment` override.
 
 ## Stop, update, and troubleshoot
 

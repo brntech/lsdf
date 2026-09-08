@@ -2,8 +2,8 @@
 """Latency benchmark suite.
 
 Runs a fixed payload matrix (small chat turn → large RAG conversation) through
-each requested profile, captures p50/p95/p99 + throughput per (profile,
-payload), and emits a release-quality `docs/performance.md`. Companion to
+each requested profile, captures individual samples or repeated-run statistics,
+and emits a report for an ignored local output path. Companion to
 `release_eval.py` — that one captures detection quality, this one captures
 inference cost so the two reports together describe the runtime.
 
@@ -233,6 +233,7 @@ def run_latency_suite(
     iterations: int = DEFAULT_ITERATIONS,
     streaming_iterations: int | None = None,
 ) -> dict[str, Any]:
+    iterations = max(int(iterations), 1)
     cases = build_payload_matrix()
     streaming_cases = build_streaming_matrix()
     # Streaming benchmark dominates wall-clock when a chunk-rich case
@@ -393,6 +394,8 @@ def _benchmark_payload(
         firewall.inspect(payload)
         timings_ms.append((time.perf_counter() - started) * 1000)
     total_ms = sum(timings_ms)
+    if iterations == 1:
+        return {"iterations": 1, "latency_ms": {"sample": timings_ms[0]}}
     return {
         "iterations": iterations,
         "throughput_per_second": (
@@ -415,7 +418,8 @@ def format_latency_suite_markdown(report: dict[str, Any]) -> str:
     lines.append("")
     lines.append(
         "Per-profile, per-payload latency. CPU-only — dependency-light "
-        "profiles (default) run pure-Python regex/entropy/medical patterns; "
+        "profiles (default/balanced) use regex, entropy, medical patterns, "
+        "and contextual-anchored detection; "
         "the optional `broad-pii-ml` profile loads the OpenAI privacy-filter "
         "transformer model on CPU. GPU paths for the optional adapter are "
         "out of scope for this artifact and tracked separately."
@@ -432,9 +436,12 @@ def format_latency_suite_markdown(report: dict[str, Any]) -> str:
     lines.append("")
 
     lines.append(
-        f"Each cell below is `iterations={report['iterations_per_case']}` "
-        "of `Firewall.inspect`."
+        f"Each payload below uses `iterations={report['iterations_per_case']}` "
+        "of `Firewall.inspect`. No warmup samples are discarded."
     )
+    single_sample = report["iterations_per_case"] == 1
+    if single_sample:
+        lines.append("Each payload has one recorded sample, not a percentile distribution or a throughput estimate.")
     lines.append("")
 
     for profile in report["profiles"]:
@@ -449,14 +456,17 @@ def format_latency_suite_markdown(report: dict[str, Any]) -> str:
             f"Mode: `{profile['mode']}`."
         )
         lines.append("")
-        lines.append(
-            "| Payload | Throughput/sec | min | p50 | p95 | p99 | max | avg |"
-        )
-        lines.append(
-            "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"
-        )
+        if single_sample:
+            lines.append("| Payload | Sample ms (n=1) |")
+            lines.append("| --- | ---: |")
+        else:
+            lines.append("| Payload | Measured calls/sec | min | p50 | p95 | p99 | max | avg |")
+            lines.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
         for case in profile["cases"]:
             latency = case["latency_ms"]
+            if single_sample:
+                lines.append(f"| `{case['name']}` | {latency['sample']:.3f} |")
+                continue
             lines.append(
                 f"| `{case['name']}` | "
                 f"{case['throughput_per_second']:.1f} | "
@@ -510,28 +520,39 @@ def format_latency_suite_markdown(report: dict[str, Any]) -> str:
 
     lines.append("## Reproduce")
     lines.append("")
+    lines.append("Preserve recorded snapshots: write current reports under ignored `.lsdf/current-reports/`. The artifact script uses atomic replacement and keeps default/balanced and full-matrix reports separate.")
+    lines.append("")
+    lines.append("```bash")
+    lines.append("bash scripts/regenerate-artifacts.sh")
+    lines.append("```")
+    lines.append("")
     lines.append("Dependency-light profiles only:")
     lines.append("")
     lines.append("```bash")
+    lines.append("mkdir -p .lsdf/current-reports")
     lines.append(
-        "docker compose run --rm test python -m lsdf.cli "
-        "latency-table --profile default --profile balanced --format markdown > docs/performance.md"
+        "docker compose run --rm cli latency-table --profile default --profile balanced "
+        "--iterations 50 --format markdown > .lsdf/current-reports/performance-default-balanced.md.tmp "
+        "&& mv .lsdf/current-reports/performance-default-balanced.md.tmp .lsdf/current-reports/performance-default-balanced.md"
     )
     lines.append("```")
     lines.append("")
     lines.append("Full release matrix, including optional ML profiles:")
     lines.append("")
     lines.append("```bash")
+    lines.append("mkdir -p .lsdf/current-reports")
     lines.append(
         "docker compose --profile optional run --rm optional-cli "
-        "latency-table --format markdown 2>/dev/null "
-        "> docs/performance.md"
+        "latency-table --profile default --profile balanced --profile broad-pii --profile broad-pii-ml "
+        "--iterations 1 --format markdown > .lsdf/current-reports/performance-full-matrix.md.tmp "
+        "&& mv .lsdf/current-reports/performance-full-matrix.md.tmp .lsdf/current-reports/performance-full-matrix.md"
     )
     lines.append("```")
     lines.append("")
     lines.append(
         "Override iterations or profiles with `--iterations N` and `--profile NAME` "
-        "(repeat per profile)."
+        "(repeat per profile). The full-matrix example records one sample per payload; "
+        "increase iterations to measure a distribution."
     )
     lines.append("")
     lines.append("## Notes")
@@ -548,14 +569,15 @@ def format_latency_suite_markdown(report: dict[str, Any]) -> str:
     )
     lines.append(
         "- **GPU acceleration for the optional ML profile** is not yet "
-        "characterized in this report. The numbers above represent the "
-        "CPU floor."
+        "characterized in this report. These are CPU observations, not a "
+        "deployment-capacity guarantee."
     )
     lines.append(
-        "- **`broad-pii-ml` model load** (~1.4 B parameters) happens once at "
-        "Firewall construction. Per-request latency above is steady-state "
-        "after warmup; the suite discards no warmup samples (cold-start is "
-        "visible in the `max` column for the first payload)."
+        "- **Measurement boundary:** Firewall construction/model loading is outside "
+        "the payload timer. First-call initialization may still affect measured "
+        "inspection latency; no warmup samples are discarded, so steady-state "
+        "behavior is not established. Repeated-run calls/sec measures this serial "
+        "loop, excluding provider/network time and deployment concurrency."
     )
     lines.append("")
 

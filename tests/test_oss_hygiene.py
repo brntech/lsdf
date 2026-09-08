@@ -24,7 +24,13 @@ class OpenSourceHygieneTests(unittest.TestCase):
 
     def test_lsdf_source_files_have_apache_spdx_header(self):
         license_text = Path("LICENSE").read_text(encoding="utf-8")
-        self.assertTrue(license_text.startswith("Apache License\nVersion 2.0"))
+        self.assertTrue(license_text.lstrip().startswith("Apache License"))
+        self.assertIn("Version 2.0, January 2004", license_text)
+        # Prevent accidentally shipping another shortened license.
+        import hashlib
+        normalized = license_text.replace("\r\n", "\n").encode("utf-8")
+        self.assertEqual(hashlib.sha256(normalized).hexdigest(),
+                         "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30")
 
         expected = "# SPDX-License-Identifier: Apache-2.0"
         source_files = sorted(Path("src/lsdf").rglob("*.py"))

@@ -45,6 +45,8 @@ This path uses heavier optional dependencies and the `lsdf-hf-cache` Docker volu
 
 Missing required GLiNER prevents startup. Missing optional privacy-filter does not necessarily make doctor fail: verify that the JSON detector-family list includes both `gliner` and `openai_privacy_filter` before claiming that the combined ML stack is ready. `policy-validate` checks policy structure and coverage, not model readiness. The example replaces `.lsdf.env`; retain any existing credentials, telemetry, or domain-pack settings, and check shell overrides when changing profiles.
 
+The privacy-filter worker handles one exchange at a time. Its 60-second inference budget includes queueing; measure and tune it for large payloads and concurrent traffic. Replacing a failed worker has a separate 300-second startup budget, which can cause queued callers to time out. Timeouts halt inspection with HTTP 500 `inspection_error` before headers, or a terminal SSE error afterward; enabled audit and metrics record the failure. They do not degrade to the local detector stack. See [worker settings and recovery behavior](installation.md#optional-ml).
+
 For release validation, regenerate the gate report:
 
 ```bash
@@ -87,9 +89,17 @@ curl -H "X-LSDF-Management-Token: $LSDF_MANAGEMENT_TOKEN" http://localhost:8080/
 
 The built-in `smoke` and `quickstart-report` commands do not send management tokens; their endpoint checks apply to the unprotected local setup above. A disabled management endpoint returns 404 even through a reverse proxy. Health HTTP 200 alone also does not establish upstream readiness: inspect the response's `status` and `upstream` fields and validate a real chat request.
 
+## Inspection failures
+
+A policy `on_fail: exception` halts request preflight with HTTP 403 or response inspection with HTTP 502; both use `policy_enforcement_error`. Other local inspection failures return HTTP 500 with `inspection_error`. Bodies contain fixed messages, not detector, vault, or operator exception text. Failure audit events record `outcome: inspection_failed`; audit writes remain best-effort.
+
+If output inspection fails after SSE headers were sent, LSDF emits one terminal error event, withholds pending content, and does not send a successful `[DONE]`. Previously delivered text cannot be withdrawn. Upstream transport failures remain a separate 502 or terminal SSE `upstream_transport_error`.
+
+Use an ASCII management token. Malformed non-ASCII credentials are rejected with 401; management credentials do not authenticate chat-completion clients.
+
 ## Audit Operations
 
-Durable audit JSONL remains best-effort and fail-open. Rotation is configured with:
+Durable audit JSONL remains best-effort and fail-open. A shared sink serializes rotation and appends from gateway threads. Use one writer process per audit path; multiple processes, separate sink instances, and external rotation or purge require coordination. Rotation is configured with:
 
 ```bash
 LSDF_AUDIT_ROTATE_BYTES=10485760 \
@@ -121,6 +131,8 @@ docker compose run --rm cli vault backup --vault-path .lsdf/vault.sqlite --outpu
 docker compose run --rm -e LSDF_OLD_VAULT_KEY -e LSDF_NEW_VAULT_KEY cli vault rotate-key --vault-path .lsdf/vault.sqlite --old-key-env LSDF_OLD_VAULT_KEY --new-key-env LSDF_NEW_VAULT_KEY --output .lsdf/vault.rotated.sqlite
 docker compose run --rm -e LSDF_VAULT_KEY cli vault resolve TOKEN_FROM_YOUR_VAULT --vault-path .lsdf/vault.sqlite
 ```
+
+Vault backups use SQLite's online backup API, including committed WAL transactions. Choose a new output filename in a trusted directory: backup and rotation reject existing outputs, source aliases, symlinks, and existing SQLite sidecars, and reserve the new file with owner-only permissions. Keep its parent directory protected from other writers. Keep writers coordinated during key rotation; a backup is a consistent point-in-time copy, not a continuously updated replica.
 
 Printing plaintext requires `--reveal-sensitive-value`.
 

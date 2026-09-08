@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import re
+import tomllib
+from pathlib import Path
 
 
 RELEASE_TAG = re.compile(
@@ -12,9 +14,11 @@ RELEASE_TAG = re.compile(
 )
 
 
-def release_image_tags(tag: str) -> dict[str, list[str]]:
+def release_image_tags(tag: str, *, package_version: str | None = None) -> dict[str, list[str]]:
     if RELEASE_TAG.fullmatch(tag) is None or len(tag + "-ml") > 128 or tag.endswith(("-ml", "-optional")):
         raise ValueError("release tag must fit vX.Y.Z or vX.Y.Z-prerelease; the -ml suffix is reserved and -optional is retired")
+    if package_version is not None and tag[1:].partition("-")[0] != package_version:
+        raise ValueError("release tag base version must match pyproject.toml")
     image = "ghcr.io/brntech/lsdf"
     tags = {"runtime": [f"{image}:{tag}"], "optional": [f"{image}:{tag}-ml"]}
     if "-" not in tag:
@@ -28,7 +32,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("tag")
     args = parser.parse_args(argv)
     try:
-        tags = release_image_tags(args.tag)
+        metadata = Path(__file__).resolve().parents[1] / "pyproject.toml"
+        package_version = tomllib.loads(metadata.read_text(encoding="utf-8"))["project"]["version"]
+        tags = release_image_tags(args.tag, package_version=package_version)
     except ValueError as exc:
         parser.error(str(exc))
     for name, values in tags.items():

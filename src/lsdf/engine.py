@@ -64,13 +64,7 @@ class Firewall:
 
         # `on_fail: exception` raises before any transform / blocked computation
         # so the operator gets a loud halt rather than a silently-mutated payload.
-        for decision in decisions:
-            if decision.on_fail == "exception":
-                raise PolicyEnforcementError(
-                    rule_id=decision.rule_id,
-                    entity=decision.finding.entity,
-                    surface=decision.finding.surface,
-                )
+        _raise_for_exception_decisions(decisions)
 
         blocked = _decisions_blocked(self.policy.mode, decisions)
         transformed = deepcopy(payload)
@@ -271,14 +265,24 @@ def _decision_applies(decision: PolicyDecision, mode: str) -> bool:
     return mode in ("redact", "block")
 
 
+def _raise_for_exception_decisions(decisions: list[PolicyDecision]) -> None:
+    for decision in decisions:
+        if decision.on_fail == "exception":
+            raise PolicyEnforcementError(
+                rule_id=decision.rule_id,
+                entity=decision.finding.entity,
+                surface=decision.finding.surface,
+            )
+
+
 def _decisions_blocked(mode: str, decisions: list[PolicyDecision]) -> bool:
     for decision in decisions:
         if decision.on_fail == "observe":
             continue
         if decision.on_fail in ("block", "exception"):
             return True
-        if decision.action == "block":
-            return mode in ("redact", "block")
+        if decision.action == "block" and mode in ("redact", "block"):
+            return True
         if mode == "block":
             return True
     return False

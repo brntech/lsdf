@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import io
 import unittest
+from unittest.mock import patch
 from contextlib import redirect_stderr, redirect_stdout
 
 from scripts.release_image_tags import main, release_image_tags
@@ -27,11 +28,26 @@ class ReleaseImageTagTests(unittest.TestCase):
 
     def test_workflow_outputs_keep_prerelease_tags_separate(self):
         stdout = io.StringIO()
-        with redirect_stdout(stdout):
+        with redirect_stdout(stdout), patch("scripts.release_image_tags.tomllib.loads",
+                return_value={"project": {"version": "0.3.1"}}):
             self.assertEqual(main(["v0.3.1-rc.1"]), 0)
         self.assertEqual(stdout.getvalue(),
             "runtime<<LSDF_IMAGE_TAGS\nghcr.io/brntech/lsdf:v0.3.1-rc.1\nLSDF_IMAGE_TAGS\n"
             "optional<<LSDF_IMAGE_TAGS\nghcr.io/brntech/lsdf:v0.3.1-rc.1-ml\nLSDF_IMAGE_TAGS\n")
+
+    def test_version_mismatch_exits_before_writing_workflow_outputs(self):
+        stdout = io.StringIO()
+        with redirect_stdout(stdout), redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit) as error:
+                main(["v999.999.999"])
+        self.assertEqual(error.exception.code, 2)
+        self.assertEqual(stdout.getvalue(), "")
+
+    def test_stable_and_prerelease_bases_must_match_packaged_version(self):
+        for tag in ("v0.3.2", "v0.3.2-rc.1"):
+            self.assertTrue(release_image_tags(tag, package_version="0.3.2"))
+            with self.assertRaises(ValueError):
+                release_image_tags(tag, package_version="0.3.1")
 
     def test_invalid_tag_exits_before_writing_workflow_outputs(self):
         stdout = io.StringIO()

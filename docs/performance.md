@@ -2,7 +2,9 @@
 
 _Generated 2026-05-07T05:01:26Z._
 
-Per-profile, per-payload latency. CPU-only — dependency-light profiles (default) run pure-Python regex/entropy/medical patterns; the optional `broad-pii-ml` profile loads the OpenAI privacy-filter transformer model on CPU. GPU paths for the optional adapter are out of scope for this artifact and tracked separately.
+**Historical snapshot; presentation corrected 2026-09-08.** No benchmark was rerun for this edit. Every recorded payload latency and streaming measurement is preserved. Each payload's six identical statistics are collapsed to its single measured value; the derived single-call reciprocal is omitted because it does not establish throughput capacity. [Current report generation](#reproduce) writes ignored scratch files.
+
+Per-profile, per-payload latency. CPU-only — dependency-light profiles (default/balanced) use regex, entropy, medical patterns, and contextual-anchored detection; the optional `broad-pii-ml` profile loads the OpenAI privacy-filter transformer model on CPU. GPU paths for the optional adapter are out of scope for this artifact and tracked separately.
 
 ## Payload matrix
 
@@ -13,18 +15,18 @@ Per-profile, per-payload latency. CPU-only — dependency-light profiles (defaul
 | `large_assistant_reply` | 14,720 | Long assistant output content (~16 KB). |
 | `rag_heavy_session` | 32,519 | Multi-turn conversation with three large RAG chunks (~32 KB). |
 
-Each cell below is `iterations=1` of `Firewall.inspect`.
+Each payload below is one recorded `Firewall.inspect` sample (`iterations=1`), not a percentile distribution. No warmup samples were discarded. Streaming tables retain their actual repeated chunk counts.
 
 ## Profile `default`
 
 Detector families: regex, entropy, medical-regex, contextual-anchored. Mode: `redact`.
 
-| Payload | Throughput/sec | min | p50 | p95 | p99 | max | avg |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `small_chat_turn` | 103.6 | 9.657 | 9.657 | 9.657 | 9.657 | 9.657 | 9.657 |
-| `medium_with_rag` | 588.9 | 1.698 | 1.698 | 1.698 | 1.698 | 1.698 | 1.698 |
-| `large_assistant_reply` | 48.9 | 20.459 | 20.459 | 20.459 | 20.459 | 20.459 | 20.459 |
-| `rag_heavy_session` | 17.6 | 56.695 | 56.695 | 56.695 | 56.695 | 56.695 | 56.695 |
+| Payload | Sample ms (n=1) |
+| --- | ---: |
+| `small_chat_turn` | 9.657 |
+| `medium_with_rag` | 1.698 |
+| `large_assistant_reply` | 20.459 |
+| `rag_heavy_session` | 56.695 |
 
 Latency is in milliseconds.
 
@@ -44,12 +46,12 @@ Latency is in milliseconds.
 
 Detector families: regex, entropy, medical-regex, contextual-anchored. Mode: `redact`.
 
-| Payload | Throughput/sec | min | p50 | p95 | p99 | max | avg |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `small_chat_turn` | 1995.6 | 0.501 | 0.501 | 0.501 | 0.501 | 0.501 | 0.501 |
-| `medium_with_rag` | 736.4 | 1.358 | 1.358 | 1.358 | 1.358 | 1.358 | 1.358 |
-| `large_assistant_reply` | 53.0 | 18.853 | 18.853 | 18.853 | 18.853 | 18.853 | 18.853 |
-| `rag_heavy_session` | 18.6 | 53.665 | 53.665 | 53.665 | 53.665 | 53.665 | 53.665 |
+| Payload | Sample ms (n=1) |
+| --- | ---: |
+| `small_chat_turn` | 0.501 |
+| `medium_with_rag` | 1.358 |
+| `large_assistant_reply` | 18.853 |
+| `rag_heavy_session` | 53.665 |
 
 Latency is in milliseconds.
 
@@ -69,12 +71,12 @@ Latency is in milliseconds.
 
 Detector families: regex, entropy, medical-regex, contextual-anchored, contextual-broad, gliner. Mode: `redact`.
 
-| Payload | Throughput/sec | min | p50 | p95 | p99 | max | avg |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `small_chat_turn` | 2.4 | 415.041 | 415.041 | 415.041 | 415.041 | 415.041 | 415.041 |
-| `medium_with_rag` | 1.6 | 612.175 | 612.175 | 612.175 | 612.175 | 612.175 | 612.175 |
-| `large_assistant_reply` | 0.1 | 8812.538 | 8812.538 | 8812.538 | 8812.538 | 8812.538 | 8812.538 |
-| `rag_heavy_session` | 0.1 | 16860.096 | 16860.096 | 16860.096 | 16860.096 | 16860.096 | 16860.096 |
+| Payload | Sample ms (n=1) |
+| --- | ---: |
+| `small_chat_turn` | 415.041 |
+| `medium_with_rag` | 612.175 |
+| `large_assistant_reply` | 8812.538 |
+| `rag_heavy_session` | 16860.096 |
 
 Latency is in milliseconds.
 
@@ -94,12 +96,12 @@ Latency is in milliseconds.
 
 Detector families: regex, entropy, medical-regex, contextual-anchored, contextual-broad, gliner, openai_privacy_filter. Mode: `redact`.
 
-| Payload | Throughput/sec | min | p50 | p95 | p99 | max | avg |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `small_chat_turn` | 0.4 | 2304.033 | 2304.033 | 2304.033 | 2304.033 | 2304.033 | 2304.033 |
-| `medium_with_rag` | 0.3 | 3331.265 | 3331.265 | 3331.265 | 3331.265 | 3331.265 | 3331.265 |
-| `large_assistant_reply` | 0.1 | 14278.718 | 14278.718 | 14278.718 | 14278.718 | 14278.718 | 14278.718 |
-| `rag_heavy_session` | 0.0 | 26507.493 | 26507.493 | 26507.493 | 26507.493 | 26507.493 | 26507.493 |
+| Payload | Sample ms (n=1) |
+| --- | ---: |
+| `small_chat_turn` | 2304.033 |
+| `medium_with_rag` | 3331.265 |
+| `large_assistant_reply` | 14278.718 |
+| `rag_heavy_session` | 26507.493 |
 
 Latency is in milliseconds.
 
@@ -117,22 +119,30 @@ Latency is in milliseconds.
 
 ## Reproduce
 
+Generate current local reports while preserving this recorded snapshot. The [artifact script](../scripts/regenerate-artifacts.sh) atomically updates ignored `.lsdf/current-reports/` reports and keeps dependency-light and full-matrix results separate; foundation recall remains its canonical report/history writer.
+
+```bash
+bash scripts/regenerate-artifacts.sh
+```
+
 Dependency-light profiles only:
 
 ```bash
-docker compose run --rm test python -m lsdf.cli latency-table --profile default --profile balanced --format markdown > docs/performance.md
+mkdir -p .lsdf/current-reports
+docker compose run --rm cli latency-table --profile default --profile balanced --iterations 50 --format markdown > .lsdf/current-reports/performance-default-balanced.md.tmp && mv .lsdf/current-reports/performance-default-balanced.md.tmp .lsdf/current-reports/performance-default-balanced.md
 ```
 
-Full release matrix, including optional ML profiles:
+Full matrix, with prepared optional dependencies and model cache:
 
 ```bash
-docker compose --profile optional run --rm optional-cli latency-table --format markdown 2>/dev/null > docs/performance.md
+mkdir -p .lsdf/current-reports
+docker compose --profile optional run --rm optional-cli latency-table --profile default --profile balanced --profile broad-pii --profile broad-pii-ml --iterations 1 --format markdown > .lsdf/current-reports/performance-full-matrix.md.tmp && mv .lsdf/current-reports/performance-full-matrix.md.tmp .lsdf/current-reports/performance-full-matrix.md
 ```
 
-Override iterations or profiles with `--iterations N` and `--profile NAME` (repeat per profile).
+The full-matrix example records one payload sample per profile. Increase `--iterations N` to measure a distribution; repeat `--profile NAME` for each intended profile. The [recorded EVAL latency](../EVAL.md#latency) uses a different representative payload and 50 iterations, so it is not interchangeable with these single-sample payload timings.
 
 ## Notes
 
 - **Streaming-holdback latency** (governed by `LSDF_STREAM_HOLDBACK_CHARS`, default 512) is now characterised in the per-profile *Streaming per-chunk inspection* table above — `per-chunk p50` is the wall-clock cost of each `append()` against the holdback buffer; `end-to-end` is the full chunk-sequence cost including the final `check_pending()` flush. The holdback bytes themselves are constant per chunk; the scanner-cost variance is what the table captures.
-- **GPU acceleration for the optional ML profile** is not yet characterized in this report. The numbers above represent the CPU floor.
-- **`broad-pii-ml` model load** (~1.4 B parameters) happens once at Firewall construction. Per-request latency above is steady-state after warmup; the suite discards no warmup samples (cold-start is visible in the `max` column for the first payload).
+- **GPU acceleration for the optional ML profile** is not yet characterized in this report. These are recorded CPU observations, not a deployment-capacity guarantee.
+- **Measurement boundary:** Firewall construction/model loading was outside the payload timer. First-call initialization may still affect inspection latency. No warmup samples were discarded, so this snapshot does not establish steady-state behavior.

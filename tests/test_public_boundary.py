@@ -11,6 +11,9 @@ PUBLIC_TEXT_ROOTS = [
     Path("EVAL.md"),
     Path("SECURITY.md"),
     Path("LICENSE"),
+    Path("NOTICE"),
+    Path("THIRD_PARTY_NOTICES.md"),
+    Path(".github"),
     Path(".dockerignore"),
     Path(".gitignore"),
     Path("Dockerfile"),
@@ -65,6 +68,7 @@ REAL_SECRET_PATTERNS = [
 SAMPLE_OUTPUT_ROOTS = [
     Path("docs/artifacts/optional-detectors"),
     Path("examples/proof-bundle-sample"),
+    Path("examples/demo-media"),
     Path("examples/quickstart/audit.jsonl"),
 ]
 
@@ -142,7 +146,7 @@ def _sample_output_files():
             yield root
             continue
         for path in root.rglob("*"):
-            if path.is_file() and path.suffix.lower() in {".md", ".json", ".jsonl"}:
+            if path.is_file() and path.suffix.lower() in {".md", ".json", ".jsonl", ".txt", ".cast"}:
                 yield path
 
 

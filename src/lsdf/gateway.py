@@ -17,9 +17,10 @@ from typing import Any, Iterable
 from .audit import JsonlAuditSink
 from .engine import Firewall
 from .metrics import MetricsRecorder
-from .policy import load_effective_policy, load_policy, load_policy_profile
+from .policy import load_effective_policy, load_policy, load_policy_bytes, load_policy_profile
 from .security_ops import verify_policy_signature
 from .streaming import DEFAULT_STREAM_HOLDBACK_CHARS, stream_chat_completion_chunks
+from .types import PolicyEnforcementError
 from .vault import EncryptedSqliteTokenVault
 
 UPSTREAM_TRANSPORT_ERROR_TYPE = "upstream_transport_error"
@@ -118,23 +119,31 @@ def serve_gateway(
     config: GatewayConfig | None = None,
 ) -> None:
     config = config or resolve_gateway_config()
+    policy_bytes: bytes | None = None
     if config.require_policy_signature and config.policy_path:
         try:
+            policy_bytes = Path(config.policy_path).read_bytes()
             verification = verify_policy_signature(
                 Path(config.policy_path),
                 public_key_path=Path(config.policy_public_key) if config.policy_public_key else None,
+                policy_bytes=policy_bytes,
             )
         except Exception as exc:
             raise GatewayConfigError(
                 f"Custom policy signature verification failed: {type(exc).__name__}"
             ) from exc
-        if not verification["valid"]:
+        if (
+            not verification["valid"]
+            or verification.get("legacy")
+            or verification.get("algorithm") != "ed25519"
+        ):
             raise GatewayConfigError("Custom policy signature verification failed")
-    policy = (
-        load_policy(config.policy_path)
-        if config.policy_path
-        else load_effective_policy(config.policy_profile, domain_packs=config.domain_packs)
-    )
+    if policy_bytes is not None:
+        policy = load_policy_bytes(policy_bytes)
+    elif config.policy_path:
+        policy = load_policy(config.policy_path)
+    else:
+        policy = load_effective_policy(config.policy_profile, domain_packs=config.domain_packs)
     token_vault = _build_gateway_vault(config)
     firewall = Firewall(policy, token_vault=token_vault)
     audit_sink = (
@@ -282,6 +291,8 @@ class LSDFGatewayHandler(BaseHTTPRequestHandler):
         if header.lower().startswith("bearer "):
             bearer = header[7:].strip()
         direct = self.headers.get("x-lsdf-management-token", "")
+        if not all(value.isascii() for value in (expected, bearer, direct)):
+            return False
         return hmac.compare_digest(expected, bearer) or hmac.compare_digest(expected, direct)
 
     def _send_json(
@@ -345,8 +356,13 @@ def handle_chat_completion(
 ) -> tuple[int, dict[str, str], bytes, dict[str, str]]:
     metrics = metrics or MetricsRecorder(enabled=False)
     metrics.increment("gateway_requests_total", stream=False)
-    with metrics.time_ms("request_inspection_ms", stream=False):
-        request_result = firewall.inspect(payload, unknown_surface="input.messages")
+    try:
+        with metrics.time_ms("request_inspection_ms", stream=False):
+            request_result = firewall.inspect(payload, unknown_surface="input.messages")
+    except Exception as exc:
+        return _inspection_failure_response(
+            exc, stage="request_preflight", stream=False, audit_sink=audit_sink, metrics=metrics,
+        )
     _record_inspection_metrics(metrics, "request_preflight", request_result)
     _write_inspection_audit(
         audit_sink,
@@ -399,8 +415,13 @@ def handle_chat_completion(
         )
         return status, response_headers, response_body, _decision_headers(False, 0)
 
-    with metrics.time_ms("response_inspection_ms", stream=False, status=status):
-        response_result = firewall.inspect(response_payload, unknown_surface="output.content")
+    try:
+        with metrics.time_ms("response_inspection_ms", stream=False, status=status):
+            response_result = firewall.inspect(response_payload, unknown_surface="output.content")
+    except Exception as exc:
+        return _inspection_failure_response(
+            exc, stage="response_inspection", stream=False, audit_sink=audit_sink, metrics=metrics,
+        )
     _record_inspection_metrics(metrics, "response_inspection", response_result)
     headers = _decision_headers(response_result.blocked, len(response_result.decisions))
     _write_inspection_audit(
@@ -445,8 +466,14 @@ def handle_streaming_chat_completion(
 ) -> tuple[int, dict[str, str], Iterable[bytes], dict[str, str]]:
     metrics = metrics or MetricsRecorder(enabled=False)
     metrics.increment("gateway_requests_total", stream=True)
-    with metrics.time_ms("request_inspection_ms", stream=True):
-        request_result = firewall.inspect(payload, unknown_surface="input.messages")
+    try:
+        with metrics.time_ms("request_inspection_ms", stream=True):
+            request_result = firewall.inspect(payload, unknown_surface="input.messages")
+    except Exception as exc:
+        status, response_headers, body, headers = _inspection_failure_response(
+            exc, stage="request_preflight", stream=True, audit_sink=audit_sink, metrics=metrics,
+        )
+        return status, response_headers, [body], headers
     _record_inspection_metrics(metrics, "request_preflight", request_result)
     _write_inspection_audit(
         audit_sink,
@@ -490,11 +517,23 @@ def handle_streaming_chat_completion(
     )
     headers = _decision_headers(False, 0)
     if "text/event-stream" not in _header_value(response_headers, "content-type", ""):
-        response_bytes = b"".join(response_body)
+        try:
+            response_bytes = b"".join(response_body)
+        except UPSTREAM_TRANSPORT_ERRORS:
+            metrics.increment("gateway_upstream_errors_total", error_type=UPSTREAM_TRANSPORT_ERROR_TYPE, stream=True)
+            status, response_headers, response_bytes = _upstream_transport_error_response_bytes()
+            return status, response_headers, [response_bytes], _decision_headers(False, 0)
         response_payload = _try_parse_json(response_bytes)
         if isinstance(response_payload, dict):
-            with metrics.time_ms("response_inspection_ms", stream=True, status=status):
-                response_result = firewall.inspect(response_payload, unknown_surface="output.content")
+            try:
+                with metrics.time_ms("response_inspection_ms", stream=True, status=status):
+                    response_result = firewall.inspect(response_payload, unknown_surface="output.content")
+            except Exception as exc:
+                status, response_headers, body, headers = _inspection_failure_response(
+                    exc, stage="stream_response_inspection", stream=True,
+                    audit_sink=audit_sink, metrics=metrics,
+                )
+                return status, response_headers, [body], headers
             _record_inspection_metrics(metrics, "stream_response_inspection", response_result)
             headers = _decision_headers(response_result.blocked, len(response_result.decisions))
             _write_inspection_audit(
@@ -552,6 +591,42 @@ def handle_streaming_chat_completion(
         ),
         headers,
     )
+
+
+def _inspection_failure_response(
+    exc: Exception,
+    *,
+    stage: str,
+    stream: bool,
+    audit_sink: JsonlAuditSink | None,
+    metrics: MetricsRecorder,
+) -> tuple[int, dict[str, str], bytes, dict[str, str]]:
+    enforcement = isinstance(exc, PolicyEnforcementError)
+    error_type = "policy_enforcement_error" if enforcement else "inspection_error"
+    status = (403 if stage == "request_preflight" else 502) if enforcement else 500
+    metrics.increment(
+        "gateway_inspection_errors_total", stage=stage, stream=stream, error_type=error_type,
+    )
+    metrics.increment("gateway_blocks_total", stage=stage, stream=stream)
+    _write_gateway_audit(
+        audit_sink,
+        {
+            "source": "gateway",
+            "stage": stage,
+            "stream": stream,
+            "blocked": True,
+            "decision_count": 0,
+            "outcome": "inspection_failed",
+            "error_type": error_type,
+            "status": status,
+        },
+    )
+    message = (
+        "Policy enforcement halted inspection."
+        if enforcement else "LSDF inspection failed; content was withheld."
+    )
+    body = json.dumps({"error": {"message": message, "type": error_type}}).encode("utf-8")
+    return status, {"content-type": "application/json"}, body, _decision_headers(True, 0)
 
 
 def _write_inspection_audit(

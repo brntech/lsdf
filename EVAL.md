@@ -4,6 +4,8 @@ _Generated 2026-05-07T05:09:39Z._
 
 Recorded signal-vs-noise snapshot for the dependency-light defaults and the optional ML-enhanced profile.
 
+**Historical snapshot; reproduction guidance revised 2026-09-08.** Numeric cells retain their recorded run; no new evaluation is claimed. Current reports go under ignored `.lsdf/current-reports/`, preserving this snapshot and its external-benchmark disclosures. See [Measured Protection](docs/measured-protection.md#public-reproducible-artifacts).
+
 **Benchmark availability:** the numeric results below retain their generated date above. The current distribution bundles four threat corpora: `piece_b_replay`, `medical_phi_replay`, `nemotron_pii`, and `br_agentic_pii`. The ai4privacy sample is no longer bundled; its rows and the cross-corpus aggregates that include it are historical external benchmark evidence, not a fresh four-corpus run. An operator may supply an appropriately licensed local copy under ignored `.lsdf/external-benchmarks/`; see the reproduction instructions below.
 
 ## Release Gate
@@ -304,16 +306,24 @@ Benchmark payload: `examples/openai_request.json` × 50 iterations.
 
 ## Reproduce
 
+The [artifact script](scripts/regenerate-artifacts.sh) atomically refreshes separate current reports while preserving this recorded snapshot. It always generates default/balanced reports and only attempts the full matrix when the optional model cache is ready. A fresh four-corpus run does not recreate historical external rows or aggregates.
+
+```bash
+bash scripts/regenerate-artifacts.sh
+```
+
 Dependency-light profiles only:
 
 ```bash
-docker compose run --rm cli eval-report --profile default --profile balanced --format markdown > EVAL.md
+mkdir -p .lsdf/current-reports
+docker compose run --rm cli eval-report --profile default --profile balanced --format markdown > .lsdf/current-reports/eval-default-balanced.md.tmp && mv .lsdf/current-reports/eval-default-balanced.md.tmp .lsdf/current-reports/eval-default-balanced.md
 ```
 
 Current four-corpus matrix, including optional ML profiles (requires prepared optional dependencies and model cache):
 
 ```bash
-docker compose --profile optional run --rm optional-cli eval-report --profile default --profile balanced --profile broad-pii --profile broad-pii-ml --format markdown > EVAL.md
+mkdir -p .lsdf/current-reports
+docker compose --profile optional run --rm optional-cli eval-report --profile default --profile balanced --profile broad-pii --profile broad-pii-ml --format markdown > .lsdf/current-reports/eval-full-matrix.md.tmp && mv .lsdf/current-reports/eval-full-matrix.md.tmp .lsdf/current-reports/eval-full-matrix.md
 ```
 
 Pass `--profile NAME` once per profile (default: `default`, `balanced`, `broad-pii`, `broad-pii-ml`), `--threat-dataset PATH` (repeatable; defaults: `piece_b_replay`, `medical_phi_replay`, `nemotron_pii`, `br_agentic_pii`), `--benign-dataset PATH` (repeatable; defaults: `false_positive`, `utility_matrix`), `--benchmark-payload PATH`, or `--iterations N` to override.
@@ -321,6 +331,7 @@ Pass `--profile NAME` once per profile (default: `default`, `balanced`, `broad-p
 Each explicit `--threat-dataset` list replaces the defaults; it does not append to them. To include the external benchmark, first obtain the relevant dataset permissions and prepare an LSDF-format JSON file with `name` set to `ai4privacy_multilingual` at the ignored local path shown below. Keep the source data and local output out of commits and release artifacts. Include all four bundled corpora explicitly:
 
 ```bash
+mkdir -p .lsdf/external-benchmarks
 docker compose --profile optional run --rm optional-cli eval-report \
   --profile broad-pii --profile broad-pii-ml --profile healthcare \
   --threat-dataset evals/piece_b_replay.json \
@@ -328,7 +339,7 @@ docker compose --profile optional run --rm optional-cli eval-report \
   --threat-dataset evals/nemotron_pii.json \
   --threat-dataset evals/br_agentic_pii.json \
   --threat-dataset .lsdf/external-benchmarks/ai4privacy_multilingual.json \
-  --format markdown > .lsdf/external-benchmarks/eval-report.md
+  --format markdown > .lsdf/external-benchmarks/eval-report.md.tmp && mv .lsdf/external-benchmarks/eval-report.md.tmp .lsdf/external-benchmarks/eval-report.md
 ```
 
 The local run evaluates the selected profiles against the supplied datasets. Matching historical numbers also requires the recorded dataset selection, policy, detector versions, and model configuration. See [Measured Protection](docs/measured-protection.md#operator-supplied-external-benchmark) and [Third-Party Notices](THIRD_PARTY_NOTICES.md).

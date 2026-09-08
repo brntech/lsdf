@@ -2,16 +2,25 @@
 
 Evidence recorded: 2026-05-06 to 2026-05-07. Distribution and reproduction guidance updated: 2026-09-08.
 
-LSDF separates dependency-light defaults from release-gated broad-pii detection. The default gateway uses regex, entropy, and lightweight medical-pattern detectors. `balanced` keeps that dependency-light base and adds generic output redaction. `broad-pii` adds contextual-broad and GLiNER adapters for span-scope PII/PHI redaction. `broad-pii-ml` uses the same local broad-pii stack and loads OpenAI privacy-filter when the reference model is available; the optional Docker image isolates the GLiNER and privacy-filter Python dependency stacks so both can run in the same profile.
+LSDF separates dependency-light defaults from release-gated broad-pii detection. The default gateway uses regex, entropy, lightweight medical-pattern detectors, and contextual-anchored detection. `balanced` keeps that dependency-light base and adds generic output redaction. `broad-pii` adds contextual-broad and GLiNER adapters for span-scope PII/PHI redaction. `broad-pii-ml` uses the same local broad-pii stack and loads OpenAI privacy-filter when the reference model is available; the optional Docker image isolates the GLiNER and privacy-filter Python dependency stacks so both can run in the same profile.
 
-The current release gate in `EVAL.md` follows each profile's stated containment posture. `broad-pii` and `broad-pii-ml` must hold value-level recall >= 0.90 on piece_b_replay, medical_phi_replay, and BR-Agentic-PII, with benign specificity >= 0.95. Nemotron-PII is bundled characterization evidence for those broad tiers; ai4privacy multilingual metrics are historical external benchmark evidence. Healthcare retains both in its surface-containment promise, so a healthcare evaluation fails the gate when the required external ai4privacy corpus is missing.
+Release gates follow each profile's declared containment promise; `EVAL.md` preserves the gate outcomes of its recorded run. `broad-pii` and `broad-pii-ml` must hold value-level recall >= 0.90 on piece_b_replay, medical_phi_replay, and BR-Agentic-PII, with benign specificity >= 0.95. Nemotron-PII is bundled characterization evidence for those broad tiers; ai4privacy multilingual metrics are historical external benchmark evidence. Healthcare retains both in its surface-containment promise, so a healthcare evaluation fails the gate when the required external ai4privacy corpus is missing.
 
 ## Public Reproducible Artifacts
 
 The default evaluation suite bundles four threat corpora (`evals/piece_b_replay.json`, `evals/medical_phi_replay.json`, `evals/nemotron_pii.json`, `evals/br_agentic_pii.json`) and two benign corpora (`evals/false_positive.json`, `evals/utility_matrix.json`). The generated reports contain aggregate measurements without raw fixture values. The committed EVAL and comparison tables retain their recorded results; ai4privacy rows and aggregates that include them are labeled historical external benchmark evidence.
 
-- **`EVAL.md`** - per-release signal-vs-noise snapshot. Per-profile threat-corpus containment, per-detector-family threat findings vs benign findings, per-profile p50/p95 on a representative payload. Regenerate with `docker compose run --rm cli eval-report --profile default --profile balanced --format markdown > EVAL.md` (dependency-light profiles) or `docker compose --profile optional run --rm optional-cli eval-report --profile default --profile balanced --profile broad-pii --profile broad-pii-ml --format markdown > EVAL.md` (with the optional ML adapter).
-- **`docs/performance.md`** - per-profile, per-payload latency table (small chat / medium with RAG / large assistant reply / RAG-heavy session). p50/p95/p99 plus throughput. Regenerate via `cli latency-table` with the same profile flags as above.
+- [EVAL.md](../EVAL.md) preserves per-profile containment, detector-family signal/noise, and 50-iteration latency on its representative payload.
+- [Performance](performance.md) preserves the separate per-payload run. Its payload cells each contain one recorded timing, not a percentile distribution or throughput estimate; streaming tables retain their actual repeated sample counts.
+- [Comparative Protection](comparative-protection.md) preserves its detector comparison and historical external rows.
+
+Generate current local reports from the repository root:
+
+```bash
+bash scripts/regenerate-artifacts.sh
+```
+
+The script writes ignored `.lsdf/current-reports/` files with atomic replacement, preserving the previous scratch report when a command fails or produces no output. It always writes `performance-default-balanced.md` (50 iterations) and `eval-default-balanced.md`. When the optional model cache is ready it additionally writes `performance-full-matrix.md` (one payload sample), `eval-full-matrix.md`, `comparative-protection.md`, and a dated FP sweep. Missing optional readiness leaves those optional reports unchanged; it never reduces the recorded full performance snapshot to a default-only table. Foundation recall is the explicit exception: its existing command still owns `docs/system-recall.md` and the canonical recall history. The linked reports give direct commands for individual runs.
 
 Headline numbers from the recorded regeneration are committed alongside both files; they are not a new run after removing the external fixture. Threat-corpus replay containment (40 sanitized credential-leak cases): `default` profile redacts to 2 sensitive values remaining (PII log-only); `broad-pii-ml` profile reaches 0 sensitive values remaining.
 
@@ -20,7 +29,8 @@ Headline numbers from the recorded regeneration are committed alongside both fil
 Reproduce the `broad-pii-ml` profile's containment on your machine:
 
 ```bash
-docker compose --profile optional run --rm optional-cli eval evals/piece_b_replay.json --profile broad-pii-ml --format markdown
+mkdir -p .lsdf/current-reports
+docker compose --profile optional run --rm optional-cli eval evals/piece_b_replay.json --profile broad-pii-ml --format markdown > .lsdf/current-reports/piece-b-ml.md.tmp && mv .lsdf/current-reports/piece-b-ml.md.tmp .lsdf/current-reports/piece-b-ml.md
 ```
 
 The 6-case ML-only PII follow-up corpus runs identically against `evals/piece_b_replay_ml_pii.json`. The default threat suite adds `evals/medical_phi_replay.json`, `evals/nemotron_pii.json`, and `evals/br_agentic_pii.json` to the credential replay. For `broad-pii` and `broad-pii-ml`, the gate covers their three span-scope promise corpora; Nemotron-PII is additional characterization. The former ai4privacy sample is not committed or distributed. Its historical metrics require the separately supplied external benchmark described below.
@@ -36,6 +46,7 @@ LSDF no longer bundles the sample derived from [ai4privacy/pii-masking-300k](htt
 Prepare the external file in LSDF evaluation format with its corpus `name` set to `ai4privacy_multilingual`. Each explicit `--threat-dataset` list replaces the defaults, so include all four bundled paths together with the local file:
 
 ```bash
+mkdir -p .lsdf/external-benchmarks
 docker compose --profile optional run --rm optional-cli eval-report \
   --profile broad-pii --profile broad-pii-ml --profile healthcare \
   --threat-dataset evals/piece_b_replay.json \
@@ -43,7 +54,7 @@ docker compose --profile optional run --rm optional-cli eval-report \
   --threat-dataset evals/nemotron_pii.json \
   --threat-dataset evals/br_agentic_pii.json \
   --threat-dataset .lsdf/external-benchmarks/ai4privacy_multilingual.json \
-  --format markdown > .lsdf/external-benchmarks/eval-report.md
+  --format markdown > .lsdf/external-benchmarks/eval-report.md.tmp && mv .lsdf/external-benchmarks/eval-report.md.tmp .lsdf/external-benchmarks/eval-report.md
 ```
 
 Healthcare's existing five-corpus `gate_promise` remains unchanged. Omitting its external corpus fails the gate for missing evidence. Supplying it enables evaluation of that promise; all recall and specificity floors must still pass. Historical external benchmark numbers also depend on the recorded sample, policies, detector versions, and models and are not reproduced by a fresh bundled-only run.

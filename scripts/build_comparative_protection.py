@@ -1,11 +1,11 @@
-"""Build docs/comparative-protection.md from the bundled LSDF corpora.
+"""Build a current scratch comparison from the bundled LSDF corpora.
 
 This is a documentation generator, not a new CLI surface. Run it through
 Docker Compose so optional detector dependencies come from the project image:
 
     docker compose --profile optional run --rm --entrypoint python optional-cli \
         scripts/build_comparative_protection.py \
-        --output docs/comparative-protection.md \
+        --output .lsdf/current-reports/comparative-protection.md \
         --seed 0
 """
 
@@ -199,7 +199,8 @@ def format_markdown(report: dict[str, Any]) -> str:
         f"`{report['seed']}` before the run. GLiNER/PyTorch CPU inference can "
         "still move threshold-edge spans by a few values between independent "
         "artifact generations; compare detector stacks within this artifact, "
-        "and use `EVAL.md` as the release-gate source of truth.",
+        "and use a fresh evaluation against the profile's declared promises for current gate checks. "
+        "`EVAL.md` preserves its recorded run.",
         "",
     ]
     _append_threat_table(lines, report)
@@ -339,12 +340,12 @@ def _append_reproduce(lines: list[str]) -> None:
         [
             "## Reproduce",
             "",
-            "Run from the public repo root with the optional detector image available:",
+            "Run from the repository root with optional detectors/model cache ready. Write current results under ignored .lsdf/current-reports/; recorded snapshots are preserved:",
             "",
             "```bash",
             "docker compose --profile optional run --rm --entrypoint python optional-cli \\",
             "  scripts/build_comparative_protection.py \\",
-            "  --output docs/comparative-protection.md \\",
+            "  --output .lsdf/current-reports/comparative-protection.md \\",
             "  --seed 0",
             "```",
             "",
@@ -421,7 +422,7 @@ def main() -> int:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("docs/comparative-protection.md"),
+        default=Path(".lsdf/current-reports/comparative-protection.md"),
     )
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     args = parser.parse_args()

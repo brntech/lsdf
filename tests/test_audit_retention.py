@@ -124,6 +124,23 @@ class PurgeRotatedAuditFilesTests(unittest.TestCase):
 
             self.assertEqual(len(report["deleted"]), 2)
 
+    def test_non_ascii_digit_siblings_are_not_rotation_backups(self):
+        with TemporaryDirectory() as tmp:
+            base = Path(tmp) / "audit.jsonl"
+            _touch(base, age_days=90)
+            unrelated = [Path(str(base) + "." + suffix) for suffix in ("\u0661", "\uff12", "\u00b2", "1\u0661")]
+            for sibling in unrelated:
+                _touch(sibling, age_days=90)
+            rotated = Path(str(base) + ".1")
+            _touch(rotated, age_days=90)
+
+            report = purge_rotated_audit_files(base, older_than_days=30)
+
+            self.assertEqual([entry["path"] for entry in report["deleted"]], [str(rotated)])
+            self.assertEqual(report["errors"], [])
+            self.assertTrue(base.exists())
+            self.assertTrue(all(sibling.exists() for sibling in unrelated))
+
 
 class AuditPurgeCLITests(unittest.TestCase):
     def test_audit_purge_subcommand_prints_report_and_exits_zero_on_clean_run(self):

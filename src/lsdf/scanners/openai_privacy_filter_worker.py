@@ -40,17 +40,27 @@ def main() -> int:
             "worker_load_seconds": round(time.perf_counter() - started, 6),
         }
         _write({"status": "ready", "metadata": metadata})
-    except Exception as exc:
-        _write({"error": f"{type(exc).__name__}: {exc}"})
+    except Exception:
+        _write({"error": "model initialization failed"})
         return 1
 
     for line in sys.stdin:
+        request_id = None
         try:
             request = json.loads(line)
-            results = classifier(str(request.get("text", "")))
-            _write({"results": _jsonable(results)})
-        except Exception as exc:
-            _write({"error": f"{type(exc).__name__}: {exc}"})
+            if (
+                not isinstance(request, dict)
+                or type(request.get("request_id")) is not int
+                or request["request_id"] <= 0
+            ):
+                raise ValueError("Invalid request")
+            request_id = request["request_id"]
+            if not isinstance(request.get("text"), str):
+                raise ValueError("Invalid request text")
+            results = classifier(request["text"])
+            _write({"request_id": request_id, "results": _jsonable(results)})
+        except Exception:
+            _write({"request_id": request_id, "error": "inference failed"})
     return 0
 
 

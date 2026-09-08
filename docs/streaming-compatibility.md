@@ -210,3 +210,7 @@ curl http://localhost:8080/v1/chat/completions \
 
 Compare the visible time-to-first-token against a direct upstream
 request to quantify the holdback budget you have available.
+
+## Terminal errors and response headers
+
+An output inspection failure after SSE headers have been sent terminates the stream with a raw-value-safe error event. Already delivered text cannot be withdrawn. The initial `x-lsdf-blocked` and `x-lsdf-decision-count` headers precede output inspection and are not a final decision summary; inspect terminal events and audit output. Final text can share a chunk with its finish reason and is emitted in text order after terminal checks.

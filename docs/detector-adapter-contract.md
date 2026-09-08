@@ -31,6 +31,10 @@ The bundled OpenAI privacy-filter adapter maps categories such as private email,
 
 Library callers and tests can inject custom detector providers through the existing detector registry path. To make a custom family name (e.g. `medical-ner`) pass policy validation, call `register_detector_family(name)` from `lsdf` once at application start before any `load_policy()` or `Firewall(...)` call — the function is idempotent, mutates the live family list shared by the policy and registry validators, and accepts an optional `specificity` to influence overlap resolution. Gateway runtime plugin loading is not implemented; production gateway deployments should use the built-in detector families, the optional Docker image, or a small application wrapper that constructs `Firewall` with custom providers and `register_detector_family()` for any custom family names.
 
+## Installed adapter settings
+
+The registry consumes `required` as an availability setting. The installed GLiNER and privacy-filter builders also accept their documented family settings. The installed Presidio builder currently uses fixed defaults; other `detection.settings.presidio` entries are not forwarded. Use a custom provider when you need a different Presidio analyzer configuration.
+
 ## Operational Requirements
 
 Optional ML detectors should stay Docker-managed, report unavailable dependencies clearly, and avoid downloading model artifacts during normal tests unless an operator explicitly configures the cache. Detector metadata should identify the model or implementation without exposing prompts, payload text, or matched sensitive values.

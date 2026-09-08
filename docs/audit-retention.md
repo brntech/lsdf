@@ -45,7 +45,7 @@ Properties of the rotated set:
   `audit.jsonl.<rotate_backups>`. Lower index = newer.
 - Rotation never reads the live file — so size-based rotation is
   raw-value-safe by construction.
-- Append failures fail open with raw-value-safe stderr warnings.
+- Gateway audit append failures fail open with raw-value-safe stderr warnings.
 
 ## 2. Retention windows
 
@@ -246,3 +246,7 @@ Anything outside the `<live name>.<int>` shape is operator-managed and
 out of scope for `audit-purge`. The retention sweep deliberately
 ignores arbitrary suffixes so an operator-side archive workflow can
 co-exist on the same directory without LSDF deleting non-LSDF files.
+
+## Writer coordination
+
+Rotation and append are serialized within one shared sink instance. Use a single writer process per path. Coordinate separate sink instances, other processes, and manual rotation or purge; the in-process lock does not cover them. Retention recognizes nonempty ASCII decimal suffixes, including `.0` and `.001`; reserve that filename shape for audit backups.

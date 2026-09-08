@@ -8,20 +8,22 @@ those findings are logged, redacted, tokenized, or blocked. That means two
 profiles can use the same detector mix but produce different containment
 results because their actions differ.
 
-Recorded source cells (these are historical measurements, not a fresh run after the dataset distribution change):
+Recorded source cells were copied from earlier May snapshots (not a fresh run after the dataset distribution change):
 
 - `EVAL.md` generated 2026-05-07T01:05:55Z for value-level recall,
   specificity, benign findings, and detector-family signal/noise.
 - `docs/performance.md` generated 2026-05-07T00:56:51Z for CPU latency.
 
+These copied figures predate the runs currently retained in [EVAL](../EVAL.md) and [Performance](performance.md). All copied values are preserved here. This guide does not retain the earlier performance run's sample count, so its timings are not presented as percentile or capacity estimates. Current report generation is described in [Measured Protection](measured-protection.md#public-reproducible-artifacts); it writes ignored scratch reports without replacing historical evidence.
+
 ## Fast Picks
 
 | Workload | Start with | Detector mix | Measured signal | Main trade-off |
 | --- | --- | --- | --- | --- |
-| Local coding agent, secrets, tool calls, traces | `default` | `regex + entropy + medical-regex + contextual-anchored` | Credential replay recall 0.944, FP case rate 0.000, small-chat p50 9.284 ms | Generic PII is mostly logged, not broadly redacted. |
-| Local agent where outbound identity should be redacted | `balanced` | `regex + entropy + medical-regex + contextual-anchored` | Credential replay recall 1.000, FP case rate 0.000, small-chat p50 0.446 ms | Same detector set as `default`; stronger value containment comes from actions. |
-| Broad PII/PHI containment without OpenAI privacy-filter | `broad-pii` | `regex + entropy + medical-regex + contextual-anchored + contextual-broad + gliner` | Recall 1.000 / 0.944 / 0.680 / 0.974 across the four bundled threat corpora, FP case rate 0.000 | Small-chat p50 rises to 429.095 ms; RAG-heavy p50 to 17535.148 ms. |
-| Broad PII/PHI plus the bundled reference ML detector | `broad-pii-ml` | `broad-pii + openai_privacy_filter` | Recall 1.000 / 0.981 / 0.713 / 1.000, FP case rate 0.000 | Small-chat p50 rises to 2504.289 ms; RAG-heavy p50 to 27679.987 ms and requires model-cache readiness. |
+| Local coding agent, secrets, tool calls, traces | `default` | `regex + entropy + medical-regex + contextual-anchored` | Credential replay recall 0.944, FP case rate 0.000, small-chat timing 9.284 ms | Generic PII is mostly logged, not broadly redacted. |
+| Local agent where outbound identity should be redacted | `balanced` | `regex + entropy + medical-regex + contextual-anchored` | Credential replay recall 1.000, FP case rate 0.000, small-chat timing 0.446 ms | Same detector set as `default`; stronger value containment comes from actions. |
+| Broad PII/PHI containment without OpenAI privacy-filter | `broad-pii` | `regex + entropy + medical-regex + contextual-anchored + contextual-broad + gliner` | Recall 1.000 / 0.944 / 0.680 / 0.974 across the four bundled threat corpora, FP case rate 0.000 | Small-chat timing rises to 429.095 ms; RAG-heavy timing to 17535.148 ms. |
+| Broad PII/PHI plus the bundled reference ML detector | `broad-pii-ml` | `broad-pii + openai_privacy_filter` | Recall 1.000 / 0.981 / 0.713 / 1.000, FP case rate 0.000 | Small-chat timing rises to 2504.289 ms; RAG-heavy timing to 27679.987 ms and requires model-cache readiness. |
 | RAG/tool-result prompt-injection risk | `strict` | `regex + entropy + medical-regex + contextual-anchored + prompt-injection` | Not a release-eval row; validate with representative fixtures | Adds prompt-injection detection, not broad PII recall. |
 | Healthcare or financial workflow | Base profile plus domain pack | Detection from the base profile, rules from `healthcare` or `financial` | Use the base profile's EVAL row; packs do not add detector families | Domain packs alter actions and surfaces, not detector recall. |
 
@@ -49,7 +51,7 @@ replace the defaults.
 
 ## Profile Mixes
 
-| Profile | Detector families | Value-level recall by corpus | Benign specificity / FP case rate | EVAL p50 | Performance p50, small / RAG-heavy |
+| Profile | Detector families | Value-level recall by corpus | Benign specificity / FP case rate | EVAL p50 | Earlier performance timing, small / RAG-heavy |
 | --- | --- | --- | --- | ---: | --- |
 | `default` | `regex`, `entropy`, `medical-regex`, `contextual-anchored` | 0.944 / 0.593 / 0.077 / 0.205 | 1.000 / 0.000 | 0.798 ms | 9.284 ms / 56.040 ms |
 | `balanced` | `regex`, `entropy`, `medical-regex`, `contextual-anchored` | 1.000 / 0.611 / 0.267 / 0.205 | 1.000 / 0.000 | 0.918 ms | 0.446 ms / 57.938 ms |
@@ -72,7 +74,7 @@ finding counts for families.
 | `contextual-anchored` | Inline XML contact tags plus high-precision label/value secrets and identity-document fields. | All profiles. | Included in the dependency-light baseline; family signal/noise counts are in `EVAL.md`. | Baseline coverage with no model cache; focused on low-FP anchored evidence. |
 | `contextual-broad` | Broad PII/PHI field labels and output-only quasi-identifier shapes. | `broad-pii`, `broad-pii-ml`. | Major recall lift without a model cache; family signal/noise counts are in `EVAL.md`. | Stronger local broad PII detection, but still paired with GLiNER in release-gated profiles. |
 | `gliner` | Local ML NER for PERSON, ADDRESS, DATE_OF_BIRTH, PHI subtypes, financial and similar PII labels. | `broad-pii`, `broad-pii-ml`. | Profile-level rows above are recorded containment evidence; family signal/noise counts are in `EVAL.md`. | The main local latency cliff. Use when broad PII recall matters more than sub-ms response time. |
-| `openai_privacy_filter` | Bundled optional reference ML detector for broader PII shapes and multilingual evidence. | `broad-pii-ml`. | Profile-level rows above are recorded containment evidence; family signal/noise counts are in `EVAL.md`. | Adds recall on Nemotron-PII, multilingual, and BR-Agentic corpora but roughly doubles broad-pii small-payload latency on CPU. Requires optional image/model readiness. |
+| `openai_privacy_filter` | Bundled optional reference ML detector for broader PII shapes and multilingual evidence. | `broad-pii-ml`. | Profile-level rows above are recorded containment evidence; family signal/noise counts are in `EVAL.md`. | Adds recall on Nemotron-PII, multilingual, and BR-Agentic corpora and adds latency in the recorded CPU measurements. Requires optional image/model readiness. |
 | `prompt-injection` (`xpia`) | Indirect prompt-injection heuristics for retrieved RAG and tool-result surfaces. | `strict`. | Not in the release PII/secret EVAL matrix. | Use for RAG/tool workflows; validate with prompt-injection fixtures rather than PII recall. |
 | `presidio` | External Presidio analyzer output normalized into LSDF findings. | Optional adapter contract, not a shipped release profile. | Not in the release EVAL matrix. | Use when your environment already depends on Presidio and can own its dependency/FP profile. |
 
@@ -102,8 +104,8 @@ All LSDF-authored adapter code remains Apache-2.0 and is included in the open-so
    `broad-pii-ml` lifts medical PHI recall from 0.944 to 0.981,
    Nemotron-PII recall from 0.680 to 0.713, and BR-Agentic recall from
    0.974 to 1.000 in the recorded EVAL. Historical external ai4privacy
-   recall rose from 0.705 to 0.878. In the recorded latency run, while small-chat p50 rises from 429.095 ms to 2504.289 ms
-   and RAG-heavy p50 rises from 17535.148 ms to 27679.987 ms on CPU.
+   recall rose from 0.705 to 0.878. In the earlier recorded latency run, small-chat timing rises from 429.095 ms to 2504.289 ms
+   and RAG-heavy timing rises from 17535.148 ms to 27679.987 ms on CPU.
 
 4. Use domain packs for workflow policy, not detector recall.
    `healthcare`, `financial`, and `enterprise-dlp` add rules and priorities on

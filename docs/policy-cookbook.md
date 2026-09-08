@@ -184,7 +184,7 @@ Beyond the bundled `redact | mask | tokenize | block` set, three Presidio-anonym
 |---|---|---|---|
 | `replace` | `replacement: <string>` (required) | the operator-supplied literal | Use when downstream consumers want a stable named placeholder (`[CUSTOMER]`, `<<EMAIL>>`). |
 | `hash` | `hash_algo: sha256 \| sha512 \| blake2b` (default `sha256`) | `<{ENTITY}:HASH:<algo>=<hex16>>` | Deterministic — same input + algo always produces the same output, so audit events and traces correlate without exposing the raw value. Truncated to 64 bits for in-line readability. |
-| `encrypt` | `encrypt_key_env: <env var name>` (required) | `<{ENTITY}:ENC:<fernet-token>>` | Reversible. The env var must hold a urlsafe-base64 32-byte Fernet key; generate one with `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`. The transform raises `ValueError` if the env var is unset or malformed at request time. |
+| `encrypt` | `encrypt_key_env: <env var name>` (required) | `<{ENTITY}:ENC:<fernet-token>>` | Reversible. The env var must hold a urlsafe-base64 32-byte Fernet key; generate one with `docker compose run --rm cli vault keygen`. The transform raises `ValueError` if the env var is unset or malformed at request time. |
 
 Examples:
 
@@ -210,7 +210,16 @@ Examples:
   encrypt_key_env: LSDF_FINANCIAL_ENCRYPT_KEY
 ```
 
-The `encrypt` operator requires the env var to be set in every environment that runs the firewall (gateway containers, CLI, tests). Generate the key once and distribute it via your existing secret-management path.
+The `encrypt` operator requires the env var to be set in every environment that runs the firewall. Generate the key once and distribute it via your existing secret-management path. A Compose `--env-file` supplies interpolation values; it does not forward arbitrary variable names. For a one-off CLI container, pass `-e LSDF_FINANCIAL_ENCRYPT_KEY` to `docker compose run`. For a persistent gateway, save an override such as `compose.encrypt.yaml`:
+
+```yaml
+services:
+  gateway:
+    environment:
+      LSDF_FINANCIAL_ENCRYPT_KEY: "${LSDF_FINANCIAL_ENCRYPT_KEY:?Supply the encryption key securely}"
+```
+
+Include that override whenever recreating the gateway: `docker compose --env-file .lsdf.env -f docker-compose.yml -f compose.encrypt.yaml up -d gateway`. Prebuilt users use `-f compose.release.yaml` as the first file. For the source ML service, use `gateway-ml` as the override service name. Do not put a key literal in the YAML or committed files.
 
 Operator parameters are mutually exclusive with the action they target — supplying `replacement` on a `redact` rule, or `hash_algo` on an `encrypt` rule, fails policy load with a clear error message naming the rule id.
 
@@ -224,7 +233,7 @@ The policy-level `mode: monitor | redact | block` switch is repo-wide; `on_fail`
 | `observe` | Log the decision in the audit trail; do not apply the transform; do not block. The per-rule analog of `mode: monitor`. |
 | `block` | Set `blocked=true` regardless of the rule's `action`, AND apply the rule's transform so the halted-but-structurally-still-present payload is raw-value-safe for any downstream logger / tracer that handles the response. Useful for "any time this rule fires, halt the request" overrides on otherwise gentle actions. Escalates above the policy mode. |
 | `reask` | Apply the transform AND surface a `reask_hint: true` flag in the audit event. A wrapping orchestration layer (LiteLLM router, agent supervisor) can branch on the flag to re-issue with a redaction prefix. LSDF itself does not retry. |
-| `exception` | Raise `lsdf.PolicyEnforcementError` from `Firewall.inspect`. For "this should never happen, halt loudly" rules — the gateway maps the exception to an upstream-facing error response. |
+| `exception` | Raise `lsdf.PolicyEnforcementError` from `Firewall.inspect`. For "this should never happen, halt loudly" rules — the gateway returns a safe 403 for request inspection or 502 for response inspection; after streaming starts it emits a terminal error event. |
 
 Common shapes:
 

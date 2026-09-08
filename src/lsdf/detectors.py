@@ -294,7 +294,8 @@ def _build_installed_gliner_detector(settings: Mapping[str, object]) -> Detector
     from .scanners.gliner import build_installed_gliner_detector
 
     try:
-        return build_installed_gliner_detector(**dict(settings))
+        kwargs = {key: value for key, value in dict(settings).items() if key != "required"}
+        return build_installed_gliner_detector(**kwargs)
     except RuntimeError as exc:
         raise DetectorUnavailableError(str(exc)) from exc
 

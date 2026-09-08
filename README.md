@@ -9,12 +9,12 @@ LSDF is a Docker-first OpenAI-compatible proxy you put between your app and the 
 Install [Docker with Compose](https://docs.docker.com/compose/install/) and Git, and start Docker with Linux containers. Get the release source and enter its directory:
 
 ```bash
-git clone --branch v0.3.1 --depth 1 https://github.com/brntech/lsdf.git
+git clone --branch v0.3.2 --depth 1 https://github.com/brntech/lsdf.git
 cd lsdf
 docker compose version
 ```
 
-You can also extract `lsdf-0.3.1-source.zip` from the [release downloads](https://github.com/brntech/lsdf/releases/tag/v0.3.1) and open its folder. These commands build images locally; no separate image pull is needed. The first build needs internet access and may take several minutes. For a prebuilt gateway without a source checkout, use the [installation guide](docs/installation.md#prebuilt-release-image).
+You can also extract `lsdf-0.3.2-source.zip` from the [release downloads](https://github.com/brntech/lsdf/releases/tag/v0.3.2) and open its folder. These commands build images locally; no separate image pull is needed. The first build needs internet access and may take several minutes. For a prebuilt gateway without a source checkout, use the [installation guide](docs/installation.md#prebuilt-release-image).
 
 Try the self-contained demo; no model server or provider key is required:
 
@@ -57,7 +57,7 @@ Most privacy tools inspect only prompt and response text. LSDF treats the whole 
 
 LSDF is local-first, dependency-light by default, and designed to make privacy behavior measurable. It also includes OpenRouter and LiteLLM presets, provider playbooks, demo-media assets, policy explanation, sample proof artifacts, and release-ready operational guidance.
 
-For the standalone gateway image in v0.3.1, with required policy fixtures and first-party proof matrices, see [Production Operations](docs/production-operations.md#standalone-runtime-image). Both runtime variants start with the dependency-light `default` profile; ML profiles require explicit selection and a prepared cache. The lightweight runtime leaves out heavy detector dependencies, model weights, and external benchmark corpora; the development Compose services support full evaluations and demos.
+For the standalone gateway image in v0.3.2, with required policy fixtures and first-party proof matrices, see [Production Operations](docs/production-operations.md#standalone-runtime-image). Both runtime variants start with the dependency-light `default` profile; ML profiles require explicit selection and a prepared cache. The lightweight runtime leaves out heavy detector dependencies, model weights, and external benchmark corpora; the development Compose services support full evaluations and demos.
 
 ## Open Source and Optional Integrations
 
@@ -164,7 +164,9 @@ Additional families:
 - `entropy`: supplementary high-entropy credential heuristic (covers password-shaped strings the regex layer doesn't anchor).
 - `medical-regex`: diagnosis text, ICD-like codes, lab values, medication-dosage patterns. Context-required against clinical anchors.
 - `prompt-injection` (internal family `xpia`): opt-in indirect prompt-injection detector (instruction-override phrases, role-tag impersonation, hidden HTML/style blocks, zero-width runs, long base64 blobs, exfiltration phrases). Wired into `strict` to block on `input.rag_context` / `input.tool_results`.
-- `presidio`, `openai_privacy_filter`: optional ML adapters. PERSON findings are filtered against a static public-figure deny-list at the registry level; extend at deploy time with `LSDF_PERSON_DENY_LIST_EXTRA`.
+- `contextual-anchored`: narrow label/value and tagged-PII patterns, active by default.
+- `contextual-broad`: broader PII context for profiles that explicitly enable it.
+- `gliner`, `presidio`, `openai_privacy_filter`: ML adapters. PERSON findings are filtered against a static public-figure deny-list at the registry level; extend at deploy time with `LSDF_PERSON_DENY_LIST_EXTRA`.
 
 Policy rules can match whole subtype families with `entity_in_category:` (for example `SECRET`, `PHI`, `STRONG_ID`, or `INTERNAL_ID`), a category-level composition layer Presidio does not provide directly.
 
@@ -301,12 +303,14 @@ docker compose run --rm -e LSDF_VAULT_KEY cli vault resolve TOKEN --vault-path .
 Use Ed25519 signatures for custom policy governance:
 
 ```bash
+mkdir -p .lsdf/policies
+cp policies/default.yaml .lsdf/policies/default.yaml
 docker compose run --rm cli policy keygen --public-key .lsdf/policy.pub --private-key .lsdf/policy.key
-docker compose run --rm cli policy sign policies/default.yaml --private-key .lsdf/policy.key --output .lsdf/default.yaml.sig
-docker compose run --rm cli policy verify policies/default.yaml --signature .lsdf/default.yaml.sig --public-key .lsdf/policy.pub
+docker compose run --rm cli policy sign .lsdf/policies/default.yaml --private-key .lsdf/policy.key --output .lsdf/policies/default.yaml.sig
+docker compose run --rm cli policy verify .lsdf/policies/default.yaml --signature .lsdf/policies/default.yaml.sig --public-key .lsdf/policy.pub
 ```
 
-For gateway enforcement, set `LSDF_REQUIRE_POLICY_SIGNATURE=true` and `LSDF_POLICY_PUBLIC_KEY=/workspace/.lsdf/policy.pub` when `LSDF_POLICY` points to a custom policy file.
+The gateway requires the signature beside the custom policy as `<policy>.sig`. Mount the policy, signature, and trusted public key read-only, then set `LSDF_POLICY`, `LSDF_REQUIRE_POLICY_SIGNATURE=true`, and `LSDF_POLICY_PUBLIC_KEY` to their container paths. See the complete [source and release deployment override](docs/security-model.md#signed-policy-deployment). Keep the private signing key with the signer.
 
 ## Policy Profiles
 
@@ -348,7 +352,7 @@ docker compose run --rm cli proof-bundle --output .lsdf/proof --format markdown
 
 `EVAL.md` records per-detector-family threat findings versus benign findings, plus latency, for the dependency-light and optional ML profiles. Its dated snapshot includes historical external benchmark rows and aggregates. Current default regeneration uses four bundled threat corpora; external benchmark results require an explicitly supplied, appropriately licensed local dataset.
 
-Reports redact raw sensitive values by default, preserve known-gap counts, and include detector provenance. The dependency-light default uses regex, entropy, and medical-pattern detectors. Presidio and OpenAI privacy-filter adapters are optional and remain outside the default runtime path.
+Reports redact raw sensitive values by default, preserve known-gap counts, and include detector provenance. The dependency-light default uses regex, entropy, medical-pattern, and contextual-anchored detectors. Presidio and OpenAI privacy-filter adapters are optional and remain outside the default runtime path.
 
 LSDF is not a compliance certification, SIEM, endpoint monitor, jailbreak product, or promise of perfect detection. It is a practical runtime firewall and proof system for sensitive-data exposure in LLM apps.
 

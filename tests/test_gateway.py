@@ -2013,5 +2013,236 @@ class StreamChunkInspectionMetricsTests(unittest.TestCase):
         self.assertEqual(self._stream_chunk_inspection_count(snapshot), 0)
 
 
+
+class _EnforcementScanner:
+    def scan(self, surface):
+        from lsdf.types import Finding
+        if "detector-failure" in surface.value:
+            raise OSError("synthetic diagnostic detail must remain private")
+        if "tripwire" not in surface.value:
+            return []
+        start = surface.value.index("tripwire")
+        return [Finding("US_SSN", surface.name, surface.pointer, start, start + 8, "tripwire", 1.0, surface.json_pointer)]
+
+
+class _CapturedAudit:
+    def __init__(self):
+        self.events = []
+
+    def write(self, event):
+        self.events.append(event)
+
+
+def _enforcement_firewall(on_fail="exception"):
+    from lsdf.policy import AuditConfig, Policy, Rule
+    return Firewall(Policy(
+        version="0.2", name="gateway-enforcement", mode="monitor",
+        entities={"US_SSN"}, surfaces={"input.messages", "output.content", "output.stream_chunk", "output.reasoning", "output.tool_calls.arguments"},
+        rules=[Rule("enforcement", {"entity": "US_SSN"}, "redact", on_fail=on_fail)],
+        audit=AuditConfig(),
+    ), scanner=_EnforcementScanner())
+
+
+class GatewayInspectionFailureTests(unittest.TestCase):
+    def test_real_http_policy_exceptions_have_safe_status_and_audit(self):
+        import http.client
+        import io
+        from contextlib import redirect_stderr
+
+        sink = _CapturedAudit()
+        forwarded = []
+
+        class Handler(LSDFGatewayHandler):
+            gateway_config = GatewayConfig(None, "default", "http://127.0.0.1:1")
+            gateway_firewall = _enforcement_firewall()
+            gateway_audit_sink = sink
+
+            def _forward(self, payload):
+                forwarded.append(payload)
+                return 200, {"content-type": "application/json"}, b"{}"
+
+            def _forward_stream(self, payload):
+                forwarded.append(payload)
+                return 200, {"content-type": "text/event-stream"}, [b"data: [DONE]\n\n"]
+
+        with redirect_stderr(io.StringIO()) as stderr:
+            server = _start_test_server(Handler)
+            try:
+                for streaming in (False, True):
+                    with self.subTest(stream=streaming):
+                        conn = http.client.HTTPConnection(*server.server_address, timeout=3)
+                        try:
+                            conn.request("POST", "/v1/chat/completions", json.dumps({"stream": streaming, "messages": [{"role": "user", "content": "tripwire"}]}), {"content-type": "application/json"})
+                            response = conn.getresponse()
+                            body = response.read().decode()
+                            self.assertEqual(response.status, 403)
+                            self.assertEqual(json.loads(body)["error"]["type"], "policy_enforcement_error")
+                            self.assertNotIn("tripwire", body)
+                        finally:
+                            conn.close()
+            finally:
+                server.shutdown()
+                server.server_close()
+        self.assertEqual(forwarded, [])
+        self.assertEqual(stderr.getvalue(), "")
+        self.assertEqual(len(sink.events), 2)
+        self.assertTrue(all(event["outcome"] == "inspection_failed" and event["blocked"] for event in sink.events))
+        self.assertNotIn("tripwire", json.dumps(sink.events))
+
+    def test_response_failures_are_safe_for_json_and_stream_fallback(self):
+        for streaming in (False, True):
+            for text, expected_status, error_type in (("tripwire", 502, "policy_enforcement_error"), ("detector-failure", 500, "inspection_error")):
+                with self.subTest(stream=streaming, error_type=error_type):
+                    sink = _CapturedAudit()
+                    response = json.dumps({"choices": [{"message": {"content": text}}]}).encode()
+                    handle = handle_streaming_chat_completion if streaming else handle_chat_completion
+                    result = handle(
+                        {"messages": [{"role": "user", "content": "hello"}]},
+                        _enforcement_firewall(),
+                        lambda payload: (200, {"content-type": "application/json"}, [response] if streaming else response),
+                        audit_sink=sink,
+                    )
+                    status, _, body, headers = result
+                    body = b"".join(body) if streaming else body
+                    self.assertEqual(status, expected_status)
+                    self.assertEqual(json.loads(body)["error"]["type"], error_type)
+                    self.assertEqual(headers["x-lsdf-blocked"], "true")
+                    self.assertEqual(sink.events[-1]["outcome"], "inspection_failed")
+                    self.assertNotIn(text, body.decode())
+                    self.assertNotIn("synthetic diagnostic detail", body.decode() + json.dumps(sink.events))
+
+    def test_request_detector_failure_and_audit_failure_remain_safe(self):
+        import io
+        from contextlib import redirect_stderr
+        from unittest.mock import Mock
+
+        for streaming in (False, True):
+            with self.subTest(stream=streaming), redirect_stderr(io.StringIO()) as stderr:
+                forward = Mock()
+                handle = handle_streaming_chat_completion if streaming else handle_chat_completion
+                status, _, body, _ = handle(
+                    {"messages": [{"role": "user", "content": "detector-failure"}]},
+                    _enforcement_firewall(), forward, audit_sink=_FailingAuditSink(),
+                )
+                body = b"".join(body) if streaming else body
+                self.assertEqual(status, 500)
+                self.assertEqual(json.loads(body)["error"]["type"], "inspection_error")
+                forward.assert_not_called()
+                self.assertIn("audit sink write failed", stderr.getvalue())
+                self.assertNotIn("synthetic diagnostic detail", stderr.getvalue() + body.decode())
+
+    def test_sse_detector_oserror_is_not_an_upstream_transport_error(self):
+        sink = _CapturedAudit()
+        _, _, body, _ = handle_streaming_chat_completion(
+            {"messages": [{"role": "user", "content": "hello"}]},
+            _enforcement_firewall(),
+            lambda payload: (200, {"content-type": "text/event-stream"}, [_sse({"choices": [{"index": 0, "delta": {"content": "detector-failure"}}]}), b"data: [DONE]\n\n"]),
+            audit_sink=sink,
+        )
+        events = _decode_sse_body(body)
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["error"]["type"], "inspection_error")
+        self.assertEqual(sink.events[-1]["outcome"], "inspection_failed")
+        self.assertTrue(sink.events[-1]["blocked"])
+        self.assertNotIn("synthetic diagnostic detail", json.dumps(events) + json.dumps(sink.events))
+
+    def test_all_terminal_paths_withhold_pending_text_when_tool_inspection_raises(self):
+        for ending in ("done", "finish", "eof", "malformed", "transport"):
+            with self.subTest(ending=ending):
+                sink = _CapturedAudit()
+                def chunks():
+                    yield _sse({"choices": [{"index": 0, "delta": {"content": "safe pending text"}}]})
+                    yield _sse({"choices": [{"index": 0, "delta": {"tool_calls": [{"index": 0, "function": {"arguments": '{"value":"tripwire"}'}}]}}]})
+                    if ending == "done":
+                        yield b"data: [DONE]\n\n"
+                    elif ending == "finish":
+                        yield _sse({"choices": [{"index": 0, "delta": {}, "finish_reason": "tool_calls"}]})
+                    elif ending == "malformed":
+                        yield b"data: {broken}\n\n"
+                    elif ending == "transport":
+                        raise OSError("upstream private detail")
+                _, _, body, _ = handle_streaming_chat_completion(
+                    {"messages": [{"role": "user", "content": "hello"}]},
+                    _enforcement_firewall(),
+                    lambda payload: (200, {"content-type": "text/event-stream"}, chunks()),
+                    holdback_chars=128, audit_sink=sink,
+                )
+                events = _decode_sse_body(body)
+                self.assertEqual(_joined_stream_field(events, "content"), "")
+                self.assertEqual(events[-1]["error"]["type"], "policy_enforcement_error")
+                self.assertNotIn("[DONE]", events)
+                self.assertNotIn("tripwire", json.dumps(events) + json.dumps(sink.events))
+                self.assertEqual(sink.events[-1]["stream_state"], "inspection_failed")
+
+
+class TerminalStreamOrderingTests(unittest.TestCase):
+    def test_terminal_text_preserves_order_for_every_text_field(self):
+        for field in ("content", "reasoning", "reasoning_content", "reasoning_details"):
+            with self.subTest(field=field):
+                expected = "a" * 16 + "b" * 10
+                chunks = [
+                    _sse({"choices": [{"index": 0, "delta": {field: expected[:16]}}]}),
+                    _sse({"choices": [{"index": 0, "delta": {field: expected[16:]}, "finish_reason": "stop"}]}),
+                    b"data: [DONE]\n\n",
+                ]
+                _, _, body, _ = handle_streaming_chat_completion(
+                    {"messages": [{"role": "user", "content": "hello"}]},
+                    _enforcement_firewall(),
+                    lambda payload: (200, {"content-type": "text/event-stream"}, chunks),
+                    holdback_chars=8,
+                )
+                events = _decode_sse_body(body)
+                self.assertEqual(_joined_stream_field(events, field), expected)
+                self.assertEqual(events[-1], "[DONE]")
+                finish = next(i for i, event in enumerate(events) if isinstance(event, dict) and any(choice.get("finish_reason") for choice in event.get("choices", [])))
+                self.assertTrue(all(not _joined_stream_field([event], field) for event in events[finish:]))
+
+    def test_all_terminal_choices_are_inspected_before_any_text_is_released(self):
+        terminal = {"choices": [
+            {"index": 0, "delta": {"content": "safe earlier choice"}, "finish_reason": "stop"},
+            {"index": 1, "delta": {"content": "tripwire"}, "finish_reason": "stop"},
+        ]}
+        _, _, body, _ = handle_streaming_chat_completion(
+            {"messages": [{"role": "user", "content": "hello"}]},
+            _enforcement_firewall(on_fail="block"),
+            lambda payload: (200, {"content-type": "text/event-stream"}, [_sse(terminal), b"data: [DONE]\n\n"]),
+            holdback_chars=0,
+        )
+        events = _decode_sse_body(body)
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["error"]["type"], "sensitive_data_blocked")
+        self.assertEqual(_joined_stream_field(events, "content"), "")
+
+
+class ManagementCredentialEncodingTests(unittest.TestCase):
+    def test_non_ascii_headers_reject_with_401_and_server_remains_usable(self):
+        import http.client
+        class Handler(LSDFGatewayHandler):
+            gateway_config = GatewayConfig(None, "default", "http://127.0.0.1:1", management_token="management-test")
+        server = _start_test_server(Handler)
+        try:
+            cases = [
+                ({"Authorization": "Bearer \u00e9"}, 401),
+                ({"X-LSDF-Management-Token": "\u00e9"}, 401),
+                ({"Authorization": "Bearer wrong"}, 401),
+                ({"Authorization": "Bearer management-test"}, 200),
+                ({"X-LSDF-Management-Token": "management-test"}, 200),
+            ]
+            for headers, expected in cases:
+                with self.subTest(expected=expected):
+                    conn = http.client.HTTPConnection(*server.server_address, timeout=3)
+                    try:
+                        conn.request("GET", "/lsdf/metrics?format=json", headers=headers)
+                        response = conn.getresponse()
+                        response.read()
+                        self.assertEqual(response.status, expected)
+                    finally:
+                        conn.close()
+        finally:
+            server.shutdown()
+            server.server_close()
+
+
+
 if __name__ == "__main__":
     unittest.main()

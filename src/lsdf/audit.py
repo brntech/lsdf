@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from threading import Lock
 from typing import Any
 
 from .types import Finding, PolicyDecision
@@ -20,16 +21,20 @@ class JsonlAuditSink:
         self.path = Path(path)
         self.rotate_bytes = rotate_bytes
         self.rotate_backups = max(1, rotate_backups)
+        self._write_lock = Lock()
 
     def write(self, event: dict[str, Any]) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self._rotate_if_needed()
         payload = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             **event,
         }
-        with self.path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(payload, separators=(",", ":")) + "\n")
+        line = json.dumps(payload, separators=(",", ":")) + "\n"
+        # Coordinates threads sharing this sink; other writers need coordination.
+        with self._write_lock:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self._rotate_if_needed()
+            with self.path.open("a", encoding="utf-8") as handle:
+                handle.write(line)
 
     def _rotate_if_needed(self) -> None:
         if not self.rotate_bytes or self.rotate_bytes <= 0 or not self.path.exists():
@@ -180,7 +185,7 @@ def purge_rotated_audit_files(
         if not candidate.name.startswith(prefix):
             continue
         suffix = candidate.name[len(prefix):]
-        if not suffix.isdigit():
+        if not suffix.isascii() or not suffix.isdigit():
             continue
         try:
             mtime = datetime.fromtimestamp(

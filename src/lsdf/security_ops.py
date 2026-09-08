@@ -17,7 +17,10 @@ from .detectors import (
     OPTIONAL_DETECTOR_FAMILIES,
     OPT_IN_DETECTOR_FAMILIES,
 )
-from .policy import SUBTYPE_MANIFEST_PATH, VALID_ACTIONS, _load_subtype_manifest, load_policy
+from .policy import (
+    SUBTYPE_MANIFEST_PATH, VALID_ACTIONS, _load_subtype_manifest,
+    load_policy, load_policy_bytes,
+)
 
 LEGACY_SIGNATURE_VERSION = "lsdf-policy-signature-v1"
 SIGNATURE_VERSION = "lsdf-policy-signature-v2-ed25519"
@@ -318,14 +321,14 @@ def generate_policy_keypair(public_key_path: Path, private_key_path: Path) -> di
 
 
 def sign_policy_file(path: Path, output: Path, private_key_path: Path | None = None) -> dict[str, Any]:
-    load_policy(path)
+    payload = path.read_bytes()
+    load_policy_bytes(payload)
     if private_key_path is None:
-        return _sign_policy_legacy(path, output)
+        return _sign_policy_legacy(path, output, payload)
     private_key = serialization.load_pem_private_key(private_key_path.read_bytes(), password=None)
     if not isinstance(private_key, Ed25519PrivateKey):
         raise ValueError("Policy private key must be an Ed25519 PEM key")
-    payload = path.read_bytes()
-    digest = _policy_digest(path)
+    digest = _policy_digest(payload)
     signature = {
         "version": SIGNATURE_VERSION,
         "algorithm": "ed25519",
@@ -350,14 +353,21 @@ def verify_policy_signature(
     path: Path,
     signature_path: Path | None = None,
     public_key_path: Path | None = None,
+    *,
+    policy_bytes: bytes | None = None,
 ) -> dict[str, Any]:
-    load_policy(path)
+    """Verify one immutable snapshot; callers may load that same snapshot afterward."""
+    payload = path.read_bytes() if policy_bytes is None else bytes(policy_bytes)
+    load_policy_bytes(payload)
     signature_path = signature_path or path.with_suffix(path.suffix + ".sig")
     signature = json.loads(signature_path.read_text(encoding="utf-8"))
     version = signature.get("version")
     if version == LEGACY_SIGNATURE_VERSION:
-        return _verify_legacy_policy_signature(path, signature_path, signature)
-    expected = _policy_digest(path)
+        report = _verify_legacy_policy_signature(path, signature_path, signature, payload)
+        if public_key_path is not None:
+            return {**report, "valid": False, "reason": "Ed25519 signature required with public key"}
+        return report
+    expected = _policy_digest(payload)
     base = {
         "policy_path": str(path),
         "signature_path": str(signature_path),
@@ -375,14 +385,14 @@ def verify_policy_signature(
     if not isinstance(public_key, Ed25519PublicKey):
         raise ValueError("Policy public key must be an Ed25519 PEM key")
     try:
-        public_key.verify(base64.b64decode(signature["signature"]), path.read_bytes())
+        public_key.verify(base64.b64decode(signature["signature"]), payload)
     except (InvalidSignature, KeyError, ValueError):
         return {**base, "valid": False, "reason": "signature verification failed"}
     return {**base, "valid": True}
 
 
-def _sign_policy_legacy(path: Path, output: Path) -> dict[str, Any]:
-    digest = _policy_digest(path)
+def _sign_policy_legacy(path: Path, output: Path, payload: bytes) -> dict[str, Any]:
+    digest = _policy_digest(payload)
     signature = {
         "version": LEGACY_SIGNATURE_VERSION,
         "policy_path": str(path),
@@ -404,8 +414,9 @@ def _verify_legacy_policy_signature(
     path: Path,
     signature_path: Path,
     signature: dict[str, Any],
+    payload: bytes,
 ) -> dict[str, Any]:
-    expected = _policy_digest(path)
+    expected = _policy_digest(payload)
     valid = signature.get("sha256") == expected
     return {
         "valid": valid,
@@ -418,8 +429,8 @@ def _verify_legacy_policy_signature(
     }
 
 
-def _policy_digest(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+def _policy_digest(payload: bytes) -> str:
+    return hashlib.sha256(payload).hexdigest()
 
 
 def _rule_values(match: dict[str, Any], single_key: str, list_key: str) -> list[str]:
@@ -483,6 +494,7 @@ def _performance_for_profile(
     mode = ""
     payloads: dict[str, dict[str, Any]] = {}
     in_payload_table = False
+    single_sample_table = False
     for line in section:
         if line.startswith("Detector families:"):
             left, _, right = line.partition(". Mode:")
@@ -491,18 +503,26 @@ def _performance_for_profile(
             continue
         if line.startswith("| Payload |"):
             in_payload_table = True
+            single_sample_table = "Sample ms (n=1)" in line
             continue
         if not in_payload_table:
             continue
         if not line.startswith("| `"):
-            if payloads:
+            if not line.startswith("| ---"):
                 in_payload_table = False
             continue
         cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
-        if len(cells) < 8:
-            continue
         payload = cells[0].strip("`")
         try:
+            if single_sample_table:
+                if len(cells) == 2:
+                    payloads[payload] = {
+                        "sample_ms": float(cells[1].replace(",", "")),
+                        "sample_count": 1,
+                    }
+                continue
+            if len(cells) < 8:
+                continue
             payloads[payload] = {
                 "throughput_per_sec": float(cells[1].replace(",", "")),
                 "min_ms": float(cells[2].replace(",", "")),
@@ -529,13 +549,13 @@ def _format_policy_performance_text(performance: dict[str, Any] | None) -> str:
     if not performance or not performance.get("available"):
         return "- Performance: not available\n"
     payloads = performance.get("payloads", {})
-    small = payloads.get("small_chat_turn", {})
-    rag = payloads.get("rag_heavy_session", {})
     parts = []
-    if small:
-        parts.append(f"small_chat_turn p50={small['p50_ms']:.3f} ms")
-    if rag:
-        parts.append(f"rag_heavy_session p50={rag['p50_ms']:.3f} ms")
+    for name in ("small_chat_turn", "rag_heavy_session"):
+        stats = payloads.get(name, {})
+        if "sample_ms" in stats:
+            parts.append(f"{name} sample (n=1)={stats['sample_ms']:.3f} ms")
+        elif "p50_ms" in stats:
+            parts.append(f"{name} p50={stats['p50_ms']:.3f} ms")
     detail = "; ".join(parts) if parts else "profile present"
     return f"- Performance: {detail} (source: {performance['source']})\n"
 
@@ -552,15 +572,26 @@ def _add_performance_section(lines: list[str], performance: dict[str, Any] | Non
             f"- Source: `{performance['source']}`",
             f"- Detector families in report: {performance.get('detector_families') or 'unknown'}",
             "",
-            "| Payload | p50 ms | p95 ms | p99 ms |",
-            "| --- | ---: | ---: | ---: |",
         ]
     )
-    for payload, stats in performance["payloads"].items():
-        lines.append(
-            f"| `{payload}` | {stats['p50_ms']:.3f} | {stats['p95_ms']:.3f} | {stats['p99_ms']:.3f} |"
-        )
-    lines.append("")
+    samples = {
+        name: stats for name, stats in performance["payloads"].items() if "sample_ms" in stats
+    }
+    distributions = {
+        name: stats for name, stats in performance["payloads"].items() if "p50_ms" in stats
+    }
+    if samples:
+        lines.extend(["| Payload | Sample ms (n=1) |", "| --- | ---: |"])
+        for payload, stats in samples.items():
+            lines.append(f"| `{payload}` | {stats['sample_ms']:.3f} |")
+        lines.append("")
+    if distributions:
+        lines.extend(["| Payload | p50 ms | p95 ms | p99 ms |", "| --- | ---: | ---: | ---: |"])
+        for payload, stats in distributions.items():
+            lines.append(
+                f"| `{payload}` | {stats['p50_ms']:.3f} | {stats['p95_ms']:.3f} | {stats['p99_ms']:.3f} |"
+            )
+        lines.append("")
 
 
 def _policy_posture(mode: str, actions: dict[str, int]) -> str:

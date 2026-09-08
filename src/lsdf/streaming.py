@@ -9,10 +9,12 @@ from dataclasses import dataclass
 from typing import Any, Callable, Iterable, Iterator, TYPE_CHECKING
 
 from .audit import build_audit_event
-from .engine import Firewall, _decision_applies, _decisions_blocked
+from .engine import (
+    Firewall, _decision_applies, _decisions_blocked, _raise_for_exception_decisions,
+)
 from .surfaces import Surface
 from .transforms import apply_decisions
-from .types import PolicyDecision
+from .types import PolicyDecision, PolicyEnforcementError
 
 if TYPE_CHECKING:
     from .metrics import MetricsRecorder
@@ -161,7 +163,9 @@ class StreamingInspectionState:
             surface = Surface(name=self.surface_name, pointer=self.pointer, value=self.pending)
             findings = self.firewall.scanner.scan(surface)
             decisions = [self.firewall.policy.decide(finding) for finding in findings]
-        return [decision for decision in decisions if decision.action != "allow"]
+        decisions = [decision for decision in decisions if decision.action != "allow"]
+        _raise_for_exception_decisions(decisions)
+        return decisions
 
     def _commit_index(self, decisions: list[PolicyDecision]) -> int:
         if len(self.pending) <= self.holdback_chars:
@@ -360,6 +364,23 @@ def format_sse_event(
     return ("\n".join(lines) + "\n\n").encode("utf-8")
 
 
+class _StreamInspectionFailure(Exception):
+    def __init__(self, exc: Exception):
+        super().__init__("Stream inspection failed")
+        self.error_type = (
+            "policy_enforcement_error" if isinstance(exc, PolicyEnforcementError)
+            else "inspection_error"
+        )
+
+
+def _inspect_stream_call(operation, *args):
+    # Keep detector/transform/vault OSError distinct from upstream transport failure.
+    try:
+        return operation(*args)
+    except Exception as exc:
+        raise _StreamInspectionFailure(exc) from None
+
+
 def stream_chat_completion_chunks(
     upstream_chunks: Iterable[bytes],
     firewall: Firewall,
@@ -368,9 +389,36 @@ def stream_chat_completion_chunks(
     telemetry_callback: Callable[[dict[str, Any]], None] | None = None,
     metrics_recorder: "MetricsRecorder | None" = None,
 ) -> Iterator[bytes]:
+    telemetry = _new_stream_telemetry()
+    try:
+        yield from _stream_chat_completion_chunks(
+            upstream_chunks, firewall, holdback_chars=holdback_chars,
+            telemetry_callback=telemetry_callback, metrics_recorder=metrics_recorder,
+            telemetry=telemetry,
+        )
+    except _StreamInspectionFailure as exc:
+        error_event = _stream_error_event(
+            "LSDF inspection halted the stream; pending content was withheld.",
+            error_type=exc.error_type,
+            summary=_stream_summary(telemetry, "inspection_failed"),
+        )
+        _notify_stream_terminal(
+            telemetry_callback, telemetry, blocked=True, error_event=error_event,
+        )
+        yield error_event
+
+
+def _stream_chat_completion_chunks(
+    upstream_chunks: Iterable[bytes],
+    firewall: Firewall,
+    *,
+    telemetry: dict[str, Any],
+    holdback_chars: int = DEFAULT_STREAM_HOLDBACK_CHARS,
+    telemetry_callback: Callable[[dict[str, Any]], None] | None = None,
+    metrics_recorder: "MetricsRecorder | None" = None,
+) -> Iterator[bytes]:
     states: dict[tuple[Any, ...], Any] = {}
     last_templates: dict[tuple[Any, ...], StreamChunkTemplate] = {}
-    telemetry = _new_stream_telemetry()
     try:
         for event in iter_sse_events(upstream_chunks):
             if not event.data:
@@ -610,7 +658,17 @@ def _transform_stream_payload(
                 ),
             )
             _record_stream_surface(telemetry, _surface_for_stream_field(field))
-            result = state.append(value)
+            last_templates[key] = StreamChunkTemplate(
+                payload=_stream_template(payload, choice_pos, field),
+                event=source_event,
+            )
+            if choice_index in terminal_choice_indexes:
+                # Inspect the complete terminal text once, together with all other
+                # terminal states. Splitting it here can emit a tail before its prefix.
+                state.pending += value
+                passthrough_payload["choices"][choice_pos]["delta"].pop(field, None)
+                continue
+            result = _inspect_stream_call(state.append, value)
             _record_stream_decisions(telemetry, result.decisions)
             if result.blocked:
                 return [], _blocked_stream_event(
@@ -618,19 +676,15 @@ def _transform_stream_payload(
                     decisions=result.decisions,
                     summary=_stream_summary(telemetry, "blocked"),
                 )
-            last_templates[key] = StreamChunkTemplate(
-                payload=_stream_template(payload, choice_pos, field),
-                event=source_event,
-            )
             if result.released:
                 passthrough_payload["choices"][choice_pos]["delta"][field] = result.released
             else:
                 passthrough_payload["choices"][choice_pos]["delta"].pop(field, None)
-    for choice_index in terminal_choice_indexes:
+    if terminal_choice_indexes:
         flush_result = _flush_stream_states(
             states,
             last_templates,
-            choice_index=choice_index,
+            choice_indexes=terminal_choice_indexes,
             source_event=source_event,
             telemetry=telemetry,
         )
@@ -704,18 +758,20 @@ def _flush_stream_states(
     last_templates: dict[tuple[Any, ...], StreamChunkTemplate],
     *,
     choice_index: int | None = None,
+    choice_indexes: set[int] | None = None,
     source_event: SseEvent | None = None,
     telemetry: dict[str, Any] | None = None,
 ) -> StreamFlushResult:
     selected = [
         (key, state)
         for key, state in list(states.items())
-        if choice_index is None or key[0] == choice_index
+        if (choice_index is None or key[0] == choice_index)
+        and (choice_indexes is None or key[0] in choice_indexes)
     ]
     preflight: list[tuple[tuple[int, str], StreamingInspectionState, StreamAppendResult]] = []
     decision_count = 0
     for key, state in selected:
-        result = state.check_pending()
+        result = _inspect_stream_call(state.check_pending)
         if telemetry is not None:
             _record_state_surface(telemetry, key)
             _record_stream_decisions(telemetry, result.decisions)
@@ -742,7 +798,7 @@ def _flush_stream_states(
 
     chunks: list[bytes] = []
     for key, state, preflight_result in preflight:
-        result = state.flush_with_preflight(preflight_result)
+        result = _inspect_stream_call(state.flush_with_preflight, preflight_result)
         if result.error_event is not None:
             return StreamFlushResult(
                 chunks=[],
@@ -1173,6 +1229,8 @@ def _notify_stream_terminal(
         "surfaces_inspected": list(_telemetry_surfaces(telemetry)),
     }
     if error:
+        if state == "inspection_failed":
+            event["outcome"] = "inspection_failed"
         event["error_type"] = error.get("type")
         event["error_message"] = error.get("message")
     if isinstance(payload, dict) and "audit_event" in payload:

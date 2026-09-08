@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "llm-sensitive-data-firewall"
-version = "0.3.1"
+version = "0.3.2"
 description = "Open-source sensitive-data firewall for LLM apps and agents."
 readme = "README.md"
 requires-python = ">=3.11"

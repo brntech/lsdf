@@ -165,7 +165,7 @@ class DetectorComparisonTests(unittest.TestCase):
             "Dependency-light LSDF loses to `presidio` on `nemotron_pii`: 0.267 vs 0.326",
             "Dependency-light LSDF ties `regex_only` on `br_agentic_pii` at 0.846",
             "optional detector RNGs are seeded with `0`",
-            "`EVAL.md` as the release-gate source of truth",
+            "fresh evaluation against the profile's declared promises for current gate checks",
             "Presidio also produced benign false positives",
             "--entrypoint python optional-cli",
             "--seed 0",

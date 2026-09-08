@@ -183,7 +183,12 @@ class Policy:
 
 
 def load_policy(path: str | Path) -> Policy:
-    raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    return load_policy_bytes(Path(path).read_bytes())
+
+
+def load_policy_bytes(payload: bytes) -> Policy:
+    """Parse a captured policy without reopening its source path."""
+    raw = yaml.safe_load(payload.decode("utf-8"))
     if not isinstance(raw, dict):
         raise ValueError("Policy must be a YAML mapping")
     _require(raw, ["version", "name", "action"])

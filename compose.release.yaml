@@ -2,7 +2,7 @@ name: lsdf-release
 
 services:
   gateway:
-    image: "${LSDF_IMAGE:-ghcr.io/brntech/lsdf:v0.3.1}"
+    image: "${LSDF_IMAGE:-ghcr.io/brntech/lsdf:v0.3.2}"
     platform: linux/amd64
     ports:
       - "127.0.0.1:${LSDF_PORT:-8080}:8080"
@@ -12,6 +12,9 @@ services:
       - runtime-data:/workspace/.lsdf
       - model-cache:/opt/lsdf-cache/huggingface
     environment:
+      LSDF_PERSON_DENY_LIST_EXTRA: "${LSDF_PERSON_DENY_LIST_EXTRA:-}"
+      LSDF_ENTROPY_DENY_SUBSTRINGS: "${LSDF_ENTROPY_DENY_SUBSTRINGS:-}"
+      LSDF_EMAIL_DENY_LOCAL_PARTS: "${LSDF_EMAIL_DENY_LOCAL_PARTS:-}"
       LSDF_PROFILE: "${LSDF_PROFILE:-default}"
       LSDF_POLICY: "${LSDF_POLICY:-}"
       LSDF_UPSTREAM_BASE_URL: "${LSDF_UPSTREAM_BASE_URL:?Set LSDF_UPSTREAM_BASE_URL in .lsdf.env}"
@@ -36,6 +39,8 @@ services:
       LSDF_OPENAI_PRIVACY_FILTER_MODEL: "${LSDF_OPENAI_PRIVACY_FILTER_MODEL:-openai/privacy-filter}"
       LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY: "${LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY:-true}"
       LSDF_OPENAI_PRIVACY_FILTER_SCORE_THRESHOLD: "${LSDF_OPENAI_PRIVACY_FILTER_SCORE_THRESHOLD:-0.85}"
+      LSDF_OPENAI_PRIVACY_FILTER_STARTUP_TIMEOUT_SECONDS: "${LSDF_OPENAI_PRIVACY_FILTER_STARTUP_TIMEOUT_SECONDS:-300}"
+      LSDF_OPENAI_PRIVACY_FILTER_INFERENCE_TIMEOUT_SECONDS: "${LSDF_OPENAI_PRIVACY_FILTER_INFERENCE_TIMEOUT_SECONDS:-60}"
 
 volumes:
   runtime-data:

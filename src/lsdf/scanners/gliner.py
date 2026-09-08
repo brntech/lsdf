@@ -256,7 +256,10 @@ def _chunk_text(text: str, *, max_chars: int, stride_chars: int) -> list[tuple[i
         end = min(len(text), start + max_chars)
         if start > 0:
             boundary = _left_boundary(text, start, max(start - 120, 0))
-            start = boundary
+            # If alignment would repeat a window, keep the unaligned step.
+            # Advancing by one character instead would amplify model calls.
+            if boundary > chunks[-1][0]:
+                start = boundary
             end = min(len(text), start + max_chars)
         chunks.append((start, text[start:end]))
         if end >= len(text):

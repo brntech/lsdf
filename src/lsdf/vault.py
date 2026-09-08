@@ -5,8 +5,9 @@ import base64
 import hashlib
 import hmac
 import json
-import shutil
+import os
 import sqlite3
+from contextlib import closing, contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -157,7 +158,8 @@ def check_vault(path: str | Path) -> dict[str, Any]:
             "reason": "missing",
         }
     try:
-        with sqlite3.connect(vault_path) as conn:
+        source_uri = vault_path.resolve().as_uri() + "?mode=ro"
+        with closing(sqlite3.connect(source_uri, uri=True)) as conn:
             columns = {
                 row[1]
                 for row in conn.execute("PRAGMA table_info(vault_tokens)").fetchall()
@@ -187,14 +189,40 @@ def check_vault(path: str | Path) -> dict[str, Any]:
     }
 
 
+@contextmanager
+def _new_vault_output(source: Path, target: Path, operation: str):
+    if source.resolve() == target.resolve():
+        raise ValueError(f"{operation} output must be a different path")
+    if target.exists() or target.is_symlink():
+        raise ValueError(f"{operation} output already exists")
+    sidecars = [Path(str(target) + suffix) for suffix in ("-wal", "-shm", "-journal")]
+    if any(sidecar.exists() or sidecar.is_symlink() for sidecar in sidecars):
+        raise ValueError(f"{operation} output has existing SQLite sidecar files")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        descriptor = os.open(target, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    except FileExistsError:
+        raise ValueError(f"{operation} output already exists") from None
+    os.close(descriptor)
+    try:
+        yield
+    except BaseException:
+        target.unlink(missing_ok=True)
+        raise
+
+
 def backup_vault(path: str | Path, output: str | Path) -> dict[str, Any]:
+    """Capture a consistent encrypted SQLite snapshot into a new output file."""
     source = Path(path)
     target = Path(output)
-    status = check_vault(source)
-    if not status["valid"]:
-        raise ValueError(f"Cannot back up invalid vault: {status.get('reason', 'invalid')}")
-    target.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(source, target)
+    with _new_vault_output(source, target, "backup"):
+        status = check_vault(source)
+        if not status["valid"]:
+            raise ValueError(f"Cannot back up invalid vault: {status.get('reason', 'invalid')}")
+        source_uri = source.resolve().as_uri() + "?mode=ro"
+        with closing(sqlite3.connect(source_uri, uri=True)) as reader:
+            with closing(sqlite3.connect(target)) as destination:
+                reader.backup(destination)
     return {
         "backed_up": True,
         "vault_path": str(source),
@@ -212,51 +240,49 @@ def rotate_vault_key(
 ) -> dict[str, Any]:
     source = Path(path)
     target = Path(output)
-    if source.resolve() == target.resolve():
-        raise ValueError("rotate-key output must be a different path")
-    status = check_vault(source)
-    if not status["valid"]:
-        raise ValueError(f"Cannot rotate invalid vault: {status.get('reason', 'invalid')}")
-    if target.exists():
-        raise ValueError("rotate-key output already exists")
     old_fernet = Fernet(old_key.encode("utf-8") if isinstance(old_key, str) else old_key)
     new_fernet = Fernet(new_key.encode("utf-8") if isinstance(new_key, str) else new_key)
-    target.parent.mkdir(parents=True, exist_ok=True)
     rows = []
-    with sqlite3.connect(source) as conn:
-        for row in conn.execute(
-            """
-            SELECT token, entity, ciphertext, created_at, value_digest, metadata_json
-            FROM vault_tokens
-            ORDER BY token
-            """
-        ):
-            try:
-                plaintext = old_fernet.decrypt(row[2].encode("utf-8"))
-            except InvalidToken as exc:
-                raise ValueError("Old vault key could not decrypt one or more tokens") from exc
-            rows.append((row[0], row[1], new_fernet.encrypt(plaintext).decode("utf-8"), row[3], row[4], row[5]))
-    with sqlite3.connect(target) as conn:
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS vault_tokens (
-              token TEXT PRIMARY KEY,
-              entity TEXT NOT NULL,
-              ciphertext TEXT NOT NULL,
-              created_at TEXT NOT NULL,
-              value_digest TEXT NOT NULL,
-              metadata_json TEXT NOT NULL
-            )
-            """
-        )
-        conn.executemany(
-            """
-            INSERT INTO vault_tokens
-              (token, entity, ciphertext, created_at, value_digest, metadata_json)
-            VALUES (?, ?, ?, ?, ?, ?)
-            """,
-            rows,
-        )
+    with _new_vault_output(source, target, "rotate-key"):
+        status = check_vault(source)
+        if not status["valid"]:
+            raise ValueError(f"Cannot rotate invalid vault: {status.get('reason', 'invalid')}")
+        source_uri = source.resolve().as_uri() + "?mode=ro"
+        with closing(sqlite3.connect(source_uri, uri=True)) as reader:
+            for row in reader.execute(
+                """
+                SELECT token, entity, ciphertext, created_at, value_digest, metadata_json
+                FROM vault_tokens
+                ORDER BY token
+                """
+            ):
+                try:
+                    plaintext = old_fernet.decrypt(row[2].encode("utf-8"))
+                except InvalidToken as exc:
+                    raise ValueError("Old vault key could not decrypt one or more tokens") from exc
+                rows.append((row[0], row[1], new_fernet.encrypt(plaintext).decode("utf-8"), row[3], row[4], row[5]))
+        with closing(sqlite3.connect(target)) as destination:
+            with destination:
+                destination.execute(
+                    """
+                    CREATE TABLE vault_tokens (
+                      token TEXT PRIMARY KEY,
+                      entity TEXT NOT NULL,
+                      ciphertext TEXT NOT NULL,
+                      created_at TEXT NOT NULL,
+                      value_digest TEXT NOT NULL,
+                      metadata_json TEXT NOT NULL
+                    )
+                    """
+                )
+                destination.executemany(
+                    """
+                    INSERT INTO vault_tokens
+                      (token, entity, ciphertext, created_at, value_digest, metadata_json)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    rows,
+                )
     return {
         "rotated": True,
         "source": str(source),

@@ -1,5 +1,6 @@
 # Comparative Protection
 
+**Historical snapshot; reproduction guidance revised 2026-09-08.** Recorded measurements are unchanged; no comparison was rerun. Current reports use ignored `.lsdf/current-reports/` and preserve this snapshot.
 This recorded artifact compares LSDF detector stacks against a public PII comparator on the same corpus selection used in that run. Four threat corpora remain bundled. The ai4privacy sample is no longer distributed; its labeled rows are historical external benchmark evidence, not a fresh four-corpus comparison. It is detector-normalized: every stack uses the same LSDF `broad-pii` policy/action layer, so differences below are about what each detector family finds, not about different redaction engines.
 
 ## Comparator Survey
@@ -22,7 +23,7 @@ Sources surveyed: [Microsoft Presidio](https://microsoft.github.io/presidio/), [
 - Benign corpora: `evals/false_positive.json`, `evals/utility_matrix.json`.
 - Metrics: value-level recall on threat corpora; specificity is 1 minus the benign case failure rate.
 - Raw-value safety: the generated report contains counts only, not sensitive fixture values.
-- Reproducibility: optional detector RNGs are seeded with `0` before the run. GLiNER/PyTorch CPU inference can still move threshold-edge spans by a few values between independent artifact generations; compare detector stacks within this artifact, and use `EVAL.md` as the release-gate source of truth.
+- Reproducibility: optional detector RNGs are seeded with `0` before the run. GLiNER/PyTorch CPU inference can still move threshold-edge spans by a few values between independent artifact generations; compare detector stacks within this artifact, and use a fresh evaluation against the profile's declared promises for current gate checks. `EVAL.md` preserves its recorded run.
 
 ## Threat Corpus Results
 
@@ -74,13 +75,14 @@ Sources surveyed: [Microsoft Presidio](https://microsoft.github.io/presidio/), [
 
 ## Reproduce
 
-Run from the repository root with the optional detector image available. This command regenerates the comparison over the current four bundled corpora; it does not reproduce the historical external ai4privacy rows:
+Run from the repository root with the optional detector image and model cache ready. This command writes a current four-corpus comparison to ignored scratch output; it does not reproduce the historical external ai4privacy rows. The [artifact script](../scripts/regenerate-artifacts.sh) also generates this report without replacing recorded snapshots.
 
 ```bash
+mkdir -p .lsdf/current-reports
 docker compose --profile optional run --rm --entrypoint python optional-cli \
   scripts/build_comparative_protection.py \
-  --output docs/comparative-protection.md \
-  --seed 0
+  --output .lsdf/current-reports/comparative-protection.md.tmp \
+  --seed 0 && mv .lsdf/current-reports/comparative-protection.md.tmp .lsdf/current-reports/comparative-protection.md
 ```
 
 For a single-corpus direct comparison table, use the existing CLI:

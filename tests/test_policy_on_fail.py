@@ -323,5 +323,45 @@ class OnFailValidationTests(unittest.TestCase):
                 self.assertEqual(policy.rules[0].on_fail, value)
 
 
+
+class MixedOnFailOrderingTests(unittest.TestCase):
+    def test_monitor_escalation_dominates_in_both_finding_orders(self):
+        from lsdf.types import Finding
+
+        class OrderedScanner:
+            def __init__(self, reverse):
+                self.reverse = reverse
+
+            def scan(self, surface):
+                findings = [
+                    Finding("API_KEY", surface.name, surface.pointer, 0, 2, "AA", 1.0),
+                    Finding("US_SSN", surface.name, surface.pointer, 2, 4, "BB", 1.0),
+                ]
+                return list(reversed(findings)) if self.reverse else findings
+
+        for reverse in (False, True):
+            for escalation in ("block", "exception", None):
+                with self.subTest(reverse=reverse, escalation=escalation):
+                    policy = Policy(
+                        version="0.2", name="mixed-on-fail", mode="monitor",
+                        entities={"API_KEY", "US_SSN"}, surfaces={"input.messages"},
+                        rules=[
+                            Rule("ordinary-block", {"entity": "API_KEY"}, "block"),
+                            Rule("escalation", {"entity": "US_SSN"}, "redact", on_fail=escalation),
+                        ], audit=AuditConfig(),
+                    )
+                    firewall = Firewall(policy, scanner=OrderedScanner(reverse))
+                    if escalation == "exception":
+                        with self.assertRaises(PolicyEnforcementError):
+                            firewall.inspect("AABB")
+                    else:
+                        result = firewall.inspect("AABB")
+                        self.assertEqual(result.blocked, escalation == "block")
+                        self.assertEqual(result.audit_event["blocked"], result.blocked)
+                        if escalation is None:
+                            self.assertEqual(result.transformed_payload, "AABB")
+
+
+
 if __name__ == "__main__":
     unittest.main()
