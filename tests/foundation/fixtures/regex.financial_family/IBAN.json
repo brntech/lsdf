@@ -1,0 +1,49 @@
+{
+  "detector": "regex.financial_family",
+  "entity": "IBAN",
+  "description": "Synthetic and published example IBAN-shaped fixtures.",
+  "cases": [
+    {
+      "id": "iban_positive_gb_example",
+      "role": "positive",
+      "text": "IBAN: GB82WEST12345698765432",
+      "note": "Widely published example IBAN."
+    },
+    {
+      "id": "iban_positive_de_example",
+      "role": "positive",
+      "text": "DE89370400440532013000",
+      "note": "Published example IBAN."
+    },
+    {
+      "id": "iban_positive_fr_example",
+      "role": "positive",
+      "text": "fixture iban FR1420041010050500013M02606",
+      "note": "Published example-style IBAN."
+    },
+    {
+      "id": "iban_positive_nl_fixture",
+      "role": "positive",
+      "text": "NL91ABNA0417164300",
+      "note": "Published Dutch example IBAN."
+    },
+    {
+      "id": "iban_negative_lowercase",
+      "role": "negative",
+      "text": "iban: gb82west12345698765432",
+      "note": "Lowercase does not match uppercase detector shape."
+    },
+    {
+      "id": "iban_negative_short",
+      "role": "negative",
+      "text": "IBAN: GB82WEST123",
+      "note": "Too short."
+    },
+    {
+      "id": "iban_negative_us_account",
+      "role": "negative",
+      "text": "routing/account pair 091000022 / 000123456789",
+      "note": "Financial numbers without IBAN country/check prefix shape."
+    }
+  ]
+}

@@ -1,0 +1,277 @@
+{
+  "detector": "gliner.pii_phi",
+  "entity": "BLOOD_TYPE",
+  "description": "Synthetic fixture for gliner.pii_phi blood type detection.",
+  "cases": [
+    {
+      "id": "pos-001",
+      "role": "positive",
+      "text": "Synthetic intake row 1 records blood type: O positive.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-002",
+      "role": "positive",
+      "text": "Synthetic intake row 2 records blood type: A negative.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-003",
+      "role": "positive",
+      "text": "Synthetic intake row 3 records blood type: AB positive.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-004",
+      "role": "positive",
+      "text": "Synthetic intake row 4 records blood type: B positive.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-005",
+      "role": "positive",
+      "text": "Synthetic intake row 5 records blood type: O negative.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-006",
+      "role": "positive",
+      "text": "Synthetic intake row 6 records blood type: A positive.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-007",
+      "role": "positive",
+      "text": "Synthetic intake row 7 records blood type: B negative.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-008",
+      "role": "positive",
+      "text": "Synthetic intake row 8 records blood type: AB negative.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-009",
+      "role": "positive",
+      "text": "Synthetic intake row 9 records blood type: O positive.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-010",
+      "role": "positive",
+      "text": "Synthetic intake row 10 records blood type: A negative.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-011",
+      "role": "positive",
+      "text": "Synthetic intake row 11 records blood type: AB positive.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-012",
+      "role": "positive",
+      "text": "Synthetic intake row 12 records blood type: B positive.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-013",
+      "role": "positive",
+      "text": "Synthetic intake row 13 records blood type: O negative.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-014",
+      "role": "positive",
+      "text": "Synthetic intake row 14 records blood type: A positive.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-015",
+      "role": "positive",
+      "text": "Synthetic intake row 15 records blood type: B negative.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-016",
+      "role": "positive",
+      "text": "Synthetic intake row 16 records blood type: AB negative.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-017",
+      "role": "positive",
+      "text": "Synthetic intake row 17 records blood type: O positive.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-018",
+      "role": "positive",
+      "text": "Synthetic intake row 18 records blood type: A negative.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-019",
+      "role": "positive",
+      "text": "Synthetic intake row 19 records blood type: AB positive.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-020",
+      "role": "positive",
+      "text": "Synthetic intake row 20 records blood type: B positive.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-021",
+      "role": "positive",
+      "text": "Synthetic intake row 21 records blood type: O negative.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-022",
+      "role": "positive",
+      "text": "Synthetic intake row 22 records blood type: A positive.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-023",
+      "role": "positive",
+      "text": "Synthetic intake row 23 records blood type: B negative.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-024",
+      "role": "positive",
+      "text": "Synthetic intake row 24 records blood type: AB negative.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-025",
+      "role": "positive",
+      "text": "Synthetic intake row 25 records blood type: O positive.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-026",
+      "role": "positive",
+      "text": "Synthetic intake row 26 records blood type: A negative.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-027",
+      "role": "positive",
+      "text": "Synthetic intake row 27 records blood type: AB positive.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-028",
+      "role": "positive",
+      "text": "Synthetic intake row 28 records blood type: B positive.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-029",
+      "role": "positive",
+      "text": "Synthetic intake row 29 records blood type: O negative.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "pos-030",
+      "role": "positive",
+      "text": "Synthetic blood group recorded as type Q for boundary miss case 30.",
+      "note": "Positive synthetic blood-type fixture with distinct context."
+    },
+    {
+      "id": "neg-001",
+      "role": "negative",
+      "text": "The demo ticket says the field was intentionally left blank.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-002",
+      "role": "negative",
+      "text": "Use generic placeholder data for this public test scenario.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-003",
+      "role": "negative",
+      "text": "No customer, patient, credential, or financial identifier appears here.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-004",
+      "role": "negative",
+      "text": "The reviewer checked the synthetic workflow summary.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-005",
+      "role": "negative",
+      "text": "All columns in this row are intentionally empty.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-006",
+      "role": "negative",
+      "text": "Training notes describe policy behavior without concrete values.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-007",
+      "role": "negative",
+      "text": "Sample prose mentions categories but no labeled value follows.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-008",
+      "role": "negative",
+      "text": "The public fixture contains only harmless operational text.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-009",
+      "role": "negative",
+      "text": "Operators can mark the optional field as skipped.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-010",
+      "role": "negative",
+      "text": "Documentation explains the concept using words only.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-011",
+      "role": "negative",
+      "text": "No identifier is present in this sandbox paragraph.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-012",
+      "role": "negative",
+      "text": "The exported row uses blank cells for sensitive columns.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-013",
+      "role": "negative",
+      "text": "This line carries status, priority, and owner role only.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-014",
+      "role": "negative",
+      "text": "The synthetic form says value unavailable.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-015",
+      "role": "negative",
+      "text": "Demonstration content avoids entity-shaped strings here.",
+      "note": "Negative synthetic control without target entity value."
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "model": "lsdf-demo",
+  "stream": true,
+  "messages": [
+    {
+      "role": "user",
+      "content": "Show the streaming content leak demo."
+    }
+  ]
+}

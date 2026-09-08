@@ -1,0 +1,49 @@
+{
+    "detector":  "regex.aws_key",
+    "entity":  "AWS_KEY",
+    "description":  "Synthetic AWS credential-shaped examples for public-boundary foundation coverage.",
+    "cases":  [
+                  {
+                      "id":  "aws_key_positive_access_key_doc_example",
+                      "role":  "positive",
+                      "text":  "aws_access_key_id = AKIAIOSFODNN7EXAMPLE",
+                      "note":  "Uses AWS documentation-style example value, not a real credential."
+                  },
+                  {
+                      "id":  "aws_key_positive_assumed_role_key",
+                      "role":  "positive",
+                      "text":  "temporary key ASIAABCDEFGHIJKLMNOP was written to the fixture.",
+                      "note":  "Synthetic ASIA-prefixed access key shape."
+                  },
+                  {
+                      "id":  "aws_key_positive_secret_access_key_label",
+                      "role":  "positive",
+                      "text":  "aws_secret_access_key: AbCdEfGhIjKlMnOpQrStUvWxYz0123456789ABCD",
+                      "note":  "Forty-character synthetic secret value with AWS label."
+                  },
+                  {
+                      "id":  "aws_key_positive_session_token_label",
+                      "role":  "positive",
+                      "text":  "aws_session_token: FixtureSessionTokenValue0000000000111111111122222222223333333333444444444455555555556666666666777777777788888888889999",
+                      "note":  "Long synthetic session token value."
+                  },
+                  {
+                      "id":  "aws_key_negative_short_access_key",
+                      "role":  "negative",
+                      "text":  "aws_access_key_id = AKIAEXAMPLE",
+                      "note":  "Too short to be an AWS access key."
+                  },
+                  {
+                      "id":  "aws_key_negative_placeholder_secret",
+                      "role":  "negative",
+                      "text":  "aws_secret_access_key: change_me_before_demo",
+                      "note":  "Placeholder text, not a credential-shaped value."
+                  },
+                  {
+                      "id":  "aws_key_negative_prose",
+                      "role":  "negative",
+                      "text":  "The fixture mentions AWS keys conceptually without printing one.",
+                      "note":  "No detector-shaped value."
+                  }
+              ]
+}

@@ -1,0 +1,17 @@
+LSDF Golden Demo Script
+
+Command:
+docker compose --profile demo up --build --abort-on-container-exit --exit-code-from demo-runner demo-runner
+
+Narration:
+1. LSDF starts a dependency-free OpenAI-compatible demo upstream and the gateway.
+2. The first check blocks an unsafe request before it reaches the model.
+3. The second check redacts unsafe model output before it reaches the client.
+4. The streaming check releases only sanitized chunks and preserves [DONE].
+5. The tool-call check blocks unsafe streamed arguments before raw fragments leak.
+6. The observability check sanitizes trace/log-shaped payloads outside the proxy.
+7. Health, metrics, audit summary, and metrics summary prove operational visibility.
+8. The report is raw-value-safe by design; real sensitive values are never printed.
+
+Expected result:
+LSDF Golden Demo: ok

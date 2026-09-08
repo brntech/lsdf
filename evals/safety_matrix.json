@@ -1,0 +1,3155 @@
+{
+  "name": "safety_matrix",
+  "version": "0.2",
+  "description": "Public LSDF safety matrix. Known-gap cases are measured as would-fail without failing the dataset.",
+  "cases": [
+    {
+      "id": "matrix-api-key-input-messages-000",
+      "category": "credentials",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Eval case 0 contains API key api_fixture0000000001 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "api_fixture0000000001"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.api_key"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "api_fixture0000000001"
+      ]
+    },
+    {
+      "id": "matrix-api-key-input-rag-context-001",
+      "category": "credentials",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved context."
+          }
+        ],
+        "rag_context": [
+          "Eval case 1 contains API key sk_fixture0000000002 for policy verification"
+        ]
+      },
+      "sensitive_values": [
+        "sk_fixture0000000002"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "input.rag_context"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.api_key"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "sk_fixture0000000002"
+      ]
+    },
+    {
+      "id": "matrix-api-key-input-tool-results-002",
+      "category": "credentials",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "Eval case 2 contains API key api_LSDF_FIXTURE_EVAL_000003 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "api_LSDF_FIXTURE_EVAL_000003"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "input.tool_results"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.api_key"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "api_LSDF_FIXTURE_EVAL_000003"
+      ]
+    },
+    {
+      "id": "matrix-api-key-output-content-003",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Eval case 3 contains API key token-fixture0000000004 for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "token-fixture0000000004"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.api_key"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "token-fixture0000000004"
+      ]
+    },
+    {
+      "id": "matrix-api-key-output-reasoning-004",
+      "category": "credentials",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Eval case 4 contains API key api_fixture0000000001 for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "api_fixture0000000001"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.reasoning"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.api_key"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "api_fixture0000000001"
+      ]
+    },
+    {
+      "id": "matrix-api-key-output-tool-calls-arguments-005",
+      "category": "credentials",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Eval case 5 contains API key sk_fixture0000000002 for policy verification\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "sk_fixture0000000002"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.api_key"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "sk_fixture0000000002"
+      ],
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "matrix-api-key-logs-traces-006",
+      "category": "credentials",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Eval case 6 contains API key api_LSDF_FIXTURE_EVAL_000003 for policy verification"
+        }
+      },
+      "sensitive_values": [
+        "api_LSDF_FIXTURE_EVAL_000003"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.api_key"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "api_LSDF_FIXTURE_EVAL_000003"
+      ]
+    },
+    {
+      "id": "matrix-other-secret-input-messages-007",
+      "category": "credentials",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Eval case 7 contains credential specimen N0deCache_77!Rotate for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "N0deCache_77!Rotate"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "OTHER_SECRET"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "entropy.secret"
+      ],
+      "expected_detector_families": [
+        "entropy"
+      ],
+      "expected_absent": [
+        "N0deCache_77!Rotate"
+      ]
+    },
+    {
+      "id": "matrix-other-secret-input-rag-context-008",
+      "category": "credentials",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved context."
+          }
+        ],
+        "rag_context": [
+          "Eval case 8 contains credential specimen R3d1s_Pr0d_2024!Secure for policy verification"
+        ]
+      },
+      "sensitive_values": [
+        "R3d1s_Pr0d_2024!Secure"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "OTHER_SECRET"
+      ],
+      "expected_surfaces": [
+        "input.rag_context"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "entropy.secret"
+      ],
+      "expected_detector_families": [
+        "entropy"
+      ],
+      "expected_absent": [
+        "R3d1s_Pr0d_2024!Secure"
+      ]
+    },
+    {
+      "id": "matrix-other-secret-input-tool-results-009",
+      "category": "credentials",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "Eval case 9 contains credential specimen VaultSync_2026!Key for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "VaultSync_2026!Key"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "OTHER_SECRET"
+      ],
+      "expected_surfaces": [
+        "input.tool_results"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "entropy.secret"
+      ],
+      "expected_detector_families": [
+        "entropy"
+      ],
+      "expected_absent": [
+        "VaultSync_2026!Key"
+      ]
+    },
+    {
+      "id": "matrix-other-secret-output-content-010",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Eval case 10 contains credential specimen Pgr_Bkup_77#Rotate_2026 for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Pgr_Bkup_77#Rotate_2026"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "OTHER_SECRET"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "entropy.secret"
+      ],
+      "expected_detector_families": [
+        "entropy"
+      ],
+      "expected_absent": [
+        "Pgr_Bkup_77#Rotate_2026"
+      ]
+    },
+    {
+      "id": "matrix-other-secret-output-reasoning-011",
+      "category": "credentials",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Eval case 11 contains credential specimen N0deCache_77!Rotate for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "N0deCache_77!Rotate"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "OTHER_SECRET"
+      ],
+      "expected_surfaces": [
+        "output.reasoning"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "entropy.secret"
+      ],
+      "expected_detector_families": [
+        "entropy"
+      ],
+      "expected_absent": [
+        "N0deCache_77!Rotate"
+      ]
+    },
+    {
+      "id": "matrix-other-secret-output-tool-calls-arguments-012",
+      "category": "credentials",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Eval case 12 contains credential specimen R3d1s_Pr0d_2024!Secure for policy verification\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "R3d1s_Pr0d_2024!Secure"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "OTHER_SECRET"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "entropy.secret"
+      ],
+      "expected_detector_families": [
+        "entropy"
+      ],
+      "expected_absent": [
+        "R3d1s_Pr0d_2024!Secure"
+      ],
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "matrix-other-secret-logs-traces-013",
+      "category": "credentials",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Eval case 13 contains credential specimen VaultSync_2026!Key for policy verification"
+        }
+      },
+      "sensitive_values": [
+        "VaultSync_2026!Key"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "OTHER_SECRET"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "entropy.secret"
+      ],
+      "expected_detector_families": [
+        "entropy"
+      ],
+      "expected_absent": [
+        "VaultSync_2026!Key"
+      ]
+    },
+    {
+      "id": "matrix-us-ssn-input-messages-014",
+      "category": "pii",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Eval case 14 contains SSN 111-22-3333 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "111-22-3333"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "US_SSN"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.ssn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "111-22-3333"
+      ]
+    },
+    {
+      "id": "matrix-us-ssn-input-rag-context-015",
+      "category": "pii",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved context."
+          }
+        ],
+        "rag_context": [
+          "Eval case 15 contains SSN 222-33-4444 for policy verification"
+        ]
+      },
+      "sensitive_values": [
+        "222-33-4444"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "US_SSN"
+      ],
+      "expected_surfaces": [
+        "input.rag_context"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.ssn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "222-33-4444"
+      ]
+    },
+    {
+      "id": "matrix-us-ssn-input-tool-results-016",
+      "category": "pii",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "Eval case 16 contains SSN 000-00-0000 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "000-00-0000"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "US_SSN"
+      ],
+      "expected_surfaces": [
+        "input.tool_results"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.ssn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "000-00-0000"
+      ]
+    },
+    {
+      "id": "matrix-us-ssn-output-content-017",
+      "category": "pii",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Eval case 17 contains SSN 987-65-4321 for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "987-65-4321"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "US_SSN"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.ssn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "987-65-4321"
+      ]
+    },
+    {
+      "id": "matrix-us-ssn-output-reasoning-018",
+      "category": "pii",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Eval case 18 contains SSN 111-22-3333 for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "111-22-3333"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "US_SSN"
+      ],
+      "expected_surfaces": [
+        "output.reasoning"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.ssn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "111-22-3333"
+      ]
+    },
+    {
+      "id": "matrix-us-ssn-output-tool-calls-arguments-019",
+      "category": "pii",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Eval case 19 contains SSN 222-33-4444 for policy verification\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "222-33-4444"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "US_SSN"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.ssn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "222-33-4444"
+      ],
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "matrix-us-ssn-logs-traces-020",
+      "category": "pii",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Eval case 20 contains SSN 000-00-0000 for policy verification"
+        }
+      },
+      "sensitive_values": [
+        "000-00-0000"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "US_SSN"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.ssn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "000-00-0000"
+      ]
+    },
+    {
+      "id": "matrix-mrn-input-messages-021",
+      "category": "phi",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Eval case 21 contains medical record number MRN: B77889 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "MRN: B77889"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MRN"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.mrn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "MRN: B77889"
+      ]
+    },
+    {
+      "id": "matrix-mrn-input-rag-context-022",
+      "category": "phi",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved context."
+          }
+        ],
+        "rag_context": [
+          "Eval case 22 contains medical record number MRN: C99887 for policy verification"
+        ]
+      },
+      "sensitive_values": [
+        "MRN: C99887"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MRN"
+      ],
+      "expected_surfaces": [
+        "input.rag_context"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.mrn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "MRN: C99887"
+      ]
+    },
+    {
+      "id": "matrix-mrn-input-tool-results-023",
+      "category": "phi",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "Eval case 23 contains medical record number MRN# Z44556 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "MRN# Z44556"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MRN"
+      ],
+      "expected_surfaces": [
+        "input.tool_results"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.mrn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "MRN# Z44556"
+      ]
+    },
+    {
+      "id": "matrix-mrn-output-content-024",
+      "category": "phi",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Eval case 24 contains medical record number MRN: LSDF-FIXTURE-00001 for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "MRN: LSDF-FIXTURE-00001"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MRN"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.mrn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "MRN: LSDF-FIXTURE-00001"
+      ]
+    },
+    {
+      "id": "matrix-mrn-output-reasoning-025",
+      "category": "phi",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Eval case 25 contains medical record number MRN: B77889 for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "MRN: B77889"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MRN"
+      ],
+      "expected_surfaces": [
+        "output.reasoning"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.mrn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "MRN: B77889"
+      ]
+    },
+    {
+      "id": "matrix-mrn-output-tool-calls-arguments-026",
+      "category": "phi",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Eval case 26 contains medical record number MRN: C99887 for policy verification\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "MRN: C99887"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "MRN"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.mrn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "MRN: C99887"
+      ],
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "matrix-mrn-logs-traces-027",
+      "category": "phi",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Eval case 27 contains medical record number MRN# Z44556 for policy verification"
+        }
+      },
+      "sensitive_values": [
+        "MRN# Z44556"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MRN"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.mrn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "MRN# Z44556"
+      ]
+    },
+    {
+      "id": "matrix-medication-input-messages-028",
+      "category": "phi",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Eval case 28 contains clinical detail metformin 500mg for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "metformin 500mg"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MEDICATION"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "medical-regex.phi_pattern"
+      ],
+      "expected_detector_families": [
+        "medical-regex"
+      ],
+      "expected_absent": [
+        "metformin 500mg"
+      ]
+    },
+    {
+      "id": "matrix-medication-input-rag-context-029",
+      "category": "phi",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved context."
+          }
+        ],
+        "rag_context": [
+          "Eval case 29 contains clinical detail lisinopril 10mg for policy verification"
+        ]
+      },
+      "sensitive_values": [
+        "lisinopril 10mg"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MEDICATION"
+      ],
+      "expected_surfaces": [
+        "input.rag_context"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "medical-regex.phi_pattern"
+      ],
+      "expected_detector_families": [
+        "medical-regex"
+      ],
+      "expected_absent": [
+        "lisinopril 10mg"
+      ]
+    },
+    {
+      "id": "matrix-medication-input-tool-results-030",
+      "category": "phi",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "Eval case 30 contains clinical detail atorvastatin 20mg for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "atorvastatin 20mg"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MEDICATION"
+      ],
+      "expected_surfaces": [
+        "input.tool_results"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "medical-regex.phi_pattern"
+      ],
+      "expected_detector_families": [
+        "medical-regex"
+      ],
+      "expected_absent": [
+        "atorvastatin 20mg"
+      ]
+    },
+    {
+      "id": "matrix-medication-output-content-031",
+      "category": "phi",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Eval case 31 contains clinical detail warfarin 2mg for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "warfarin 2mg"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MEDICATION"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "medical-regex.phi_pattern"
+      ],
+      "expected_detector_families": [
+        "medical-regex"
+      ],
+      "expected_absent": [
+        "warfarin 2mg"
+      ]
+    },
+    {
+      "id": "matrix-medication-output-reasoning-032",
+      "category": "phi",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Eval case 32 contains clinical detail metformin 500mg for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "metformin 500mg"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MEDICATION"
+      ],
+      "expected_surfaces": [
+        "output.reasoning"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "medical-regex.phi_pattern"
+      ],
+      "expected_detector_families": [
+        "medical-regex"
+      ],
+      "expected_absent": [
+        "metformin 500mg"
+      ]
+    },
+    {
+      "id": "matrix-medication-output-tool-calls-arguments-033",
+      "category": "phi",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Eval case 33 contains clinical detail lisinopril 10mg for policy verification\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "lisinopril 10mg"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "MEDICATION"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "medical-regex.phi_pattern"
+      ],
+      "expected_detector_families": [
+        "medical-regex"
+      ],
+      "expected_absent": [
+        "lisinopril 10mg"
+      ],
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "matrix-medication-logs-traces-034",
+      "category": "phi",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Eval case 34 contains clinical detail atorvastatin 20mg for policy verification"
+        }
+      },
+      "sensitive_values": [
+        "atorvastatin 20mg"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MEDICATION"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "medical-regex.phi_pattern"
+      ],
+      "expected_detector_families": [
+        "medical-regex"
+      ],
+      "expected_absent": [
+        "atorvastatin 20mg"
+      ]
+    },
+    {
+      "id": "matrix-credit-card-input-messages-035",
+      "category": "financial",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Eval case 35 contains payment card 378282246310005 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "378282246310005"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "CREDIT_CARD"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.credit_card_luhn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "378282246310005"
+      ]
+    },
+    {
+      "id": "matrix-credit-card-input-rag-context-036",
+      "category": "financial",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved context."
+          }
+        ],
+        "rag_context": [
+          "Eval case 36 contains payment card 4111 1111 1111 1111 for policy verification"
+        ]
+      },
+      "sensitive_values": [
+        "4111 1111 1111 1111"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "CREDIT_CARD"
+      ],
+      "expected_surfaces": [
+        "input.rag_context"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.credit_card_luhn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "4111 1111 1111 1111"
+      ]
+    },
+    {
+      "id": "matrix-credit-card-input-tool-results-037",
+      "category": "financial",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "Eval case 37 contains payment card 4242 4242 4242 4242 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "4242 4242 4242 4242"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "CREDIT_CARD"
+      ],
+      "expected_surfaces": [
+        "input.tool_results"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.credit_card_luhn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "4242 4242 4242 4242"
+      ]
+    },
+    {
+      "id": "matrix-credit-card-output-content-038",
+      "category": "financial",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Eval case 38 contains payment card 5555 5555 5555 4444 for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "5555 5555 5555 4444"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "CREDIT_CARD"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.credit_card_luhn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "5555 5555 5555 4444"
+      ]
+    },
+    {
+      "id": "matrix-credit-card-output-reasoning-039",
+      "category": "financial",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Eval case 39 contains payment card 378282246310005 for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "378282246310005"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "CREDIT_CARD"
+      ],
+      "expected_surfaces": [
+        "output.reasoning"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.credit_card_luhn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "378282246310005"
+      ]
+    },
+    {
+      "id": "matrix-credit-card-output-tool-calls-arguments-040",
+      "category": "financial",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Eval case 40 contains payment card 4111 1111 1111 1111 for policy verification\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "4111 1111 1111 1111"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "CREDIT_CARD"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.credit_card_luhn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "4111 1111 1111 1111"
+      ],
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "matrix-credit-card-logs-traces-041",
+      "category": "financial",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Eval case 41 contains payment card 4242 4242 4242 4242 for policy verification"
+        }
+      },
+      "sensitive_values": [
+        "4242 4242 4242 4242"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "CREDIT_CARD"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.credit_card_luhn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "4242 4242 4242 4242"
+      ]
+    },
+    {
+      "id": "matrix-iban-input-messages-042",
+      "category": "financial",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Eval case 42 contains IBAN FR1420041010050500013M02606 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "FR1420041010050500013M02606"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "IBAN"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.iban"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "FR1420041010050500013M02606"
+      ]
+    },
+    {
+      "id": "matrix-iban-input-rag-context-043",
+      "category": "financial",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved context."
+          }
+        ],
+        "rag_context": [
+          "Eval case 43 contains IBAN ES9121000418450200051332 for policy verification"
+        ]
+      },
+      "sensitive_values": [
+        "ES9121000418450200051332"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "IBAN"
+      ],
+      "expected_surfaces": [
+        "input.rag_context"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.iban"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "ES9121000418450200051332"
+      ]
+    },
+    {
+      "id": "matrix-iban-input-tool-results-044",
+      "category": "financial",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "Eval case 44 contains IBAN GB82WEST12345698765432 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "GB82WEST12345698765432"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "IBAN"
+      ],
+      "expected_surfaces": [
+        "input.tool_results"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.iban"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "GB82WEST12345698765432"
+      ]
+    },
+    {
+      "id": "matrix-iban-output-content-045",
+      "category": "financial",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Eval case 45 contains IBAN DE89370400440532013000 for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "DE89370400440532013000"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "IBAN"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.iban"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "DE89370400440532013000"
+      ]
+    },
+    {
+      "id": "matrix-iban-output-reasoning-046",
+      "category": "financial",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Eval case 46 contains IBAN FR1420041010050500013M02606 for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "FR1420041010050500013M02606"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "IBAN"
+      ],
+      "expected_surfaces": [
+        "output.reasoning"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.iban"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "FR1420041010050500013M02606"
+      ]
+    },
+    {
+      "id": "matrix-iban-output-tool-calls-arguments-047",
+      "category": "financial",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Eval case 47 contains IBAN ES9121000418450200051332 for policy verification\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "ES9121000418450200051332"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "IBAN"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.iban"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "ES9121000418450200051332"
+      ],
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "matrix-iban-logs-traces-048",
+      "category": "financial",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Eval case 48 contains IBAN GB82WEST12345698765432 for policy verification"
+        }
+      },
+      "sensitive_values": [
+        "GB82WEST12345698765432"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "IBAN"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.iban"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "GB82WEST12345698765432"
+      ]
+    },
+    {
+      "id": "matrix-email-input-messages-049",
+      "category": "pii",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Eval case 49 contains contact email ops.owner@example.org for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "ops.owner@example.org"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "EMAIL"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.email"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-email-input-rag-context-050",
+      "category": "pii",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved context."
+          }
+        ],
+        "rag_context": [
+          "Eval case 50 contains contact email local.builder@example.net for policy verification"
+        ]
+      },
+      "sensitive_values": [
+        "local.builder@example.net"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "EMAIL"
+      ],
+      "expected_surfaces": [
+        "input.rag_context"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.email"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-email-input-tool-results-051",
+      "category": "pii",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "Eval case 51 contains contact email support.alias@example.io for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "support.alias@example.io"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "EMAIL"
+      ],
+      "expected_surfaces": [
+        "input.tool_results"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.email"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-email-output-content-052",
+      "category": "pii",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Eval case 52 contains contact email jane.patient@example.com for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "jane.patient@example.com"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "EMAIL"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.email"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-email-output-reasoning-053",
+      "category": "pii",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Eval case 53 contains contact email ops.owner@example.org for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "ops.owner@example.org"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "EMAIL"
+      ],
+      "expected_surfaces": [
+        "output.reasoning"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.email"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-email-output-tool-calls-arguments-054",
+      "category": "pii",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Eval case 54 contains contact email local.builder@example.net for policy verification\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "local.builder@example.net"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "EMAIL"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.email"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "matrix-email-logs-traces-055",
+      "category": "pii",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Eval case 55 contains contact email support.alias@example.io for policy verification"
+        }
+      },
+      "sensitive_values": [
+        "support.alias@example.io"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "EMAIL"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.email"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-phone-input-messages-056",
+      "category": "pii",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Eval case 56 contains callback number (555) 010-2020 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "(555) 010-2020"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "PHONE"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.phone"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-phone-input-rag-context-057",
+      "category": "pii",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved context."
+          }
+        ],
+        "rag_context": [
+          "Eval case 57 contains callback number 555-010-3030 for policy verification"
+        ]
+      },
+      "sensitive_values": [
+        "555-010-3030"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "PHONE"
+      ],
+      "expected_surfaces": [
+        "input.rag_context"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.phone"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-phone-input-tool-results-058",
+      "category": "pii",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "Eval case 58 contains callback number +1 555 010 4040 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "+1 555 010 4040"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "PHONE"
+      ],
+      "expected_surfaces": [
+        "input.tool_results"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.phone"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-phone-output-content-059",
+      "category": "pii",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Eval case 59 contains callback number 555.010.5050 for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "555.010.5050"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "PHONE"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.phone"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-phone-output-reasoning-060",
+      "category": "pii",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Eval case 60 contains callback number (555) 010-2020 for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "(555) 010-2020"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "PHONE"
+      ],
+      "expected_surfaces": [
+        "output.reasoning"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.phone"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-phone-output-tool-calls-arguments-061",
+      "category": "pii",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Eval case 61 contains callback number 555-010-3030 for policy verification\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "555-010-3030"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "PHONE"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.phone"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "matrix-phone-logs-traces-062",
+      "category": "pii",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Eval case 62 contains callback number +1 555 010 4040 for policy verification"
+        }
+      },
+      "sensitive_values": [
+        "+1 555 010 4040"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "PHONE"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.phone"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-person-detector-output-content",
+      "category": "known-gap-person",
+      "surface": "output.content",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Lisa Nakamura approved the internal memo for review"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Lisa Nakamura"
+      ],
+      "expected_absent": [
+        "Lisa Nakamura"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-person-detector-output-reasoning",
+      "category": "known-gap-person",
+      "surface": "output.reasoning",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Lisa Nakamura approved the internal memo for review"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Lisa Nakamura"
+      ],
+      "expected_absent": [
+        "Lisa Nakamura"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-person-detector-output-tool-calls-arguments",
+      "category": "known-gap-person",
+      "surface": "output.tool_calls.arguments",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Lisa Nakamura approved the internal memo for review\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Lisa Nakamura"
+      ],
+      "expected_absent": [
+        "Lisa Nakamura"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "matrix-person-detector-logs-traces",
+      "category": "known-gap-person",
+      "surface": "logs.traces",
+      "known_gap": true,
+      "payload": {
+        "trace": {
+          "span": "Lisa Nakamura approved the internal memo for review"
+        }
+      },
+      "sensitive_values": [
+        "Lisa Nakamura"
+      ],
+      "expected_absent": [
+        "Lisa Nakamura"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-address-detector-output-content",
+      "category": "known-gap-address",
+      "surface": "output.content",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Ship the file to 742 Evergreen Terrace after approval"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "742 Evergreen Terrace"
+      ],
+      "expected_absent": [
+        "742 Evergreen Terrace"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-address-detector-output-reasoning",
+      "category": "known-gap-address",
+      "surface": "output.reasoning",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Ship the file to 742 Evergreen Terrace after approval"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "742 Evergreen Terrace"
+      ],
+      "expected_absent": [
+        "742 Evergreen Terrace"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-address-detector-output-tool-calls-arguments",
+      "category": "known-gap-address",
+      "surface": "output.tool_calls.arguments",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Ship the file to 742 Evergreen Terrace after approval\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "742 Evergreen Terrace"
+      ],
+      "expected_absent": [
+        "742 Evergreen Terrace"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "matrix-address-detector-logs-traces",
+      "category": "known-gap-address",
+      "surface": "logs.traces",
+      "known_gap": true,
+      "payload": {
+        "trace": {
+          "span": "Ship the file to 742 Evergreen Terrace after approval"
+        }
+      },
+      "sensitive_values": [
+        "742 Evergreen Terrace"
+      ],
+      "expected_absent": [
+        "742 Evergreen Terrace"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-date-of-birth-detector-output-content",
+      "category": "known-gap-dob",
+      "surface": "output.content",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The patient DOB is 1974-05-13 in the intake note"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "1974-05-13"
+      ],
+      "expected_absent": [
+        "1974-05-13"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-date-of-birth-detector-output-reasoning",
+      "category": "known-gap-dob",
+      "surface": "output.reasoning",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "The patient DOB is 1974-05-13 in the intake note"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "1974-05-13"
+      ],
+      "expected_absent": [
+        "1974-05-13"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-date-of-birth-detector-output-tool-calls-arguments",
+      "category": "known-gap-dob",
+      "surface": "output.tool_calls.arguments",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"The patient DOB is 1974-05-13 in the intake note\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "1974-05-13"
+      ],
+      "expected_absent": [
+        "1974-05-13"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "matrix-date-of-birth-detector-logs-traces",
+      "category": "known-gap-dob",
+      "surface": "logs.traces",
+      "known_gap": true,
+      "payload": {
+        "trace": {
+          "span": "The patient DOB is 1974-05-13 in the intake note"
+        }
+      },
+      "sensitive_values": [
+        "1974-05-13"
+      ],
+      "expected_absent": [
+        "1974-05-13"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-bank-routing-account-output-content",
+      "category": "known-gap-financial",
+      "surface": "output.content",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Use routing 021000021 with account 000123456789 for the transfer"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "021000021",
+        "000123456789"
+      ],
+      "expected_absent": [
+        "021000021",
+        "000123456789"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-bank-routing-account-output-reasoning",
+      "category": "known-gap-financial",
+      "surface": "output.reasoning",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Use routing 021000021 with account 000123456789 for the transfer"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "021000021",
+        "000123456789"
+      ],
+      "expected_absent": [
+        "021000021",
+        "000123456789"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-bank-routing-account-output-tool-calls-arguments",
+      "category": "known-gap-financial",
+      "surface": "output.tool_calls.arguments",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Use routing 021000021 with account 000123456789 for the transfer\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "021000021",
+        "000123456789"
+      ],
+      "expected_absent": [
+        "021000021",
+        "000123456789"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "matrix-bank-routing-account-logs-traces",
+      "category": "known-gap-financial",
+      "surface": "logs.traces",
+      "known_gap": true,
+      "payload": {
+        "trace": {
+          "span": "Use routing 021000021 with account 000123456789 for the transfer"
+        }
+      },
+      "sensitive_values": [
+        "021000021",
+        "000123456789"
+      ],
+      "expected_absent": [
+        "021000021",
+        "000123456789"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-person-salary-association-output-content",
+      "category": "known-gap-contextual-dlp",
+      "surface": "output.content",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Priya Sundaram's compensation is $210,000 for the new role"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Priya Sundaram",
+        "$210,000"
+      ],
+      "expected_absent": [
+        "Priya Sundaram",
+        "$210,000"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-person-salary-association-output-reasoning",
+      "category": "known-gap-contextual-dlp",
+      "surface": "output.reasoning",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Priya Sundaram's compensation is $210,000 for the new role"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Priya Sundaram",
+        "$210,000"
+      ],
+      "expected_absent": [
+        "Priya Sundaram",
+        "$210,000"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-person-salary-association-output-tool-calls-arguments",
+      "category": "known-gap-contextual-dlp",
+      "surface": "output.tool_calls.arguments",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Priya Sundaram's compensation is $210,000 for the new role\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Priya Sundaram",
+        "$210,000"
+      ],
+      "expected_absent": [
+        "Priya Sundaram",
+        "$210,000"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "matrix-person-salary-association-logs-traces",
+      "category": "known-gap-contextual-dlp",
+      "surface": "logs.traces",
+      "known_gap": true,
+      "payload": {
+        "trace": {
+          "span": "Priya Sundaram's compensation is $210,000 for the new role"
+        }
+      },
+      "sensitive_values": [
+        "Priya Sundaram",
+        "$210,000"
+      ],
+      "expected_absent": [
+        "Priya Sundaram",
+        "$210,000"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-customer-account-association-output-content",
+      "category": "known-gap-contextual-business",
+      "surface": "output.content",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Acme customer account CUST-44219 has confidential renewal terms"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Acme",
+        "CUST-44219",
+        "confidential renewal terms"
+      ],
+      "expected_absent": [
+        "Acme",
+        "CUST-44219",
+        "confidential renewal terms"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-customer-account-association-output-reasoning",
+      "category": "known-gap-contextual-business",
+      "surface": "output.reasoning",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Acme customer account CUST-44219 has confidential renewal terms"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Acme",
+        "CUST-44219",
+        "confidential renewal terms"
+      ],
+      "expected_absent": [
+        "Acme",
+        "CUST-44219",
+        "confidential renewal terms"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-customer-account-association-output-tool-calls-arguments",
+      "category": "known-gap-contextual-business",
+      "surface": "output.tool_calls.arguments",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Acme customer account CUST-44219 has confidential renewal terms\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Acme",
+        "CUST-44219",
+        "confidential renewal terms"
+      ],
+      "expected_absent": [
+        "Acme",
+        "CUST-44219",
+        "confidential renewal terms"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "matrix-customer-account-association-logs-traces",
+      "category": "known-gap-contextual-business",
+      "surface": "logs.traces",
+      "known_gap": true,
+      "payload": {
+        "trace": {
+          "span": "Acme customer account CUST-44219 has confidential renewal terms"
+        }
+      },
+      "sensitive_values": [
+        "Acme",
+        "CUST-44219",
+        "confidential renewal terms"
+      ],
+      "expected_absent": [
+        "Acme",
+        "CUST-44219",
+        "confidential renewal terms"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-patient-diagnosis-association-output-content",
+      "category": "known-gap-contextual-phi",
+      "surface": "output.content",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Mateo Chen is associated with hypertension in the care note"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Mateo Chen",
+        "hypertension"
+      ],
+      "expected_absent": [
+        "Mateo Chen",
+        "hypertension"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-patient-diagnosis-association-output-reasoning",
+      "category": "known-gap-contextual-phi",
+      "surface": "output.reasoning",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Mateo Chen is associated with hypertension in the care note"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Mateo Chen",
+        "hypertension"
+      ],
+      "expected_absent": [
+        "Mateo Chen",
+        "hypertension"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "matrix-patient-diagnosis-association-output-tool-calls-arguments",
+      "category": "known-gap-contextual-phi",
+      "surface": "output.tool_calls.arguments",
+      "known_gap": true,
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Mateo Chen is associated with hypertension in the care note\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Mateo Chen",
+        "hypertension"
+      ],
+      "expected_absent": [
+        "Mateo Chen",
+        "hypertension"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "matrix-patient-diagnosis-association-logs-traces",
+      "category": "known-gap-contextual-phi",
+      "surface": "logs.traces",
+      "known_gap": true,
+      "payload": {
+        "trace": {
+          "span": "Mateo Chen is associated with hypertension in the care note"
+        }
+      },
+      "sensitive_values": [
+        "Mateo Chen",
+        "hypertension"
+      ],
+      "expected_absent": [
+        "Mateo Chen",
+        "hypertension"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    }
+  ]
+}

@@ -1,0 +1,344 @@
+{
+  "title": "LSDF Gateway",
+  "uid": "lsdf-gateway",
+  "tags": [
+    "lsdf",
+    "llm-firewall",
+    "privacy"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "editable": true,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "label": "Loki data source",
+        "type": "datasource",
+        "query": "loki",
+        "current": {
+          "text": "Loki",
+          "value": "Loki"
+        }
+      },
+      {
+        "name": "lsdf_app_label",
+        "label": "Loki app label",
+        "type": "constant",
+        "query": "lsdf",
+        "current": {
+          "text": "lsdf",
+          "value": "lsdf"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Gateway requests / sec",
+      "description": "Rate of gateway_requests_total counter events from the metrics JSONL. Includes both streaming and non-streaming requests; the stream label is exposed for filtering.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (stream) (rate({app=\"$lsdf_app_label\"} | json | name=\"gateway_requests_total\" [$__interval]))",
+          "legendFormat": "stream={{stream}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Gateway blocks / sec by stage",
+      "description": "Rate of gateway_blocks_total counter events, grouped by the stage label (request_preflight, response_inspection, stream_response_inspection, stream_terminal).",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (stage) (rate({app=\"$lsdf_app_label\"} | json | name=\"gateway_blocks_total\" [$__interval]))",
+          "legendFormat": "{{stage}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Request inspection latency (p50 / p95 / max)",
+      "description": "Quantiles of the request_inspection_ms duration histogram emitted on every gateway request.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "p50",
+          "expr": "quantile_over_time(0.50, {app=\"$lsdf_app_label\"} | json | name=\"request_inspection_ms\" | unwrap duration_ms [$__interval])",
+          "legendFormat": "p50"
+        },
+        {
+          "refId": "p95",
+          "expr": "quantile_over_time(0.95, {app=\"$lsdf_app_label\"} | json | name=\"request_inspection_ms\" | unwrap duration_ms [$__interval])",
+          "legendFormat": "p95"
+        },
+        {
+          "refId": "max",
+          "expr": "max_over_time({app=\"$lsdf_app_label\"} | json | name=\"request_inspection_ms\" | unwrap duration_ms [$__interval])",
+          "legendFormat": "max"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Response inspection latency (p50 / p95 / max)",
+      "description": "Quantiles of the response_inspection_ms duration histogram. Emitted once per non-streaming response, and once per streaming response when the upstream returned a non-SSE fallback body that LSDF re-inspects whole. Per-chunk timing of true SSE streams is in the separate stream_chunk_inspection_ms series — see panel 10.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "p50",
+          "expr": "quantile_over_time(0.50, {app=\"$lsdf_app_label\"} | json | name=\"response_inspection_ms\" | unwrap duration_ms [$__interval])",
+          "legendFormat": "p50"
+        },
+        {
+          "refId": "p95",
+          "expr": "quantile_over_time(0.95, {app=\"$lsdf_app_label\"} | json | name=\"response_inspection_ms\" | unwrap duration_ms [$__interval])",
+          "legendFormat": "p95"
+        },
+        {
+          "refId": "max",
+          "expr": "max_over_time({app=\"$lsdf_app_label\"} | json | name=\"response_inspection_ms\" | unwrap duration_ms [$__interval])",
+          "legendFormat": "max"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Inspection action distribution",
+      "description": "Rate of inspection_action_total events per (stage, action) pair. Action is one of allow/redact/block/log per the policy; stage distinguishes preflight, response, and stream_response.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (stage, action) (rate({app=\"$lsdf_app_label\"} | json | name=\"inspection_action_total\" [$__interval]))",
+          "legendFormat": "{{stage}} / {{action}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Findings by entity and surface",
+      "description": "Rate of inspection_entity_total and inspection_surface_total — useful for catching detector-family regressions (sudden EMAIL spike) or surface-shift (RAG context starting to dominate findings).",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "entity",
+          "expr": "sum by (entity) (rate({app=\"$lsdf_app_label\"} | json | name=\"inspection_entity_total\" [$__interval]))",
+          "legendFormat": "entity / {{entity}}"
+        },
+        {
+          "refId": "surface",
+          "expr": "sum by (surface) (rate({app=\"$lsdf_app_label\"} | json | name=\"inspection_surface_total\" [$__interval]))",
+          "legendFormat": "surface / {{surface}}"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Upstream errors / sec",
+      "description": "Rate of gateway_upstream_errors_total counter events, grouped by error_type. Streaming and non-streaming both feed in.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (error_type, stream) (rate({app=\"$lsdf_app_label\"} | json | name=\"gateway_upstream_errors_total\" [$__interval]))",
+          "legendFormat": "{{error_type}} stream={{stream}}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Upstream open latency (streaming) p50 / p95",
+      "description": "Quantiles of upstream_stream_open_ms — time spent waiting for the upstream's first streaming byte, before LSDF starts inspecting. Spikes here usually mean upstream slowness, not LSDF overhead.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "p50",
+          "expr": "quantile_over_time(0.50, {app=\"$lsdf_app_label\"} | json | name=\"upstream_stream_open_ms\" | unwrap duration_ms [$__interval])",
+          "legendFormat": "p50"
+        },
+        {
+          "refId": "p95",
+          "expr": "quantile_over_time(0.95, {app=\"$lsdf_app_label\"} | json | name=\"upstream_stream_open_ms\" | unwrap duration_ms [$__interval])",
+          "legendFormat": "p95"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Upstream call latency (non-streaming) p50 / p95",
+      "description": "Quantiles of upstream_request_ms — time spent waiting for a full non-streaming upstream response. Companion to panel 8 for SSE; distinguishes upstream-side cost from LSDF inspection cost on the non-streaming path.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "p50",
+          "expr": "quantile_over_time(0.50, {app=\"$lsdf_app_label\"} | json | name=\"upstream_request_ms\" | unwrap duration_ms [$__interval])",
+          "legendFormat": "p50"
+        },
+        {
+          "refId": "p95",
+          "expr": "quantile_over_time(0.95, {app=\"$lsdf_app_label\"} | json | name=\"upstream_request_ms\" | unwrap duration_ms [$__interval])",
+          "legendFormat": "p95"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Stream chunk inspection latency (p50 / p95 / max)",
+      "description": "Quantiles of stream_chunk_inspection_ms — per-chunk holdback inspection on true SSE content streams. One observation per inspection of the rolling holdback window inside StreamingInspectionState (fires on every content/reasoning delta). Companion metric stream_tool_call_inspection_ms times the parallel path for tool-call argument fragment reassembly. Use the `surface` label to break out content vs reasoning_content vs reasoning_details.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "p50",
+          "expr": "quantile_over_time(0.50, {app=\"$lsdf_app_label\"} | json | name=\"stream_chunk_inspection_ms\" | unwrap duration_ms [$__interval]) by (surface)",
+          "legendFormat": "p50 / {{surface}}"
+        },
+        {
+          "refId": "p95",
+          "expr": "quantile_over_time(0.95, {app=\"$lsdf_app_label\"} | json | name=\"stream_chunk_inspection_ms\" | unwrap duration_ms [$__interval]) by (surface)",
+          "legendFormat": "p95 / {{surface}}"
+        },
+        {
+          "refId": "max",
+          "expr": "max_over_time({app=\"$lsdf_app_label\"} | json | name=\"stream_chunk_inspection_ms\" | unwrap duration_ms [$__interval]) by (surface)",
+          "legendFormat": "max / {{surface}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        }
+      }
+    }
+  ]
+}

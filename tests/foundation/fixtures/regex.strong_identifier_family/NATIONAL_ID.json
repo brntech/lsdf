@@ -1,0 +1,49 @@
+{
+    "detector":  "regex.strong_identifier_family",
+    "entity":  "NATIONAL_ID",
+    "description":  "Synthetic anchored national identifier fixtures across locale labels.",
+    "cases":  [
+                  {
+                      "id":  "national_id_positive_bsn",
+                      "role":  "positive",
+                      "text":  "BSN-nummer: 501756520",
+                      "note":  "Anchored Dutch-style synthetic national identifier."
+                  },
+                  {
+                      "id":  "national_id_positive_social_number",
+                      "role":  "positive",
+            "text":  "NINO: QQ123456C",
+            "note":  "Synthetic UK-style identifier using a short label."
+                  },
+                  {
+                      "id":  "national_id_positive_dni",
+                      "role":  "positive",
+                      "text":  "DNI: 12345678Z",
+                      "note":  "Anchored Spanish-style synthetic identifier."
+                  },
+                  {
+                      "id":  "national_id_positive_nino",
+                      "role":  "positive",
+                      "text":  "National Insurance Number: QQ123456C",
+                      "note":  "Synthetic UK-style identifier."
+                  },
+                  {
+                      "id":  "national_id_negative_no_delimiter",
+                      "role":  "negative",
+                      "text":  "The DNI Spanish identity system uses digits and a letter.",
+                      "note":  "Anchor word appears without delimiter and value."
+                  },
+                  {
+                      "id":  "national_id_negative_short_value",
+                      "role":  "negative",
+                      "text":  "BSN: 12345",
+                      "note":  "Value below anchored detector length."
+                  },
+                  {
+                      "id":  "national_id_negative_cf_prose",
+                      "role":  "negative",
+                      "text":  "See the appendix; cf. section 4 for methodology.",
+                      "note":  "Benign abbreviation outside identifier context."
+                  }
+              ]
+}

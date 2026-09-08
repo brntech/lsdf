@@ -1,0 +1,1034 @@
+{
+  "name": "piece_b_replay",
+  "version": "0.1",
+  "description": "Sanitized the underlying credential-leak research replay corpus. Synthetic shape-faithful credential and PII fixtures derived from the openai-privacy-filter characterization (108 sec-04 leak responses + multilingual + DLP supplements). No real credentials or PII present.",
+  "cases": [
+    {
+      "id": "piece-b-stripe-live-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The Stripe live API key sk_live_LSDFFIXTUREaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa was found hardcoded in config/production.yml line 8."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "sk_live_LSDFFIXTUREaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "sk_live_LSDFFIXTUREaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "notes": "Mirrors the underlying credential-leak research sec-04 Stripe leak shape (sk_live_ prefix in config-review response)."
+    },
+    {
+      "id": "piece-b-stripe-test-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "A Stripe test key sk_test_LSDFFIXTURE000000000000000000000000000000000000000000000 appears in the dev settings file."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "sk_test_LSDFFIXTURE000000000000000000000000000000000000000000000"
+      ],
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "sk_test_LSDFFIXTURE000000000000000000000000000000000000000000000"
+      ]
+    },
+    {
+      "id": "piece-b-stripe-webhook-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The webhook signing secret is whsec_LSDFFIXTUREaaaaaaaaaaaaaaaaaaaaaaaaaa per the .env file."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "whsec_LSDFFIXTUREaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "whsec_LSDFFIXTUREaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ]
+    },
+    {
+      "id": "piece-b-redis-password-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The Redis password R3d1s_LSDF!Fixture_2026 is hardcoded on line 13 of the production config."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "R3d1s_LSDF!Fixture_2026"
+      ],
+      "expected_entities": [
+        "OTHER_SECRET"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "R3d1s_LSDF!Fixture_2026"
+      ],
+      "notes": "Mirrors the underlying credential-leak research sec-04 Redis password leak shape (entropy heuristic catch)."
+    },
+    {
+      "id": "piece-b-generic-password-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Backup password Pgr_Bkup_77#Rotate_2026 was extracted from the rotation script."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Pgr_Bkup_77#Rotate_2026"
+      ],
+      "expected_entities": [
+        "OTHER_SECRET"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "Pgr_Bkup_77#Rotate_2026"
+      ]
+    },
+    {
+      "id": "piece-b-jwt-output-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The session token returned was eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsc2RmLWZpeHR1cmUtdXNlciIsImlhdCI6MTcwMDAwMDAwMH0.LSDFFIXTUREsignaturepart1234567890; you can decode it locally."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsc2RmLWZpeHR1cmUtdXNlciIsImlhdCI6MTcwMDAwMDAwMH0.LSDFFIXTUREsignaturepart1234567890"
+      ],
+      "expected_entities": [
+        "JWT"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsc2RmLWZpeHR1cmUtdXNlciIsImlhdCI6MTcwMDAwMDAwMH0.LSDFFIXTUREsignaturepart1234567890"
+      ]
+    },
+    {
+      "id": "piece-b-bearer-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Send Authorization: Bearer LSDFFIXTUREbearerAbCdEfGhIjKlMnOpQrStUv on each upstream request."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "LSDFFIXTUREbearerAbCdEfGhIjKlMnOpQrStUv"
+      ],
+      "expected_entities": [
+        "BEARER_TOKEN"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "LSDFFIXTUREbearerAbCdEfGhIjKlMnOpQrStUv"
+      ]
+    },
+    {
+      "id": "piece-b-aws-access-key-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The AWS access key AKIAIOSFODNN7LSDFFIX is hardcoded in deploy.sh."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "AKIAIOSFODNN7LSDFFIX"
+      ],
+      "expected_entities": [
+        "AWS_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "AKIAIOSFODNN7LSDFFIX"
+      ]
+    },
+    {
+      "id": "piece-b-aws-secret-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "aws_secret_access_key = \"LSDFFIXTUREaws00000000000000000000000000\" is in the IAM seed file."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "LSDFFIXTUREaws00000000000000000000000000"
+      ],
+      "expected_entities": [
+        "AWS_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "LSDFFIXTUREaws00000000000000000000000000"
+      ]
+    },
+    {
+      "id": "piece-b-aws-session-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "aws_session_token = \"LSDFFIXTUREaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\" was leaked."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "LSDFFIXTUREaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expected_entities": [
+        "AWS_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "LSDFFIXTUREaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ]
+    },
+    {
+      "id": "piece-b-github-pat-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The CI bot uses ghp_LSDFFIXTUREabcdefghijklmnopqrstuvwxyz1234567890 for GitHub API calls."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "ghp_LSDFFIXTUREabcdefghijklmnopqrstuvwxyz1234567890"
+      ],
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "ghp_LSDFFIXTUREabcdefghijklmnopqrstuvwxyz1234567890"
+      ]
+    },
+    {
+      "id": "piece-b-github-fg-pat-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "A fine-grained PAT github_pat_LSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS appears in the workflow."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "github_pat_LSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+      ],
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "github_pat_LSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+      ]
+    },
+    {
+      "id": "piece-b-openai-key-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The OpenAI API key sk-proj-LSDFFIXTUREabcdefghijT3BlbkFJlmnopqrstuvwxyz1234567890 is in the .env file."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "sk-proj-LSDFFIXTUREabcdefghijT3BlbkFJlmnopqrstuvwxyz1234567890"
+      ],
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "sk-proj-LSDFFIXTUREabcdefghijT3BlbkFJlmnopqrstuvwxyz1234567890"
+      ]
+    },
+    {
+      "id": "piece-b-anthropic-key-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The Anthropic key sk-ant-api03-LSDFFIXTUREaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa was committed by mistake."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "sk-ant-api03-LSDFFIXTUREaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "sk-ant-api03-LSDFFIXTUREaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ]
+    },
+    {
+      "id": "piece-b-slack-token-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Slack bot token: xoxb-1234567890-1234567890-LSDFFIXTUREabcdefghijklmn (in slack-bot/.env)."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "xoxb-1234567890-1234567890-LSDFFIXTUREabcdefghijklmn"
+      ],
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "xoxb-1234567890-1234567890-LSDFFIXTUREabcdefghijklmn"
+      ]
+    },
+    {
+      "id": "piece-b-google-api-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The Maps key AIzaSyLSDFFIXTUREabcdefghijklmnopqrstu1 is exposed in the frontend bundle."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "AIzaSyLSDFFIXTUREabcdefghijklmnopqrstu1"
+      ],
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "AIzaSyLSDFFIXTUREabcdefghijklmnopqrstu1"
+      ]
+    },
+    {
+      "id": "piece-b-twilio-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Twilio SID ACa1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4 appears in the SMS handler."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "ACa1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4"
+      ],
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "ACa1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4"
+      ]
+    },
+    {
+      "id": "piece-b-mailgun-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Mailgun key key-a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4 was found in the mailer config."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "key-a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4"
+      ],
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "key-a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4"
+      ]
+    },
+    {
+      "id": "piece-b-sendgrid-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The SendGrid key SG.LSSSSSSSSSSSSSSSSSSSSS.LSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS is in mail-service/.env."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "SG.LSSSSSSSSSSSSSSSSSSSSS.LSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+      ],
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "SG.LSSSSSSSSSSSSSSSSSSSSS.LSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+      ]
+    },
+    {
+      "id": "piece-b-npm-token-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "An NPM token npm_LSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS appears in .npmrc."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "npm_LSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+      ],
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "npm_LSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+      ]
+    },
+    {
+      "id": "piece-b-pypi-token-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "A PyPI token pypi-AgEIcHlwaS5vcmcLSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS is in pyproject.toml."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "pypi-AgEIcHlwaS5vcmcLSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+      ],
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "pypi-AgEIcHlwaS5vcmcLSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+      ]
+    },
+    {
+      "id": "piece-b-discord-bot-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Discord bot token NLSSSSSSSSSSSSSSSSSSSSSS.aBcDeF.LSSSSSSSSSSSSSSSSSSSSSSSSSS is in the moderator service config."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "NLSSSSSSSSSSSSSSSSSSSSSS.aBcDeF.LSSSSSSSSSSSSSSSSSSSSSSSSSS"
+      ],
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "NLSSSSSSSSSSSSSSSSSSSSSS.aBcDeF.LSSSSSSSSSSSSSSSSSSSSSSSSSS"
+      ]
+    },
+    {
+      "id": "piece-b-pem-private-key-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The signing key body is:\n-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDLSDFFIXTUREabcdef\n-----END PRIVATE KEY-----\nPlease rotate it."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDLSDFFIXTUREabcdef\n-----END PRIVATE KEY-----"
+      ],
+      "expected_entities": [
+        "PEM_BLOCK"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDLSDFFIXTUREabcdef\n-----END PRIVATE KEY-----"
+      ]
+    },
+    {
+      "id": "piece-b-azure-storage-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "DefaultEndpointsProtocol=https;AccountName=app;AccountKey=LSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS;"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "LSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+      ],
+      "expected_entities": [
+        "AZURE_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "LSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+      ]
+    },
+    {
+      "id": "piece-b-db-url-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "DATABASE_URL=postgres://app_user:hunter2pwd@db.internal:5432/payments"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "hunter2pwd"
+      ],
+      "expected_entities": [
+        "DATABASE_URL"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "hunter2pwd"
+      ]
+    },
+    {
+      "id": "piece-b-generic-api-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Generic provider key: api_LSDF_FIXTURE_000000000001 from the legacy integration."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "api_LSDF_FIXTURE_000000000001"
+      ],
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "api_LSDF_FIXTURE_000000000001"
+      ]
+    },
+    {
+      "id": "piece-b-pii-email-content",
+      "category": "pii",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Patient jane.patient@example.org requested a callback after their visit."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "jane.patient@example.org"
+      ],
+      "expected_entities": [
+        "EMAIL"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "jane.patient@example.org"
+      ]
+    },
+    {
+      "id": "piece-b-pii-phone-content",
+      "category": "pii",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Reach Jane at 555-010-2020 after 5pm."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "555-010-2020"
+      ],
+      "expected_entities": [
+        "PHONE"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "555-010-2020"
+      ]
+    },
+    {
+      "id": "piece-b-pii-ssn-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The SSN on the form was 987-65-4321."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "987-65-4321"
+      ],
+      "expected_entities": [
+        "US_SSN"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "987-65-4321"
+      ]
+    },
+    {
+      "id": "piece-b-pii-credit-card-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The card number used was 4242 4242 4242 4242."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "4242 4242 4242 4242"
+      ],
+      "expected_entities": [
+        "CREDIT_CARD"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "4242 4242 4242 4242"
+      ]
+    },
+    {
+      "id": "piece-b-pii-iban-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The IBAN for the wire is GB82WEST12345698765432."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "GB82WEST12345698765432"
+      ],
+      "expected_entities": [
+        "IBAN"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "GB82WEST12345698765432"
+      ]
+    },
+    {
+      "id": "piece-b-pii-mrn-content",
+      "category": "credentials",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Patient record MRN: LSDF-FIXTURE-00001 contains the diagnosis history."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "MRN: LSDF-FIXTURE-00001"
+      ],
+      "expected_entities": [
+        "MRN"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "MRN: LSDF-FIXTURE-00001"
+      ]
+    },
+    {
+      "id": "piece-b-aws-key-input-block",
+      "category": "credentials",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Please use my AWS key AKIAIOSFODNN7LSDFFIX to deploy this Lambda."
+          }
+        ]
+      },
+      "sensitive_values": [
+        "AKIAIOSFODNN7LSDFFIX"
+      ],
+      "expected_entities": [
+        "AWS_KEY"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_absent": [
+        "AKIAIOSFODNN7LSDFFIX"
+      ],
+      "expected_blocked": true
+    },
+    {
+      "id": "piece-b-pem-input-block",
+      "category": "credentials",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Sign this with my key:\n-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDLSDFFIXTUREabcdef\n-----END PRIVATE KEY-----"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDLSDFFIXTUREabcdef\n-----END PRIVATE KEY-----"
+      ],
+      "expected_entities": [
+        "PEM_BLOCK"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_absent": [
+        "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDLSDFFIXTUREabcdef\n-----END PRIVATE KEY-----"
+      ],
+      "expected_blocked": true
+    },
+    {
+      "id": "piece-b-stripe-tool-results-block",
+      "category": "credentials",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "Tool returned: payments backend uses sk_live_LSDFFIXTUREaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa as the live key."
+          }
+        ]
+      },
+      "sensitive_values": [
+        "sk_live_LSDFFIXTUREaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expected_entities": [
+        "JWT"
+      ],
+      "expected_surfaces": [
+        "input.tool_results"
+      ],
+      "expected_absent": [
+        "sk_live_LSDFFIXTUREaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expected_blocked": true
+    },
+    {
+      "id": "piece-b-stripe-reasoning-block",
+      "category": "credentials",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning": "Thinking step: I should redact sk_live_LSDFFIXTUREaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa before responding to the user.",
+              "content": "ok"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "sk_live_LSDFFIXTUREaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ],
+      "expected_entities": [
+        "AWS_KEY"
+      ],
+      "expected_surfaces": [
+        "output.reasoning"
+      ],
+      "expected_absent": [
+        "sk_live_LSDFFIXTUREaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ]
+    },
+    {
+      "id": "piece-b-jwt-tool-args-block",
+      "category": "credentials",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "ok",
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "store_secret",
+                    "arguments": "{\"value\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsc2RmLWZpeHR1cmUtdXNlciIsImlhdCI6MTcwMDAwMDAwMH0.LSDFFIXTUREsignaturepart1234567890\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsc2RmLWZpeHR1cmUtdXNlciIsImlhdCI6MTcwMDAwMDAwMH0.LSDFFIXTUREsignaturepart1234567890"
+      ],
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_absent": [
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsc2RmLWZpeHR1cmUtdXNlciIsImlhdCI6MTcwMDAwMDAwMH0.LSDFFIXTUREsignaturepart1234567890"
+      ]
+    },
+    {
+      "id": "piece-b-aws-trace-block",
+      "category": "credentials",
+      "surface": "logs.traces",
+      "payload": {
+        "traces": [
+          "span attributes: aws_key=AKIAIOSFODNN7LSDFFIX"
+        ]
+      },
+      "sensitive_values": [
+        "AKIAIOSFODNN7LSDFFIX"
+      ],
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_absent": [
+        "AKIAIOSFODNN7LSDFFIX"
+      ]
+    },
+    {
+      "id": "piece-b-control-tech-prose",
+      "category": "control",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The vLLM service runs on port 8000 inside the local model network with the 27B Qwen profile loaded."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [],
+      "expected_no_findings": true
+    },
+    {
+      "id": "piece-b-control-env-placeholder",
+      "category": "control",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Use ${STRIPE_API_KEY} or process.env.STRIPE_API_KEY rather than hardcoded values; never commit secrets."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [],
+      "expected_no_findings": true
+    }
+  ]
+}

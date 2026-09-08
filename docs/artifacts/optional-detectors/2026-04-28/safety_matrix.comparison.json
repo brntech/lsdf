@@ -1,0 +1,37 @@
+{
+  "dataset": "safety_matrix",
+  "dataset_path": "evals/safety_matrix.json",
+  "profile": "default",
+  "mode": "enforce",
+  "case_count": 91,
+  "detector_sets": [
+    {
+      "name": "presidio",
+      "families": [
+        "presidio"
+      ],
+      "status": "unavailable",
+      "reason": "Install presidio-analyzer to enable detector family 'presidio'"
+    },
+    {
+      "name": "privacy",
+      "families": [
+        "openai_privacy_filter"
+      ],
+      "status": "unavailable",
+      "reason": "Install transformers and a supported model cache to enable detector family 'openai_privacy_filter'"
+    },
+    {
+      "name": "default_optional",
+      "families": [
+        "regex",
+        "entropy",
+        "medical",
+        "presidio",
+        "openai_privacy_filter"
+      ],
+      "status": "unavailable",
+      "reason": "Install presidio-analyzer to enable detector family 'presidio'"
+    }
+  ]
+}

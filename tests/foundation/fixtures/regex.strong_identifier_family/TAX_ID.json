@@ -1,0 +1,49 @@
+{
+  "detector": "regex.strong_identifier_family",
+  "entity": "TAX_ID",
+  "description": "Synthetic tax identifier fixtures emitted by anchored national-ID style labels.",
+  "cases": [
+    {
+      "id": "tax_id_positive_codice_fiscale",
+      "role": "positive",
+      "text": "Codice fiscale: RSSMRA80A01H501Z",
+      "note": "Synthetic Italian-style tax identifier."
+    },
+    {
+      "id": "tax_id_positive_cf_short_label",
+      "role": "positive",
+      "text": "CF: BNCLRA85T10A562S",
+      "note": "Short Italian tax label with synthetic value."
+    },
+    {
+      "id": "tax_id_positive_steuernummer",
+      "role": "positive",
+      "text": "Steuernummer: 12-345-67890",
+      "note": "Synthetic German tax identifier."
+    },
+    {
+      "id": "tax_id_positive_steuer_id",
+      "role": "positive",
+      "text": "Steuer-ID: 12345678901",
+      "note": "Synthetic German tax ID value."
+    },
+    {
+      "id": "tax_id_negative_cf_sentence",
+      "role": "negative",
+      "text": "The abbreviation cf. appears in a bibliography note.",
+      "note": "No delimiter and value."
+    },
+    {
+      "id": "tax_id_negative_short",
+      "role": "negative",
+      "text": "Steuer-ID: 12345",
+      "note": "Too short for anchored value."
+    },
+    {
+      "id": "tax_id_negative_no_value",
+      "role": "negative",
+      "text": "Codice fiscale was requested but not supplied.",
+      "note": "No assignment delimiter."
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "detector": "regex.private_key",
+  "entity": "PRIVATE_KEY",
+  "description": "Synthetic service-account private-key anchors for regex private-key foundation coverage.",
+  "cases": [
+    {
+      "id": "private-key-pos-json-minimal",
+      "role": "positive",
+      "text": "{\"type\":\"service_account\",\"project_id\":\"fixture\",\"private_key\":\"-----BEGIN PRIVATE KEY-----\"}",
+      "note": "Service-account JSON private-key anchor."
+    },
+    {
+      "id": "private-key-pos-json-spaced",
+      "role": "positive",
+      "text": "{ \"type\" : \"service_account\", \"client_email\" : \"demo@example.test\", \"private_key\" : \"-----BEGIN\" }",
+      "note": "Spaced service-account JSON private-key anchor."
+    },
+    {
+      "id": "private-key-pos-json-fields-between",
+      "role": "positive",
+      "text": "{\"type\":\"service_account\",\"client_id\":\"fixture-001\",\"auth_uri\":\"https://example.test\",\"private_key\":\"-----BEGIN PRIVATE KEY-----\"}",
+      "note": "Fields between service-account type and private-key anchor."
+    },
+    {
+      "id": "private-key-pos-multiline",
+      "role": "positive",
+      "text": "{\n  \"type\": \"service_account\",\n  \"private_key\": \"-----BEGIN PRIVATE KEY-----\"\n}",
+      "note": "Multiline service-account JSON private-key anchor."
+    },
+    {
+      "id": "private-key-neg-type-only",
+      "role": "negative",
+      "text": "{\"type\":\"service_account\",\"project_id\":\"fixture\"}",
+      "note": "Service-account type without private-key field."
+    },
+    {
+      "id": "private-key-neg-key-only",
+      "role": "negative",
+      "text": "{\"private_key\":\"not-a-real-block\"}",
+      "note": "Private-key field without service-account context and PEM beginning."
+    },
+    {
+      "id": "private-key-neg-prose",
+      "role": "negative",
+      "text": "The runbook explains where service-account keys would be stored.",
+      "note": "No key-shaped value."
+    }
+  ]
+}

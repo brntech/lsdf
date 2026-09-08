@@ -1,0 +1,49 @@
+{
+    "detector":  "medical-regex.phi_pattern",
+    "entity":  "ICD_CODE",
+    "description":  "Synthetic ICD codes with clinical context and benign controls.",
+    "cases":  [
+                  {
+                      "id":  "pos-001",
+                      "role":  "positive",
+                      "text":  "Patient diagnosis J45.909 appears in the mock chart.",
+                      "note":  "ICD with patient context."
+                  },
+                  {
+                      "id":  "pos-002",
+                      "role":  "positive",
+                      "text":  "Clinical record lists E11.9 for demo coding.",
+                      "note":  "ICD with clinical context."
+                  },
+                  {
+                      "id":  "pos-003",
+                      "role":  "positive",
+                      "text":  "History includes I10 in the synthetic note.",
+                      "note":  "ICD with history context."
+                  },
+                  {
+                      "id":  "pos-004",
+                      "role":  "positive",
+                      "text":  "Doctor entered M54.5 in the fixture record.",
+                      "note":  "ICD with doctor context."
+                  },
+                  {
+                      "id":  "neg-001",
+                      "role":  "negative",
+                      "text":  "Release code J45.909 is mentioned as a software tag.",
+                      "note":  "No clinical context near code."
+                  },
+                  {
+                      "id":  "neg-002",
+                      "role":  "negative",
+                      "text":  "Ticket ABC-123 remains open.",
+                      "note":  "Non-ICD issue code."
+                  },
+                  {
+                      "id":  "neg-003",
+                      "role":  "negative",
+                      "text":  "The example version is E11.9-alpha.",
+                      "note":  "Version-like text."
+                  }
+              ]
+}

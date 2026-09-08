@@ -1,0 +1,26 @@
+ Container lsdf-demo-upstream-1 Recreate 
+ Container lsdf-demo-upstream-1 Recreated 
+ Container lsdf-demo-gateway-1 Recreate 
+ Container lsdf-demo-gateway-1 Recreated 
+ Container lsdf-demo-runner-1 Recreate 
+ Container lsdf-demo-runner-1 Recreated 
+ Container lsdf-demo-upstream-1 Starting 
+ Container lsdf-demo-upstream-1 Started 
+ Container lsdf-demo-gateway-1 Starting 
+ Container lsdf-demo-gateway-1 Started 
+ Container lsdf-demo-runner-1 Starting 
+ Container lsdf-demo-runner-1 Started 
+demo-runner-1  | LSDF Golden Demo: ok
+demo-runner-1  | - Gateway: http://demo-gateway:8080
+demo-runner-1  | - OK gateway_ready
+demo-runner-1  | - OK request_block
+demo-runner-1  | - OK response_redaction
+demo-runner-1  | - OK stream_redaction
+demo-runner-1  | - OK tool_call_block
+demo-runner-1  | - OK observability_sanitize
+demo-runner-1  | - OK health
+demo-runner-1  | - OK metrics
+demo-runner-1  | - OK audit_summary
+demo-runner-1  | - OK metrics_summary
+ Container lsdf-demo-runner-1 Stopping 
+ Container lsdf-demo-runner-1 Stopped 

@@ -1,0 +1,60 @@
+{
+  "cases": [
+    {
+      "id": "technical-readme-prose",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "The local OpenAI-compatible service runs on port 8000 inside local-model-network. Use demo-model and documented KV cache settings."
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true
+    },
+    {
+      "id": "url-and-path-like-code",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Fetch //api.example.com/v1/users and read config/settings.yml before running app/main.py."
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true
+    },
+    {
+      "id": "public-figures",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Compare public comments by Sam Altman, Satya Nadella, and Jensen Huang about AI infrastructure."
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true
+    },
+    {
+      "id": "environment-placeholder-code",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "const token = process.env.API_TOKEN; const url = process.env.API_URL || 'https://example.org';"
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true
+    }
+  ]
+}

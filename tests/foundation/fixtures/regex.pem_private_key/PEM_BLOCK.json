@@ -1,0 +1,49 @@
+{
+  "detector": "regex.pem_private_key",
+  "entity": "PEM_BLOCK",
+  "description": "Synthetic PEM private-key block fixtures using non-secret placeholder bodies.",
+  "cases": [
+    {
+      "id": "pem_positive_generic_private_key",
+      "role": "positive",
+      "text": "-----BEGIN PRIVATE KEY-----\nLSDFTESTFIXTUREONLY000000000000000000000000\n-----END PRIVATE KEY-----",
+      "note": "PEM boundary shape with a non-cryptographic placeholder body."
+    },
+    {
+      "id": "pem_positive_rsa_private_key",
+      "role": "positive",
+      "text": "-----BEGIN RSA PRIVATE KEY-----\nTHISISNOTAREALRSAKEY0000000000000000000000\n-----END RSA PRIVATE KEY-----",
+      "note": "Synthetic RSA private key block."
+    },
+    {
+      "id": "pem_positive_ec_private_key",
+      "role": "positive",
+      "text": "-----BEGIN EC PRIVATE KEY-----\nFIXTUREECBODY000000000000000000000000000000\n-----END EC PRIVATE KEY-----",
+      "note": "Synthetic EC private key block."
+    },
+    {
+      "id": "pem_positive_openssh_private_key",
+      "role": "positive",
+      "text": "-----BEGIN OPENSSH PRIVATE KEY-----\nOPENSSHFIXTUREBODY000000000000000000000000\n-----END OPENSSH PRIVATE KEY-----",
+      "note": "Synthetic OpenSSH private key block."
+    },
+    {
+      "id": "pem_negative_public_key",
+      "role": "negative",
+      "text": "-----BEGIN PUBLIC KEY-----\nPUBLICFIXTUREBODY00000000000000000000000000\n-----END PUBLIC KEY-----",
+      "note": "Public key boundary is not a private key block."
+    },
+    {
+      "id": "pem_negative_certificate",
+      "role": "negative",
+      "text": "-----BEGIN CERTIFICATE-----\nCERTFIXTUREBODY0000000000000000000000000000\n-----END CERTIFICATE-----",
+      "note": "Certificate block should not match the private key detector."
+    },
+    {
+      "id": "pem_negative_incomplete_block",
+      "role": "negative",
+      "text": "-----BEGIN PRIVATE KEY-----\nMISSINGENDMARKERFIXTUREONLY",
+      "note": "Missing end boundary."
+    }
+  ]
+}

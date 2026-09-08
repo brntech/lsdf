@@ -1,0 +1,9 @@
+{
+  "model": "lsdf-demo",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Please use api_LSDF_FIXTURE_TOKEN_000000 to call the billing system."
+    }
+  ]
+}

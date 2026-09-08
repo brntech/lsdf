@@ -1,0 +1,49 @@
+{
+  "detector": "regex.strong_identifier_family",
+  "entity": "US_SSN",
+  "description": "Synthetic US SSN-shaped fixtures.",
+  "cases": [
+    {
+      "id": "us_ssn_positive_standard_1",
+      "role": "positive",
+      "text": "SSN 000-00-0000 belongs to a fixture user.",
+      "note": "Reserved all-zero synthetic shape."
+    },
+    {
+      "id": "us_ssn_positive_standard_2",
+      "role": "positive",
+      "text": "Social Security Number: 123-45-6789",
+      "note": "Classic synthetic documentation-style value."
+    },
+    {
+      "id": "us_ssn_positive_embedded",
+      "role": "positive",
+      "text": "Record fixture-ssn=555-01-0100 was generated for tests.",
+      "note": "Synthetic value using 555 prefix."
+    },
+    {
+      "id": "us_ssn_positive_sentence",
+      "role": "positive",
+      "text": "The masked workflow saw 222-33-4444 in the sample text.",
+      "note": "Synthetic SSN-shaped sample."
+    },
+    {
+      "id": "us_ssn_negative_missing_dashes",
+      "role": "negative",
+      "text": "SSN 123456789 is written without separators.",
+      "note": "Does not match dashed detector shape."
+    },
+    {
+      "id": "us_ssn_negative_short",
+      "role": "negative",
+      "text": "SSN 12-34-5678",
+      "note": "Wrong group lengths."
+    },
+    {
+      "id": "us_ssn_negative_prose",
+      "role": "negative",
+      "text": "The sample discusses social security numbers without including one.",
+      "note": "No SSN-shaped value."
+    }
+  ]
+}

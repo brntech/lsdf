@@ -1,0 +1,136 @@
+{
+  "cases": [
+    {
+      "id": "input-ssn-tokenized",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "My SSN is 000-00-0000."
+          }
+        ]
+      },
+      "expected_absent": ["000-00-0000"],
+      "expected_audit_absent": ["000-00-0000"],
+      "expected_blocked": false,
+      "expected_entities": ["US_SSN"],
+      "expected_surfaces": ["input.messages"],
+      "expected_actions": ["tokenize"]
+    },
+    {
+      "id": "tool-secret-blocked",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "send_webhook",
+                    "arguments": "{\"api_key\":\"api_LSDF_FIXTURE_TOKEN_000000\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected_absent": ["api_LSDF_FIXTURE_TOKEN_000000"],
+      "expected_audit_absent": ["api_LSDF_FIXTURE_TOKEN_000000"],
+      "expected_blocked": true,
+      "expected_entities": ["API_KEY"],
+      "expected_surfaces": ["output.tool_calls.arguments"],
+      "expected_actions": ["block"],
+      "expected_valid_json_pointers": [
+        ["choices", 0, "message", "tool_calls", 0, "function", "arguments"]
+      ]
+    },
+    {
+      "id": "reasoning-redis-password-blocked",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "The Redis password is R3d1s_Pr0d_2024!Secure."
+            }
+          }
+        ]
+      },
+      "expected_absent": ["R3d1s_Pr0d_2024!Secure"],
+      "expected_audit_absent": ["R3d1s_Pr0d_2024!Secure"],
+      "expected_blocked": true,
+      "expected_entities": ["OTHER_SECRET"],
+      "expected_surfaces": ["output.reasoning"],
+      "expected_actions": ["block"]
+    },
+    {
+      "id": "rag-mrn-tokenized",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved chart."
+          }
+        ],
+        "rag_context": [
+          "Patient MRN: LSDF-FIXTURE-00001 has a cardiology follow-up."
+        ]
+      },
+      "expected_absent": ["MRN: LSDF-FIXTURE-00001"],
+      "expected_audit_absent": ["MRN: LSDF-FIXTURE-00001"],
+      "expected_blocked": false,
+      "expected_entities": ["MRN"],
+      "expected_surfaces": ["input.rag_context"],
+      "expected_actions": ["tokenize"]
+    },
+    {
+      "id": "trace-mrn-redacted",
+      "payload": {
+        "trace": {
+          "output": "Patient MRN: LSDF-FIXTURE-00001 was emitted by the model."
+        }
+      },
+      "expected_absent": ["MRN: LSDF-FIXTURE-00001"],
+      "expected_audit_absent": ["MRN: LSDF-FIXTURE-00001"],
+      "expected_blocked": false,
+      "expected_entities": ["MRN"],
+      "expected_surfaces": ["logs.traces"],
+      "expected_actions": ["redact"]
+    },
+    {
+      "id": "credit-card-luhn-tokenized",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Customer pasted card 4111 1111 1111 1111."
+          }
+        ]
+      },
+      "expected_absent": ["4111 1111 1111 1111"],
+      "expected_audit_absent": ["4111 1111 1111 1111"],
+      "expected_blocked": false,
+      "expected_entities": ["CREDIT_CARD"],
+      "expected_surfaces": ["input.messages"],
+      "expected_actions": ["tokenize"]
+    },
+    {
+      "id": "medical-phi-output-redacted",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Patient takes metformin 500mg and HbA1c 8.2% was noted."
+            }
+          }
+        ]
+      },
+      "expected_absent": ["metformin 500mg", "HbA1c 8.2%"],
+      "expected_audit_absent": ["metformin 500mg", "HbA1c 8.2%"],
+      "expected_blocked": false,
+      "expected_entities": ["MEDICATION", "LAB_VALUE"],
+      "expected_surfaces": ["output.content"],
+      "expected_actions": ["redact"]
+    }
+  ]
+}

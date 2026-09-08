@@ -1,0 +1,29 @@
+name: enterprise-dlp
+entities: []
+surfaces: []
+rules:
+  - id: domain-enterprise-block-secrets-dispatch
+    match:
+      entity_any_of: [CUSTOMER_CONFIDENTIAL]
+      entity_in_category: SECRET
+      surface_any_of: [output.tool_calls.arguments, output.reasoning, logs.traces]
+    action: block
+    severity: critical
+    priority: 120
+
+  - id: domain-enterprise-block-secrets-input
+    match:
+      entity_in_category: SECRET
+      surface_any_of: [input.messages, input.system, input.developer, input.rag_context, input.tool_results]
+    action: block
+    severity: critical
+    priority: 100
+
+  - id: domain-enterprise-redact-confidential-output
+    match:
+      entity_any_of: [CUSTOMER_CONFIDENTIAL]
+      entity_in_category: SECRET
+      surface_any_of: [output.content, output.stream_chunk]
+    action: redact
+    severity: high
+    priority: 80

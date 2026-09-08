@@ -1,0 +1,31 @@
+{
+  "status": "ok",
+  "output": "examples/proof-bundle-sample",
+  "format": "markdown",
+  "profile": "default",
+  "domain_packs": [],
+  "detector_families": [
+    "regex",
+    "entropy",
+    "medical-regex",
+    "contextual-anchored"
+  ],
+  "known_gap_cases": 33,
+  "known_gap_leaked_after": 28,
+  "known_gap_would_fail": 30,
+  "management": {
+    "recommendation": "Protect /lsdf/* with LSDF_MANAGEMENT_TOKEN or a trusted reverse proxy."
+  },
+  "vault": {
+    "posture": "irreversible tokens by default; encrypted local vault when explicitly configured."
+  },
+  "non_certification": "LSDF is a runtime firewall and proof system, not a compliance certification.",
+  "files": {
+    "policy-summary": "examples/proof-bundle-sample/policy-summary.json",
+    "protection-report": "examples/proof-bundle-sample/protection-report.json",
+    "security-report": "examples/proof-bundle-sample/security-report.json",
+    "audit-schema": "examples/proof-bundle-sample/audit-schema.json",
+    "readme": "examples/proof-bundle-sample/README.md",
+    "manifest": "examples/proof-bundle-sample/manifest.json"
+  }
+}

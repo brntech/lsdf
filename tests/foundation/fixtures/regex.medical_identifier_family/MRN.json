@@ -1,0 +1,49 @@
+{
+  "detector": "regex.medical_identifier_family",
+  "entity": "MRN",
+  "description": "Synthetic medical record number fixtures.",
+  "cases": [
+    {
+      "id": "mrn_positive_colon",
+      "role": "positive",
+      "text": "MRN: MRN-000123",
+      "note": "Synthetic MRN with colon delimiter."
+    },
+    {
+      "id": "mrn_positive_space",
+      "role": "positive",
+      "text": "MRN ABCD12345",
+      "note": "Synthetic alphanumeric MRN."
+    },
+    {
+      "id": "mrn_positive_hash",
+      "role": "positive",
+      "text": "MRN# ZX-90001",
+      "note": "Hash-delimited synthetic MRN."
+    },
+    {
+      "id": "mrn_positive_compact",
+      "role": "positive",
+      "text": "fixture medical record MRN777777",
+      "note": "Compact synthetic MRN."
+    },
+    {
+      "id": "mrn_negative_short",
+      "role": "negative",
+      "text": "MRN: A123",
+      "note": "Too short."
+    },
+    {
+      "id": "mrn_negative_different_label",
+      "role": "negative",
+      "text": "Patient ID: ABCD12345",
+      "note": "Identifier shape without MRN label."
+    },
+    {
+      "id": "mrn_negative_prose",
+      "role": "negative",
+      "text": "The abbreviation MRN is defined in the glossary.",
+      "note": "No MRN-shaped value."
+    }
+  ]
+}

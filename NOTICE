@@ -1,0 +1,11 @@
+LLM Sensitive Data Firewall (LSDF)
+Copyright 2026 Broadnet Technologies LLC
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+
+Developed by Broadnet. Based on sensitive-data leakage research published by
+Mohammad Al Zubaidi:
+  doi:10.5281/zenodo.19574049 (MoE credential leak)
+  doi:10.5281/zenodo.19688433 (data-sensitivity battery)
+
+Third-party datasets and software are listed in THIRD_PARTY_NOTICES.md.

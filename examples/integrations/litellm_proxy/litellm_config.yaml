@@ -1,0 +1,8 @@
+model_list:
+  - model_name: local-model
+    litellm_params:
+      model: openai/local-model
+      api_base: os.environ/UPSTREAM_OPENAI_BASE_URL
+      api_key: os.environ/UPSTREAM_OPENAI_API_KEY
+litellm_settings:
+  drop_params: true

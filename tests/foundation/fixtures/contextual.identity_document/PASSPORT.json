@@ -1,0 +1,277 @@
+{
+  "detector": "contextual.identity_document",
+  "entity": "PASSPORT",
+  "description": "Synthetic passport identifiers and benign travel controls.",
+  "cases": [
+    {
+      "id": "pos-001",
+      "role": "positive",
+      "text": "passport: P12345000",
+      "note": "Positive synthetic contextual label `passport`."
+    },
+    {
+      "id": "pos-002",
+      "role": "positive",
+      "text": "pasaporte = P12345001",
+      "note": "Positive synthetic contextual label `pasaporte`."
+    },
+    {
+      "id": "pos-003",
+      "role": "positive",
+      "text": "Synthetic row has passport: P12345002.",
+      "note": "Positive synthetic contextual label `passport`."
+    },
+    {
+      "id": "pos-004",
+      "role": "positive",
+      "text": "Demo packet lists pasaporte = P12345003.",
+      "note": "Positive synthetic contextual label `pasaporte`."
+    },
+    {
+      "id": "pos-005",
+      "role": "positive",
+      "text": "Review field passport: P12345004.",
+      "note": "Positive synthetic contextual label `passport`."
+    },
+    {
+      "id": "pos-006",
+      "role": "positive",
+      "text": "Training form says pasaporte = P12345005.",
+      "note": "Positive synthetic contextual label `pasaporte`."
+    },
+    {
+      "id": "pos-007",
+      "role": "positive",
+      "text": "passport: P12345006",
+      "note": "Positive synthetic contextual label `passport`."
+    },
+    {
+      "id": "pos-008",
+      "role": "positive",
+      "text": "pasaporte = P12345007",
+      "note": "Positive synthetic contextual label `pasaporte`."
+    },
+    {
+      "id": "pos-009",
+      "role": "positive",
+      "text": "Synthetic row has passport: P12345008.",
+      "note": "Positive synthetic contextual label `passport`."
+    },
+    {
+      "id": "pos-010",
+      "role": "positive",
+      "text": "Demo packet lists pasaporte = P12345009.",
+      "note": "Positive synthetic contextual label `pasaporte`."
+    },
+    {
+      "id": "pos-011",
+      "role": "positive",
+      "text": "Review field passport: P12345010.",
+      "note": "Positive synthetic contextual label `passport`."
+    },
+    {
+      "id": "pos-012",
+      "role": "positive",
+      "text": "Training form says pasaporte = P12345011.",
+      "note": "Positive synthetic contextual label `pasaporte`."
+    },
+    {
+      "id": "pos-013",
+      "role": "positive",
+      "text": "passport: P12345012",
+      "note": "Positive synthetic contextual label `passport`."
+    },
+    {
+      "id": "pos-014",
+      "role": "positive",
+      "text": "pasaporte = P12345013",
+      "note": "Positive synthetic contextual label `pasaporte`."
+    },
+    {
+      "id": "pos-015",
+      "role": "positive",
+      "text": "Synthetic row has passport: P12345014.",
+      "note": "Positive synthetic contextual label `passport`."
+    },
+    {
+      "id": "pos-016",
+      "role": "positive",
+      "text": "Demo packet lists pasaporte = P12345015.",
+      "note": "Positive synthetic contextual label `pasaporte`."
+    },
+    {
+      "id": "pos-017",
+      "role": "positive",
+      "text": "Review field passport: P12345016.",
+      "note": "Positive synthetic contextual label `passport`."
+    },
+    {
+      "id": "pos-018",
+      "role": "positive",
+      "text": "Training form says pasaporte = P12345017.",
+      "note": "Positive synthetic contextual label `pasaporte`."
+    },
+    {
+      "id": "pos-019",
+      "role": "positive",
+      "text": "passport: P12345018",
+      "note": "Positive synthetic contextual label `passport`."
+    },
+    {
+      "id": "pos-020",
+      "role": "positive",
+      "text": "pasaporte = P12345019",
+      "note": "Positive synthetic contextual label `pasaporte`."
+    },
+    {
+      "id": "pos-021",
+      "role": "positive",
+      "text": "Synthetic row has passport: P12345020.",
+      "note": "Positive synthetic contextual label `passport`."
+    },
+    {
+      "id": "pos-022",
+      "role": "positive",
+      "text": "Demo packet lists pasaporte = P12345021.",
+      "note": "Positive synthetic contextual label `pasaporte`."
+    },
+    {
+      "id": "pos-023",
+      "role": "positive",
+      "text": "Review field passport: P12345022.",
+      "note": "Positive synthetic contextual label `passport`."
+    },
+    {
+      "id": "pos-024",
+      "role": "positive",
+      "text": "Training form says pasaporte = P12345023.",
+      "note": "Positive synthetic contextual label `pasaporte`."
+    },
+    {
+      "id": "pos-025",
+      "role": "positive",
+      "text": "passport: P12345024",
+      "note": "Positive synthetic contextual label `passport`."
+    },
+    {
+      "id": "pos-026",
+      "role": "positive",
+      "text": "pasaporte = P12345025",
+      "note": "Positive synthetic contextual label `pasaporte`."
+    },
+    {
+      "id": "pos-027",
+      "role": "positive",
+      "text": "Synthetic row has passport: P12345026.",
+      "note": "Positive synthetic contextual label `passport`."
+    },
+    {
+      "id": "pos-028",
+      "role": "positive",
+      "text": "Demo packet lists pasaporte = P12345027.",
+      "note": "Positive synthetic contextual label `pasaporte`."
+    },
+    {
+      "id": "pos-029",
+      "role": "positive",
+      "text": "Review field passport: P12345028.",
+      "note": "Positive synthetic contextual label `passport`."
+    },
+    {
+      "id": "pos-030",
+      "role": "positive",
+      "text": "Training form says pasaporte = passport code withheld.",
+      "note": "Positive synthetic contextual label `pasaporte`."
+    },
+    {
+      "id": "neg-001",
+      "role": "negative",
+      "text": "The demo ticket says the field was intentionally left blank.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-002",
+      "role": "negative",
+      "text": "Use generic placeholder data for this public test scenario.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-003",
+      "role": "negative",
+      "text": "No customer, patient, credential, or financial identifier appears here.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-004",
+      "role": "negative",
+      "text": "The reviewer checked the synthetic workflow summary.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-005",
+      "role": "negative",
+      "text": "All columns in this row are intentionally empty.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-006",
+      "role": "negative",
+      "text": "Training notes describe policy behavior without concrete values.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-007",
+      "role": "negative",
+      "text": "Sample prose mentions categories but no labeled value follows.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-008",
+      "role": "negative",
+      "text": "The public fixture contains only harmless operational text.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-009",
+      "role": "negative",
+      "text": "Operators can mark the optional field as skipped.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-010",
+      "role": "negative",
+      "text": "Documentation explains the concept using words only.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-011",
+      "role": "negative",
+      "text": "No identifier is present in this sandbox paragraph.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-012",
+      "role": "negative",
+      "text": "The exported row uses blank cells for sensitive columns.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-013",
+      "role": "negative",
+      "text": "This line carries status, priority, and owner role only.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-014",
+      "role": "negative",
+      "text": "The synthetic form says value unavailable.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-015",
+      "role": "negative",
+      "text": "Demonstration content avoids entity-shaped strings here.",
+      "note": "Negative synthetic control without target entity value."
+    }
+  ]
+}

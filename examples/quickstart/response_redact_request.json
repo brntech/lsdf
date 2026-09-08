@@ -1,0 +1,9 @@
+{
+  "model": "lsdf-demo",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Show the normal content leak demo."
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "detector": "regex.financial_family",
+  "entity": "BANK_ACCOUNT",
+  "description": "Synthetic bank account and routing number fixtures.",
+  "cases": [
+    {
+      "id": "bank_account_positive_account_number",
+      "role": "positive",
+      "text": "Account Number: 152634-93721548",
+      "note": "Synthetic anchored bank account value."
+    },
+    {
+      "id": "bank_account_positive_routing",
+      "role": "positive",
+      "text": "Bank Routing Number: 091000022",
+      "note": "Test routing-style value."
+    },
+    {
+      "id": "bank_account_positive_bank_account",
+      "role": "positive",
+      "text": "Bank Account Number: 000123456789",
+      "note": "Synthetic account number."
+    },
+    {
+      "id": "bank_account_positive_rekeningnummer",
+      "role": "positive",
+      "text": "Rekeningnummer: NL12TEST34567890",
+      "note": "Anchored synthetic Dutch account-like value."
+    },
+    {
+      "id": "bank_account_negative_open",
+      "role": "negative",
+      "text": "Account Number: open",
+      "note": "Insufficient digit density."
+    },
+    {
+      "id": "bank_account_negative_no_delimiter",
+      "role": "negative",
+      "text": "Account Number appears in the field list only.",
+      "note": "No delimiter and value."
+    },
+    {
+      "id": "bank_account_negative_short",
+      "role": "negative",
+      "text": "Account Number: 12345",
+      "note": "Too few digits."
+    }
+  ]
+}

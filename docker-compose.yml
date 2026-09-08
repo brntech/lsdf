@@ -1,0 +1,347 @@
+name: lsdf
+
+x-lsdf-base: &lsdf-base
+  build:
+    context: .
+    target: base
+  image: lsdf:dev
+  working_dir: /workspace
+  volumes:
+    - .:/workspace
+  environment:
+    PYTHONPATH: /workspace/src
+    PYTHONDONTWRITEBYTECODE: "1"
+    PYTHONUNBUFFERED: "1"
+    PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+services:
+  python:
+    <<: *lsdf-base
+    entrypoint: ["python3"]
+
+  cli:
+    <<: *lsdf-base
+    entrypoint: ["python3", "-m", "lsdf.cli"]
+
+  test:
+    <<: *lsdf-base
+    entrypoint: ["python3", "-m", "unittest"]
+    command: ["discover", "-s", "tests", "-v"]
+
+  eval:
+    <<: *lsdf-base
+    entrypoint: ["python3", "-m", "lsdf.cli", "eval"]
+    command: ["evals/basic.json"]
+
+  artifacts:
+    <<: *lsdf-base
+    entrypoint: ["python3", "-m", "lsdf.cli", "optional-detector-artifacts"]
+    command: ["--output-dir", "docs/artifacts/optional-detectors/container-latest"]
+
+  gateway:
+    <<: *lsdf-base
+    entrypoint: ["python3", "-m", "lsdf.cli"]
+    command:
+      - gateway
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+    ports:
+      - "8080:8080"
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      LSDF_PROFILE: "${LSDF_PROFILE:-default}"
+      LSDF_UPSTREAM_BASE_URL: "${LSDF_UPSTREAM_BASE_URL:-}"
+      LSDF_UPSTREAM_API_KEY: "${LSDF_UPSTREAM_API_KEY:-}"
+      LSDF_STREAM_HOLDBACK_CHARS: "${LSDF_STREAM_HOLDBACK_CHARS:-512}"
+      LSDF_AUDIT_JSONL_PATH: "${LSDF_AUDIT_JSONL_PATH:-}"
+      LSDF_AUDIT_ROTATE_BYTES: "${LSDF_AUDIT_ROTATE_BYTES:-}"
+      LSDF_AUDIT_ROTATE_BACKUPS: "${LSDF_AUDIT_ROTATE_BACKUPS:-3}"
+      LSDF_METRICS_ENABLED: "${LSDF_METRICS_ENABLED:-false}"
+      LSDF_METRICS_JSONL_PATH: "${LSDF_METRICS_JSONL_PATH:-}"
+      LSDF_HEALTH_UPSTREAM_TIMEOUT_MS: "${LSDF_HEALTH_UPSTREAM_TIMEOUT_MS:-1000}"
+      LSDF_TOKENIZATION_MODE: "${LSDF_TOKENIZATION_MODE:-irreversible}"
+      LSDF_VAULT_PATH: "${LSDF_VAULT_PATH:-}"
+      LSDF_VAULT_KEY: "${LSDF_VAULT_KEY:-}"
+      LSDF_REQUIRE_POLICY_SIGNATURE: "${LSDF_REQUIRE_POLICY_SIGNATURE:-false}"
+      LSDF_POLICY_PUBLIC_KEY: "${LSDF_POLICY_PUBLIC_KEY:-}"
+      LSDF_DOMAIN_PACKS: "${LSDF_DOMAIN_PACKS:-}"
+      LSDF_MANAGEMENT_ENABLED: "${LSDF_MANAGEMENT_ENABLED:-true}"
+      LSDF_MANAGEMENT_TOKEN: "${LSDF_MANAGEMENT_TOKEN:-}"
+
+  demo-upstream:
+    <<: *lsdf-base
+    entrypoint: ["python3", "-m", "lsdf.demo_upstream"]
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8091"
+    ports:
+      - "8091:8091"
+
+  demo-gateway:
+    profiles: ["demo"]
+    <<: *lsdf-base
+    entrypoint: ["python3", "-m", "lsdf.cli"]
+    command:
+      - gateway
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+    depends_on:
+      - demo-upstream
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      LSDF_PROFILE: default
+      LSDF_UPSTREAM_BASE_URL: http://demo-upstream:8091
+      LSDF_STREAM_HOLDBACK_CHARS: "512"
+      LSDF_AUDIT_JSONL_PATH: /workspace/.lsdf/demo/audit.jsonl
+      LSDF_METRICS_ENABLED: "true"
+      LSDF_METRICS_JSONL_PATH: /workspace/.lsdf/demo/metrics.jsonl
+
+  demo-runner:
+    profiles: ["demo"]
+    <<: *lsdf-base
+    entrypoint: ["python3", "-m", "lsdf.demo_runner"]
+    command:
+      - --gateway-base-url
+      - http://demo-gateway:8080
+      - --audit-jsonl-path
+      - /workspace/.lsdf/demo/audit.jsonl
+      - --metrics-jsonl-path
+      - /workspace/.lsdf/demo/metrics.jsonl
+    depends_on:
+      - demo-gateway
+
+  litellm-proxy-demo:
+    profiles: ["litellm-demo"]
+    <<: *lsdf-base
+    entrypoint: ["python3", "-m", "lsdf.openai_proxy_demo"]
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - "4000"
+      - --upstream-base-url
+      - http://demo-upstream:8091
+    depends_on:
+      - demo-upstream
+
+  litellm-demo-gateway:
+    profiles: ["litellm-demo"]
+    <<: *lsdf-base
+    entrypoint: ["python3", "-m", "lsdf.cli"]
+    command:
+      - gateway
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+    depends_on:
+      - litellm-proxy-demo
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      LSDF_PROFILE: default
+      LSDF_UPSTREAM_BASE_URL: http://litellm-proxy-demo:4000
+      LSDF_STREAM_HOLDBACK_CHARS: "512"
+
+  litellm-demo-runner:
+    profiles: ["litellm-demo"]
+    <<: *lsdf-base
+    entrypoint: ["python3", "examples/integrations/runnable_client_examples.py"]
+    command:
+      - --scenario
+      - litellm-proxy
+      - --gateway-base-url
+      - http://litellm-demo-gateway:8080/v1
+    depends_on:
+      - litellm-demo-gateway
+
+  runtime:
+    profiles: ["runtime"]
+    build:
+      context: .
+      target: runtime
+    image: lsdf:runtime
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - lsdf-runtime-data:/workspace/.lsdf
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      LSDF_PROFILE: "${LSDF_PROFILE:-default}"
+      LSDF_UPSTREAM_BASE_URL: "${LSDF_UPSTREAM_BASE_URL:-}"
+      LSDF_UPSTREAM_API_KEY: "${LSDF_UPSTREAM_API_KEY:-}"
+      LSDF_STREAM_HOLDBACK_CHARS: "${LSDF_STREAM_HOLDBACK_CHARS:-512}"
+      LSDF_AUDIT_JSONL_PATH: "${LSDF_AUDIT_JSONL_PATH:-}"
+      LSDF_AUDIT_ROTATE_BYTES: "${LSDF_AUDIT_ROTATE_BYTES:-}"
+      LSDF_AUDIT_ROTATE_BACKUPS: "${LSDF_AUDIT_ROTATE_BACKUPS:-3}"
+      LSDF_METRICS_ENABLED: "${LSDF_METRICS_ENABLED:-false}"
+      LSDF_METRICS_JSONL_PATH: "${LSDF_METRICS_JSONL_PATH:-}"
+      LSDF_HEALTH_UPSTREAM_TIMEOUT_MS: "${LSDF_HEALTH_UPSTREAM_TIMEOUT_MS:-1000}"
+      LSDF_TOKENIZATION_MODE: "${LSDF_TOKENIZATION_MODE:-irreversible}"
+      LSDF_VAULT_PATH: "${LSDF_VAULT_PATH:-}"
+      LSDF_VAULT_KEY: "${LSDF_VAULT_KEY:-}"
+      LSDF_REQUIRE_POLICY_SIGNATURE: "${LSDF_REQUIRE_POLICY_SIGNATURE:-false}"
+      LSDF_POLICY_PUBLIC_KEY: "${LSDF_POLICY_PUBLIC_KEY:-}"
+      LSDF_DOMAIN_PACKS: "${LSDF_DOMAIN_PACKS:-}"
+      LSDF_MANAGEMENT_ENABLED: "${LSDF_MANAGEMENT_ENABLED:-true}"
+      LSDF_MANAGEMENT_TOKEN: "${LSDF_MANAGEMENT_TOKEN:-}"
+
+  runtime-check:
+    profiles: ["runtime-smoke"]
+    build:
+      context: .
+      target: runtime
+    image: lsdf:runtime
+    entrypoint: ["python3", "/checks/runtime_image_smoke.py"]
+    volumes:
+      - ./tests/runtime_image_smoke.py:/checks/runtime_image_smoke.py:ro
+
+  optional-runtime-check:
+    profiles: ["optional-runtime-smoke"]
+    build:
+      context: .
+      target: runtime-optional
+    image: lsdf:runtime-optional
+    entrypoint: ["python3", "/checks/runtime_image_smoke.py"]
+    environment:
+      LSDF_RUNTIME_OPTIONAL: "true"
+      LSDF_PROFILE: default
+      HF_HUB_OFFLINE: "1"
+    volumes:
+      - ./tests/runtime_image_smoke.py:/checks/runtime_image_smoke.py:ro
+
+  runtime-smoke-gateway:
+    profiles: ["runtime-smoke"]
+    build:
+      context: .
+      target: runtime
+    image: lsdf:runtime
+    depends_on:
+      - demo-upstream
+    environment:
+      LSDF_UPSTREAM_BASE_URL: http://demo-upstream:8091
+      LSDF_METRICS_ENABLED: "true"
+
+  runtime-smoke-runner:
+    profiles: ["runtime-smoke"]
+    <<: *lsdf-base
+    entrypoint: ["python3", "-m", "lsdf.demo_runner"]
+    command: ["--gateway-base-url", "http://runtime-smoke-gateway:8080"]
+    depends_on:
+      - runtime-smoke-gateway
+
+  optional-cli:
+    profiles: ["optional"]
+    build:
+      context: .
+      target: optional-detectors
+    image: lsdf:optional
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - lsdf-hf-cache:/opt/lsdf-cache/huggingface
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      HF_HOME: /opt/lsdf-cache/huggingface
+      LSDF_OPENAI_PRIVACY_FILTER_MODEL: "${LSDF_OPENAI_PRIVACY_FILTER_MODEL:-openai/privacy-filter}"
+      LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY: "${LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY:-true}"
+      LSDF_OPENAI_PRIVACY_FILTER_SCORE_THRESHOLD: "${LSDF_OPENAI_PRIVACY_FILTER_SCORE_THRESHOLD:-0.85}"
+      LSDF_REQUIRE_OPENAI_PRIVACY_FILTER: "${LSDF_REQUIRE_OPENAI_PRIVACY_FILTER:-}"
+      LSDF_RUN_OPTIONAL_DETECTOR_BATTERY_SMOKE: "${LSDF_RUN_OPTIONAL_DETECTOR_BATTERY_SMOKE:-1}"
+    entrypoint: ["python3", "-m", "lsdf.cli"]
+
+  gateway-ml:
+    profiles: ["optional"]
+    build:
+      context: .
+      target: optional-detectors
+    image: lsdf:optional
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - lsdf-hf-cache:/opt/lsdf-cache/huggingface
+    entrypoint: ["python3", "-m", "lsdf.cli"]
+    command:
+      - gateway
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+    ports:
+      - "8080:8080"
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      HF_HOME: /opt/lsdf-cache/huggingface
+      LSDF_PROFILE: "${LSDF_PROFILE:-broad-pii-ml}"
+      LSDF_UPSTREAM_BASE_URL: "${LSDF_UPSTREAM_BASE_URL:-}"
+      LSDF_UPSTREAM_API_KEY: "${LSDF_UPSTREAM_API_KEY:-}"
+      LSDF_STREAM_HOLDBACK_CHARS: "${LSDF_STREAM_HOLDBACK_CHARS:-512}"
+      LSDF_AUDIT_JSONL_PATH: "${LSDF_AUDIT_JSONL_PATH:-}"
+      LSDF_AUDIT_ROTATE_BYTES: "${LSDF_AUDIT_ROTATE_BYTES:-}"
+      LSDF_AUDIT_ROTATE_BACKUPS: "${LSDF_AUDIT_ROTATE_BACKUPS:-3}"
+      LSDF_METRICS_ENABLED: "${LSDF_METRICS_ENABLED:-false}"
+      LSDF_METRICS_JSONL_PATH: "${LSDF_METRICS_JSONL_PATH:-}"
+      LSDF_HEALTH_UPSTREAM_TIMEOUT_MS: "${LSDF_HEALTH_UPSTREAM_TIMEOUT_MS:-1000}"
+      LSDF_TOKENIZATION_MODE: "${LSDF_TOKENIZATION_MODE:-irreversible}"
+      LSDF_VAULT_PATH: "${LSDF_VAULT_PATH:-}"
+      LSDF_VAULT_KEY: "${LSDF_VAULT_KEY:-}"
+      LSDF_REQUIRE_POLICY_SIGNATURE: "${LSDF_REQUIRE_POLICY_SIGNATURE:-false}"
+      LSDF_POLICY_PUBLIC_KEY: "${LSDF_POLICY_PUBLIC_KEY:-}"
+      LSDF_DOMAIN_PACKS: "${LSDF_DOMAIN_PACKS:-}"
+      LSDF_MANAGEMENT_ENABLED: "${LSDF_MANAGEMENT_ENABLED:-true}"
+      LSDF_MANAGEMENT_TOKEN: "${LSDF_MANAGEMENT_TOKEN:-}"
+      LSDF_OPENAI_PRIVACY_FILTER_MODEL: "${LSDF_OPENAI_PRIVACY_FILTER_MODEL:-openai/privacy-filter}"
+      LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY: "${LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY:-true}"
+      LSDF_OPENAI_PRIVACY_FILTER_SCORE_THRESHOLD: "${LSDF_OPENAI_PRIVACY_FILTER_SCORE_THRESHOLD:-0.85}"
+
+  optional-test:
+    profiles: ["optional"]
+    build:
+      context: .
+      target: optional-detectors
+    image: lsdf:optional
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - lsdf-hf-cache:/opt/lsdf-cache/huggingface
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      HF_HOME: /opt/lsdf-cache/huggingface
+      LSDF_OPENAI_PRIVACY_FILTER_MODEL: "${LSDF_OPENAI_PRIVACY_FILTER_MODEL:-openai/privacy-filter}"
+      LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY: "${LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY:-true}"
+      LSDF_OPENAI_PRIVACY_FILTER_SCORE_THRESHOLD: "${LSDF_OPENAI_PRIVACY_FILTER_SCORE_THRESHOLD:-0.85}"
+      LSDF_REQUIRE_OPENAI_PRIVACY_FILTER: "${LSDF_REQUIRE_OPENAI_PRIVACY_FILTER:-}"
+      LSDF_RUN_OPTIONAL_DETECTOR_BATTERY_SMOKE: "${LSDF_RUN_OPTIONAL_DETECTOR_BATTERY_SMOKE:-1}"
+    entrypoint: ["python3", "-m", "unittest"]
+    command: ["tests.test_optional_detector_smoke", "-v"]
+
+volumes:
+  lsdf-runtime-data:
+  lsdf-hf-cache:
+    name: lsdf-hf-cache

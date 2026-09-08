@@ -1,0 +1,277 @@
+{
+  "detector": "presidio.analyzer",
+  "entity": "IBAN",
+  "description": "Synthetic fixture for presidio.analyzer iban detection.",
+  "cases": [
+    {
+      "id": "pos-001",
+      "role": "positive",
+      "text": "Record field contains iban: GB10WEST12345698765000.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-002",
+      "role": "positive",
+      "text": "Please review GB11WEST12345698765001 during the synthetic intake workflow.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-003",
+      "role": "positive",
+      "text": "The sample ticket lists iban as GB12WEST12345698765002 for testing.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-004",
+      "role": "positive",
+      "text": "Synthetic export row: iban = GB13WEST12345698765003; status = demo.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-005",
+      "role": "positive",
+      "text": "Training payload includes iban: GB14WEST12345698765004.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-006",
+      "role": "positive",
+      "text": "The review queue captured GB15WEST12345698765005 under the iban field.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-007",
+      "role": "positive",
+      "text": "Sandbox note says iban value GB16WEST12345698765006.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-008",
+      "role": "positive",
+      "text": "Fixture narrative includes GB17WEST12345698765007 for detector calibration.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-009",
+      "role": "positive",
+      "text": "Demo intake form stores iban: GB18WEST12345698765008.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-010",
+      "role": "positive",
+      "text": "Synthetic case packet repeats GB19WEST12345698765009 near the iban label.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-011",
+      "role": "positive",
+      "text": "Record field contains iban: GB20WEST12345698765010.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-012",
+      "role": "positive",
+      "text": "Please review GB21WEST12345698765011 during the synthetic intake workflow.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-013",
+      "role": "positive",
+      "text": "The sample ticket lists iban as GB22WEST12345698765012 for testing.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-014",
+      "role": "positive",
+      "text": "Synthetic export row: iban = GB23WEST12345698765013; status = demo.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-015",
+      "role": "positive",
+      "text": "Training payload includes iban: GB24WEST12345698765014.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-016",
+      "role": "positive",
+      "text": "The review queue captured GB25WEST12345698765015 under the iban field.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-017",
+      "role": "positive",
+      "text": "Sandbox note says iban value GB26WEST12345698765016.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-018",
+      "role": "positive",
+      "text": "Fixture narrative includes GB27WEST12345698765017 for detector calibration.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-019",
+      "role": "positive",
+      "text": "Demo intake form stores iban: GB28WEST12345698765018.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-020",
+      "role": "positive",
+      "text": "Synthetic case packet repeats GB29WEST12345698765019 near the iban label.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-021",
+      "role": "positive",
+      "text": "Record field contains iban: GB30WEST12345698765020.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-022",
+      "role": "positive",
+      "text": "Please review GB31WEST12345698765021 during the synthetic intake workflow.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-023",
+      "role": "positive",
+      "text": "The sample ticket lists iban as GB32WEST12345698765022 for testing.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-024",
+      "role": "positive",
+      "text": "Synthetic export row: iban = GB33WEST12345698765023; status = demo.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-025",
+      "role": "positive",
+      "text": "Training payload includes iban: GB34WEST12345698765024.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-026",
+      "role": "positive",
+      "text": "The review queue captured GB35WEST12345698765025 under the iban field.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-027",
+      "role": "positive",
+      "text": "Sandbox note says iban value GB36WEST12345698765026.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-028",
+      "role": "positive",
+      "text": "Fixture narrative includes GB37WEST12345698765027 for detector calibration.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-029",
+      "role": "positive",
+      "text": "Demo intake form stores iban: GB38WEST12345698765028.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "pos-030",
+      "role": "positive",
+      "text": "Synthetic case packet repeats iban withheld in words near the iban label.",
+      "note": "Positive synthetic optional-adapter value."
+    },
+    {
+      "id": "neg-001",
+      "role": "negative",
+      "text": "The demo ticket says the field was intentionally left blank.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-002",
+      "role": "negative",
+      "text": "Use generic placeholder data for this public test scenario.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-003",
+      "role": "negative",
+      "text": "No customer, patient, credential, or financial identifier appears here.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-004",
+      "role": "negative",
+      "text": "The reviewer checked the synthetic workflow summary.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-005",
+      "role": "negative",
+      "text": "All columns in this row are intentionally empty.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-006",
+      "role": "negative",
+      "text": "Training notes describe policy behavior without concrete values.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-007",
+      "role": "negative",
+      "text": "Sample prose mentions categories but no labeled value follows.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-008",
+      "role": "negative",
+      "text": "The public fixture contains only harmless operational text.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-009",
+      "role": "negative",
+      "text": "Operators can mark the optional field as skipped.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-010",
+      "role": "negative",
+      "text": "Documentation explains the concept using words only.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-011",
+      "role": "negative",
+      "text": "No identifier is present in this sandbox paragraph.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-012",
+      "role": "negative",
+      "text": "The exported row uses blank cells for sensitive columns.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-013",
+      "role": "negative",
+      "text": "This line carries status, priority, and owner role only.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-014",
+      "role": "negative",
+      "text": "The synthetic form says value unavailable.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-015",
+      "role": "negative",
+      "text": "Demonstration content avoids entity-shaped strings here.",
+      "note": "Negative synthetic control without target entity value."
+    }
+  ]
+}

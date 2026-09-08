@@ -1,0 +1,72 @@
+{
+  "version": "0.2",
+  "name": "default",
+  "mode": "redact",
+  "entity_count": 19,
+  "surface_count": 10,
+  "rule_count": 7,
+  "detector_families": [
+    "regex",
+    "entropy",
+    "medical-regex",
+    "contextual-anchored"
+  ],
+  "detector_settings": [],
+  "entity_categories": {
+    "PHI": [
+      "BLOOD_TYPE",
+      "DIAGNOSIS_TEXT",
+      "HEALTH_INSURANCE_ID",
+      "ICD_CODE",
+      "LAB_VALUE",
+      "MEDICAL_CONDITION",
+      "MEDICATION",
+      "MRN",
+      "OTHER_PHI",
+      "PHI"
+    ],
+    "SECRET": [
+      "API_KEY",
+      "AWS_KEY",
+      "AZURE_KEY",
+      "BEARER_TOKEN",
+      "DATABASE_URL",
+      "DATADOG_KEY",
+      "JWT",
+      "OAUTH_TOKEN",
+      "OTHER_SECRET",
+      "PASSWORD",
+      "PEM_BLOCK",
+      "PRIVATE_KEY",
+      "SECRET",
+      "WEBHOOK_URL"
+    ],
+    "STRONG_ID": [
+      "BR_CPF",
+      "DRIVER_LICENSE",
+      "NATIONAL_ID",
+      "OTHER_STRONG_ID",
+      "PASSPORT",
+      "SSN",
+      "TAX_ID",
+      "US_SSN"
+    ],
+    "INTERNAL_ID": [
+      "CUSTOMER_ID",
+      "EMPLOYEE_ID",
+      "LICENSE_PLATE",
+      "OTHER_INTERNAL_ID",
+      "STUDENT_ID",
+      "USER_ID"
+    ]
+  },
+  "rules": [
+    "redact-sensitive-tool-args",
+    "block-secrets-dispatch-surfaces",
+    "block-secrets-before-model",
+    "redact-secrets-final-content",
+    "tokenize-sensitive-identifiers-before-model",
+    "redact-sensitive-identifiers-output",
+    "log-generic-identity-low-noise"
+  ]
+}

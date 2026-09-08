@@ -1,0 +1,49 @@
+{
+  "detector": "regex.financial_family",
+  "entity": "CREDIT_CARD",
+  "description": "Synthetic/test credit card number fixtures using public test ranges.",
+  "cases": [
+    {
+      "id": "credit_card_positive_visa_test",
+      "role": "positive",
+      "text": "test_card: 4242 4242 4242 4242",
+      "note": "Public payment processor test card number."
+    },
+    {
+      "id": "credit_card_positive_mastercard_test",
+      "role": "positive",
+      "text": "test card 5555-5555-5555-4444",
+      "note": "Public Mastercard test number."
+    },
+    {
+      "id": "credit_card_positive_amex_test",
+      "role": "positive",
+      "text": "fixture card 378282246310005",
+      "note": "Public Amex test number."
+    },
+    {
+      "id": "credit_card_positive_discover_test",
+      "role": "positive",
+      "text": "discover fixture 6011 1111 1111 1117",
+      "note": "Public Discover test number."
+    },
+    {
+      "id": "credit_card_negative_bad_luhn",
+      "role": "negative",
+      "text": "test_card: 4242 4242 4242 4241",
+      "note": "Same shape, invalid Luhn checksum."
+    },
+    {
+      "id": "credit_card_negative_short",
+      "role": "negative",
+      "text": "test_card: 4242 4242 4242",
+      "note": "Too short for detector."
+    },
+    {
+      "id": "credit_card_negative_order_number",
+      "role": "negative",
+      "text": "order number 1234-5678 is not a payment card.",
+      "note": "Short business identifier."
+    }
+  ]
+}

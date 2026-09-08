@@ -1,0 +1,277 @@
+{
+  "detector": "openai_privacy_filter.reference_model",
+  "entity": "ADDRESS",
+  "description": "Synthetic fixture for openai_privacy_filter.reference_model address detection.",
+  "cases": [
+    {
+      "id": "pos-001",
+      "role": "positive",
+      "text": "Record field contains address: 40 Cedar Lane.",
+      "note": "Positive synthetic optional-adapter address value with English context."
+    },
+    {
+      "id": "pos-002",
+      "role": "positive",
+      "text": "El formulario sintetico lista 41 Maple Street para prueba.",
+      "note": "Positive synthetic optional-adapter address value with Spanish context."
+    },
+    {
+      "id": "pos-003",
+      "role": "positive",
+      "text": "Le dossier synthetique indique 42 Harbor Road pour essai.",
+      "note": "Positive synthetic optional-adapter address value with French context."
+    },
+    {
+      "id": "pos-004",
+      "role": "positive",
+      "text": "Der synthetische Eintrag nennt 43 Pine Avenue im Test.",
+      "note": "Positive synthetic optional-adapter address value with German context."
+    },
+    {
+      "id": "pos-005",
+      "role": "positive",
+      "text": "La scheda sintetica include 44 Birch Drive per prova.",
+      "note": "Positive synthetic optional-adapter address value with Italian context."
+    },
+    {
+      "id": "pos-006",
+      "role": "positive",
+      "text": "O registro sintetico lista 45 River Boulevard para teste.",
+      "note": "Positive synthetic optional-adapter address value with Portuguese context."
+    },
+    {
+      "id": "pos-007",
+      "role": "positive",
+      "text": "Het synthetische formulier noemt 46 Oak Lane als adres.",
+      "note": "Positive synthetic optional-adapter address value with Dutch context."
+    },
+    {
+      "id": "pos-008",
+      "role": "positive",
+      "text": "Record field contains address: 47 Ash Street.",
+      "note": "Positive synthetic optional-adapter address value with English context."
+    },
+    {
+      "id": "pos-009",
+      "role": "positive",
+      "text": "El formulario sintetico lista 48 Elm Road para prueba.",
+      "note": "Positive synthetic optional-adapter address value with Spanish context."
+    },
+    {
+      "id": "pos-010",
+      "role": "positive",
+      "text": "Le dossier synthetique indique 49 Spruce Avenue pour essai.",
+      "note": "Positive synthetic optional-adapter address value with French context."
+    },
+    {
+      "id": "pos-011",
+      "role": "positive",
+      "text": "Der synthetische Eintrag nennt 50 Willow Drive im Test.",
+      "note": "Positive synthetic optional-adapter address value with German context."
+    },
+    {
+      "id": "pos-012",
+      "role": "positive",
+      "text": "La scheda sintetica include 51 Palm Boulevard per prova.",
+      "note": "Positive synthetic optional-adapter address value with Italian context."
+    },
+    {
+      "id": "pos-013",
+      "role": "positive",
+      "text": "O registro sintetico lista 52 Stone Road para teste.",
+      "note": "Positive synthetic optional-adapter address value with Portuguese context."
+    },
+    {
+      "id": "pos-014",
+      "role": "positive",
+      "text": "Het synthetische formulier noemt 53 Lake Street als adres.",
+      "note": "Positive synthetic optional-adapter address value with Dutch context."
+    },
+    {
+      "id": "pos-015",
+      "role": "positive",
+      "text": "Record field contains address: 54 Hill Avenue.",
+      "note": "Positive synthetic optional-adapter address value with English context."
+    },
+    {
+      "id": "pos-016",
+      "role": "positive",
+      "text": "El formulario sintetico lista 55 Valley Lane para prueba.",
+      "note": "Positive synthetic optional-adapter address value with Spanish context."
+    },
+    {
+      "id": "pos-017",
+      "role": "positive",
+      "text": "Le dossier synthetique indique 56 Garden Drive pour essai.",
+      "note": "Positive synthetic optional-adapter address value with French context."
+    },
+    {
+      "id": "pos-018",
+      "role": "positive",
+      "text": "Der synthetische Eintrag nennt 57 Market Street im Test.",
+      "note": "Positive synthetic optional-adapter address value with German context."
+    },
+    {
+      "id": "pos-019",
+      "role": "positive",
+      "text": "La scheda sintetica include 58 Grove Road per prova.",
+      "note": "Positive synthetic optional-adapter address value with Italian context."
+    },
+    {
+      "id": "pos-020",
+      "role": "positive",
+      "text": "O registro sintetico lista 59 Meadow Avenue para teste.",
+      "note": "Positive synthetic optional-adapter address value with Portuguese context."
+    },
+    {
+      "id": "pos-021",
+      "role": "positive",
+      "text": "Het synthetische formulier noemt 60 Union Boulevard als adres.",
+      "note": "Positive synthetic optional-adapter address value with Dutch context."
+    },
+    {
+      "id": "pos-022",
+      "role": "positive",
+      "text": "Record field contains address: 61 Forest Lane.",
+      "note": "Positive synthetic optional-adapter address value with English context."
+    },
+    {
+      "id": "pos-023",
+      "role": "positive",
+      "text": "El formulario sintetico lista 62 Ridge Street para prueba.",
+      "note": "Positive synthetic optional-adapter address value with Spanish context."
+    },
+    {
+      "id": "pos-024",
+      "role": "positive",
+      "text": "Le dossier synthetique indique 63 Canal Road pour essai.",
+      "note": "Positive synthetic optional-adapter address value with French context."
+    },
+    {
+      "id": "pos-025",
+      "role": "positive",
+      "text": "Der synthetische Eintrag nennt 64 Park Avenue im Test.",
+      "note": "Positive synthetic optional-adapter address value with German context."
+    },
+    {
+      "id": "pos-026",
+      "role": "positive",
+      "text": "La scheda sintetica include 65 Mill Drive per prova.",
+      "note": "Positive synthetic optional-adapter address value with Italian context."
+    },
+    {
+      "id": "pos-027",
+      "role": "positive",
+      "text": "O registro sintetico lista 66 Beacon Street para teste.",
+      "note": "Positive synthetic optional-adapter address value with Portuguese context."
+    },
+    {
+      "id": "pos-028",
+      "role": "positive",
+      "text": "Het synthetische formulier noemt 67 Sunset Road als adres.",
+      "note": "Positive synthetic optional-adapter address value with Dutch context."
+    },
+    {
+      "id": "pos-029",
+      "role": "positive",
+      "text": "Record field contains address: 68 North Avenue.",
+      "note": "Positive synthetic optional-adapter address value with English context."
+    },
+    {
+      "id": "pos-030",
+      "role": "positive",
+      "text": "El formulario sintetico lista 69 South Lane para prueba.",
+      "note": "Positive synthetic optional-adapter address value with Spanish context."
+    },
+    {
+      "id": "neg-001",
+      "role": "negative",
+      "text": "The demo ticket says the field was intentionally left blank.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-002",
+      "role": "negative",
+      "text": "Use generic placeholder data for this public test scenario.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-003",
+      "role": "negative",
+      "text": "No customer, patient, credential, or financial identifier appears here.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-004",
+      "role": "negative",
+      "text": "The reviewer checked the synthetic workflow summary.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-005",
+      "role": "negative",
+      "text": "All columns in this row are intentionally empty.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-006",
+      "role": "negative",
+      "text": "Training notes describe policy behavior without concrete values.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-007",
+      "role": "negative",
+      "text": "Sample prose mentions categories but no labeled value follows.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-008",
+      "role": "negative",
+      "text": "The public fixture contains only harmless operational text.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-009",
+      "role": "negative",
+      "text": "Operators can mark the optional field as skipped.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-010",
+      "role": "negative",
+      "text": "Documentation explains the concept using words only.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-011",
+      "role": "negative",
+      "text": "No identifier is present in this sandbox paragraph.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-012",
+      "role": "negative",
+      "text": "The exported row uses blank cells for sensitive columns.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-013",
+      "role": "negative",
+      "text": "This line carries status, priority, and owner role only.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-014",
+      "role": "negative",
+      "text": "The synthetic form says value unavailable.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-015",
+      "role": "negative",
+      "text": "Demonstration content avoids entity-shaped strings here.",
+      "note": "Negative synthetic control without target entity value."
+    }
+  ]
+}

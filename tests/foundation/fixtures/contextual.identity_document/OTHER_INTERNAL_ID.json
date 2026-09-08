@@ -1,0 +1,277 @@
+{
+  "detector": "contextual.identity_document",
+  "entity": "OTHER_INTERNAL_ID",
+  "description": "Synthetic form identifiers and benign controls.",
+  "cases": [
+    {
+      "id": "pos-001",
+      "role": "positive",
+      "text": "form id: INT-9000",
+      "note": "Positive synthetic contextual label `form id`."
+    },
+    {
+      "id": "pos-002",
+      "role": "positive",
+      "text": "certificate number = INT-9001",
+      "note": "Positive synthetic contextual label `certificate number`."
+    },
+    {
+      "id": "pos-003",
+      "role": "positive",
+      "text": "Synthetic row has form id: INT-9002.",
+      "note": "Positive synthetic contextual label `form id`."
+    },
+    {
+      "id": "pos-004",
+      "role": "positive",
+      "text": "Demo packet lists certificate number = INT-9003.",
+      "note": "Positive synthetic contextual label `certificate number`."
+    },
+    {
+      "id": "pos-005",
+      "role": "positive",
+      "text": "Review field form id: INT-9004.",
+      "note": "Positive synthetic contextual label `form id`."
+    },
+    {
+      "id": "pos-006",
+      "role": "positive",
+      "text": "Training form says certificate number = INT-9005.",
+      "note": "Positive synthetic contextual label `certificate number`."
+    },
+    {
+      "id": "pos-007",
+      "role": "positive",
+      "text": "form id: INT-9006",
+      "note": "Positive synthetic contextual label `form id`."
+    },
+    {
+      "id": "pos-008",
+      "role": "positive",
+      "text": "certificate number = INT-9007",
+      "note": "Positive synthetic contextual label `certificate number`."
+    },
+    {
+      "id": "pos-009",
+      "role": "positive",
+      "text": "Synthetic row has form id: INT-9008.",
+      "note": "Positive synthetic contextual label `form id`."
+    },
+    {
+      "id": "pos-010",
+      "role": "positive",
+      "text": "Demo packet lists certificate number = INT-9009.",
+      "note": "Positive synthetic contextual label `certificate number`."
+    },
+    {
+      "id": "pos-011",
+      "role": "positive",
+      "text": "Review field form id: INT-9010.",
+      "note": "Positive synthetic contextual label `form id`."
+    },
+    {
+      "id": "pos-012",
+      "role": "positive",
+      "text": "Training form says certificate number = INT-9011.",
+      "note": "Positive synthetic contextual label `certificate number`."
+    },
+    {
+      "id": "pos-013",
+      "role": "positive",
+      "text": "form id: INT-9012",
+      "note": "Positive synthetic contextual label `form id`."
+    },
+    {
+      "id": "pos-014",
+      "role": "positive",
+      "text": "certificate number = INT-9013",
+      "note": "Positive synthetic contextual label `certificate number`."
+    },
+    {
+      "id": "pos-015",
+      "role": "positive",
+      "text": "Synthetic row has form id: INT-9014.",
+      "note": "Positive synthetic contextual label `form id`."
+    },
+    {
+      "id": "pos-016",
+      "role": "positive",
+      "text": "Demo packet lists certificate number = INT-9015.",
+      "note": "Positive synthetic contextual label `certificate number`."
+    },
+    {
+      "id": "pos-017",
+      "role": "positive",
+      "text": "Review field form id: INT-9016.",
+      "note": "Positive synthetic contextual label `form id`."
+    },
+    {
+      "id": "pos-018",
+      "role": "positive",
+      "text": "Training form says certificate number = INT-9017.",
+      "note": "Positive synthetic contextual label `certificate number`."
+    },
+    {
+      "id": "pos-019",
+      "role": "positive",
+      "text": "form id: INT-9018",
+      "note": "Positive synthetic contextual label `form id`."
+    },
+    {
+      "id": "pos-020",
+      "role": "positive",
+      "text": "certificate number = INT-9019",
+      "note": "Positive synthetic contextual label `certificate number`."
+    },
+    {
+      "id": "pos-021",
+      "role": "positive",
+      "text": "Synthetic row has form id: INT-9020.",
+      "note": "Positive synthetic contextual label `form id`."
+    },
+    {
+      "id": "pos-022",
+      "role": "positive",
+      "text": "Demo packet lists certificate number = INT-9021.",
+      "note": "Positive synthetic contextual label `certificate number`."
+    },
+    {
+      "id": "pos-023",
+      "role": "positive",
+      "text": "Review field form id: INT-9022.",
+      "note": "Positive synthetic contextual label `form id`."
+    },
+    {
+      "id": "pos-024",
+      "role": "positive",
+      "text": "Training form says certificate number = INT-9023.",
+      "note": "Positive synthetic contextual label `certificate number`."
+    },
+    {
+      "id": "pos-025",
+      "role": "positive",
+      "text": "form id: INT-9024",
+      "note": "Positive synthetic contextual label `form id`."
+    },
+    {
+      "id": "pos-026",
+      "role": "positive",
+      "text": "certificate number = INT-9025",
+      "note": "Positive synthetic contextual label `certificate number`."
+    },
+    {
+      "id": "pos-027",
+      "role": "positive",
+      "text": "Synthetic row has form id: INT-9026.",
+      "note": "Positive synthetic contextual label `form id`."
+    },
+    {
+      "id": "pos-028",
+      "role": "positive",
+      "text": "Demo packet lists certificate number = INT-9027.",
+      "note": "Positive synthetic contextual label `certificate number`."
+    },
+    {
+      "id": "pos-029",
+      "role": "positive",
+      "text": "Review field form id: INT-9028.",
+      "note": "Positive synthetic contextual label `form id`."
+    },
+    {
+      "id": "pos-030",
+      "role": "positive",
+      "text": "Training form says certificate number = internal id withheld.",
+      "note": "Positive synthetic contextual label `certificate number`."
+    },
+    {
+      "id": "neg-001",
+      "role": "negative",
+      "text": "The demo ticket says the field was intentionally left blank.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-002",
+      "role": "negative",
+      "text": "Use generic placeholder data for this public test scenario.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-003",
+      "role": "negative",
+      "text": "No customer, patient, credential, or financial identifier appears here.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-004",
+      "role": "negative",
+      "text": "The reviewer checked the synthetic workflow summary.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-005",
+      "role": "negative",
+      "text": "All columns in this row are intentionally empty.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-006",
+      "role": "negative",
+      "text": "Training notes describe policy behavior without concrete values.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-007",
+      "role": "negative",
+      "text": "Sample prose mentions categories but no labeled value follows.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-008",
+      "role": "negative",
+      "text": "The public fixture contains only harmless operational text.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-009",
+      "role": "negative",
+      "text": "Operators can mark the optional field as skipped.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-010",
+      "role": "negative",
+      "text": "Documentation explains the concept using words only.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-011",
+      "role": "negative",
+      "text": "No identifier is present in this sandbox paragraph.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-012",
+      "role": "negative",
+      "text": "The exported row uses blank cells for sensitive columns.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-013",
+      "role": "negative",
+      "text": "This line carries status, priority, and owner role only.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-014",
+      "role": "negative",
+      "text": "The synthetic form says value unavailable.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-015",
+      "role": "negative",
+      "text": "Demonstration content avoids entity-shaped strings here.",
+      "note": "Negative synthetic control without target entity value."
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+name: financial
+entities: []
+surfaces: []
+rules:
+  - id: domain-financial-block-payment-dispatch
+    match:
+      entity_any_of: [CREDIT_CARD, BANK_ACCOUNT, IBAN, SWIFT, EMPLOYEE_COMPENSATION]
+      entity_in_category_any_of: [STRONG_ID, INTERNAL_ID]
+      surface_any_of: [output.tool_calls.arguments, output.reasoning, logs.traces]
+    action: block
+    severity: critical
+    priority: 115
+
+  - id: domain-financial-tokenize-before-model
+    match:
+      entity_any_of: [CREDIT_CARD, BANK_ACCOUNT, IBAN, SWIFT]
+      entity_in_category_any_of: [STRONG_ID, INTERNAL_ID]
+      surface_any_of: [input.messages, input.rag_context, input.tool_results]
+    action: tokenize
+    severity: high
+    priority: 75
+
+  - id: domain-financial-redact-output
+    match:
+      entity_any_of: [CREDIT_CARD, BANK_ACCOUNT, IBAN, SWIFT, EMPLOYEE_COMPENSATION]
+      entity_in_category_any_of: [STRONG_ID, INTERNAL_ID]
+      surface_any_of: [output.content, output.stream_chunk]
+    action: redact
+    severity: high
+    priority: 75

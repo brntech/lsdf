@@ -1,0 +1,49 @@
+{
+    "detector":  "regex.secret_assignment",
+    "entity":  "BEARER_TOKEN",
+    "description":  "Synthetic bearer-token assignment fixtures.",
+    "cases":  [
+                  {
+                      "id":  "bearer_token_positive_bearer_label",
+                      "role":  "positive",
+                      "text":  "bearer: FixtureBearerValue123456789",
+                      "note":  "Generic bearer label maps to BEARER_TOKEN."
+                  },
+                  {
+                      "id":  "bearer_token_positive_token_bearer_value",
+                      "role":  "positive",
+                      "text":  "bearer: FixtureBearerValue0001",
+                      "note":  "Label maps directly to BEARER_TOKEN."
+                  },
+                  {
+                      "id":  "bearer_token_positive_authorization_shape",
+                      "role":  "positive",
+                      "text":  "bearer: FixtureBearerTokenABC12345",
+                      "note":  "Label maps directly to BEARER_TOKEN in secret assignment."
+                  },
+                  {
+                      "id":  "bearer_token_positive_quoted",
+                      "role":  "positive",
+                      "text":  "bearer = \"FixtureBearerTokenValue999\"",
+                      "note":  "Quoted synthetic bearer assignment."
+                  },
+                  {
+                      "id":  "bearer_token_negative_placeholder",
+                      "role":  "negative",
+                      "text":  "bearer: example",
+                      "note":  "Placeholder value."
+                  },
+                  {
+                      "id":  "bearer_token_negative_no_value",
+                      "role":  "negative",
+                      "text":  "Authorization uses a bearer token in production.",
+                      "note":  "No assignment value."
+                  },
+                  {
+                      "id":  "bearer_token_negative_short",
+                      "role":  "negative",
+                      "text":  "bearer: tok123",
+                      "note":  "Too short."
+                  }
+              ]
+}

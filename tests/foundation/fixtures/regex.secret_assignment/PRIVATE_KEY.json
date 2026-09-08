@@ -1,0 +1,49 @@
+{
+  "detector": "regex.secret_assignment",
+  "entity": "PRIVATE_KEY",
+  "description": "Synthetic private key assignment fixtures outside PEM block coverage.",
+  "cases": [
+    {
+      "id": "private_key_positive_snake_case",
+      "role": "positive",
+      "text": "private_key: FixturePrivateKeyHandle001",
+      "note": "Synthetic non-PEM assignment value."
+    },
+    {
+      "id": "private_key_positive_spaced_label",
+      "role": "positive",
+      "text": "private key = FixturePrivateKeyHandle002",
+      "note": "Spaced label maps to PRIVATE_KEY."
+    },
+    {
+      "id": "private_key_positive_quoted",
+      "role": "positive",
+      "text": "private_key = \"FixturePrivateKeyHandle003\"",
+      "note": "Quoted assignment."
+    },
+    {
+      "id": "private_key_positive_hyphen_value",
+      "role": "positive",
+      "text": "private-key: fixture-private-key-004",
+      "note": "Hyphenated label and synthetic value."
+    },
+    {
+      "id": "private_key_negative_public_key",
+      "role": "negative",
+      "text": "public_key: FixturePublicKeyHandle001",
+      "note": "Public key is not in the secret assignment label set."
+    },
+    {
+      "id": "private_key_negative_placeholder",
+      "role": "negative",
+      "text": "private_key: TODO",
+      "note": "Placeholder value."
+    },
+    {
+      "id": "private_key_negative_no_delimiter",
+      "role": "negative",
+      "text": "private key material is stored outside this fixture",
+      "note": "No assignment delimiter."
+    }
+  ]
+}

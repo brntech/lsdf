@@ -1,0 +1,27 @@
+{
+  "model": "lsdf-demo",
+  "stream": true,
+  "messages": [
+    {
+      "role": "user",
+      "content": "Show the streaming tool-call leak demo."
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "lookup_account",
+        "description": "Demo lookup tool",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "api_key": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

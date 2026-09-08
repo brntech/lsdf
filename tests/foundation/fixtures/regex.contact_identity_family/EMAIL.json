@@ -1,0 +1,49 @@
+{
+  "detector": "regex.contact_identity_family",
+  "entity": "EMAIL",
+  "description": "Synthetic personal email fixtures and role-account negatives.",
+  "cases": [
+    {
+      "id": "email_positive_example_test",
+      "role": "positive",
+      "text": "Contact: alex.fixture@example.test",
+      "note": "Reserved test-domain email."
+    },
+    {
+      "id": "email_positive_subdomain",
+      "role": "positive",
+      "text": "owner = priya.sample@users.example.test",
+      "note": "Synthetic subdomain address."
+    },
+    {
+      "id": "email_positive_plus_tag",
+      "role": "positive",
+      "text": "mail jules.fixture+demo@example.test",
+      "note": "Plus-tagged synthetic email."
+    },
+    {
+      "id": "email_positive_dash_local",
+      "role": "positive",
+      "text": "reply to river-fixture@example.test",
+      "note": "Hyphenated local part."
+    },
+    {
+      "id": "email_negative_role_account",
+      "role": "negative",
+      "text": "support@example.test",
+      "note": "Default deny-list local part."
+    },
+    {
+      "id": "email_negative_missing_tld",
+      "role": "negative",
+      "text": "alex.fixture@example",
+      "note": "Missing top-level domain."
+    },
+    {
+      "id": "email_negative_prose",
+      "role": "negative",
+      "text": "Email address was intentionally omitted from this fixture.",
+      "note": "No email-shaped value."
+    }
+  ]
+}

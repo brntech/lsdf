@@ -1,0 +1,49 @@
+{
+  "detector": "regex.datadog_key",
+  "entity": "DATADOG_KEY",
+  "description": "Synthetic Datadog API/app key assignments for regex Datadog-key foundation coverage.",
+  "cases": [
+    {
+      "id": "datadog-key-pos-api",
+      "role": "positive",
+      "text": "dd_api_key=0123456789abcdef0123456789abcdef",
+      "note": "Synthetic Datadog API-key assignment."
+    },
+    {
+      "id": "datadog-key-pos-app",
+      "role": "positive",
+      "text": "dd app key: abcdef0123456789abcdef0123456789",
+      "note": "Synthetic Datadog app-key assignment."
+    },
+    {
+      "id": "datadog-key-pos-hyphen",
+      "role": "positive",
+      "text": "dd-api-key: 00112233445566778899aabbccddeeff",
+      "note": "Hyphenated Datadog API-key label."
+    },
+    {
+      "id": "datadog-key-pos-quoted",
+      "role": "positive",
+      "text": "dd_app_key=\"ffeeddccbbaa99887766554433221100\"",
+      "note": "Quoted Datadog app-key assignment."
+    },
+    {
+      "id": "datadog-key-neg-short",
+      "role": "negative",
+      "text": "dd_api_key=012345",
+      "note": "Too short for a Datadog key."
+    },
+    {
+      "id": "datadog-key-neg-nonhex",
+      "role": "negative",
+      "text": "dd_api_key=fixturevaluewithlettersoutsidehex",
+      "note": "Non-hex assignment."
+    },
+    {
+      "id": "datadog-key-neg-prose",
+      "role": "negative",
+      "text": "The Datadog integration is disabled for this fixture.",
+      "note": "No key-shaped value."
+    }
+  ]
+}

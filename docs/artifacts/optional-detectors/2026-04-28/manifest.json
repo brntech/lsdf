@@ -1,0 +1,114 @@
+{
+  "artifact_type": "optional-detector-dependency-diagnostic",
+  "generated_at": "2026-04-28T20:27:44.566412+00:00",
+  "profile": "default",
+  "mode": "enforce",
+  "output_dir": "docs/artifacts/optional-detectors/2026-04-28",
+  "datasets": [
+    "evals/safety_matrix.json",
+    "evals/utility_matrix.json",
+    "evals/observability_matrix.json"
+  ],
+  "detector_sets": [
+    "presidio=presidio",
+    "privacy=openai_privacy_filter",
+    "default_optional=regex,entropy,medical,presidio,openai_privacy_filter"
+  ],
+  "optional_detector_status": {
+    "presidio": {
+      "status": "unavailable",
+      "reason": "Install presidio-analyzer to enable detector family 'presidio'"
+    },
+    "openai_privacy_filter": {
+      "status": "unavailable",
+      "reason": "Install transformers and a supported model cache to enable detector family 'openai_privacy_filter'"
+    }
+  },
+  "reports": [
+    {
+      "dataset": "safety_matrix",
+      "json": "docs/artifacts/optional-detectors/2026-04-28/safety_matrix.comparison.json",
+      "markdown": "docs/artifacts/optional-detectors/2026-04-28/safety_matrix.comparison.md",
+      "detector_sets": [
+        {
+          "name": "presidio",
+          "status": "unavailable",
+          "reason": "Install presidio-analyzer to enable detector family 'presidio'",
+          "passed": 0,
+          "failed": 0
+        },
+        {
+          "name": "privacy",
+          "status": "unavailable",
+          "reason": "Install transformers and a supported model cache to enable detector family 'openai_privacy_filter'",
+          "passed": 0,
+          "failed": 0
+        },
+        {
+          "name": "default_optional",
+          "status": "unavailable",
+          "reason": "Install presidio-analyzer to enable detector family 'presidio'",
+          "passed": 0,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "dataset": "utility_matrix",
+      "json": "docs/artifacts/optional-detectors/2026-04-28/utility_matrix.comparison.json",
+      "markdown": "docs/artifacts/optional-detectors/2026-04-28/utility_matrix.comparison.md",
+      "detector_sets": [
+        {
+          "name": "presidio",
+          "status": "unavailable",
+          "reason": "Install presidio-analyzer to enable detector family 'presidio'",
+          "passed": 0,
+          "failed": 0
+        },
+        {
+          "name": "privacy",
+          "status": "unavailable",
+          "reason": "Install transformers and a supported model cache to enable detector family 'openai_privacy_filter'",
+          "passed": 0,
+          "failed": 0
+        },
+        {
+          "name": "default_optional",
+          "status": "unavailable",
+          "reason": "Install presidio-analyzer to enable detector family 'presidio'",
+          "passed": 0,
+          "failed": 0
+        }
+      ]
+    },
+    {
+      "dataset": "observability_matrix",
+      "json": "docs/artifacts/optional-detectors/2026-04-28/observability_matrix.comparison.json",
+      "markdown": "docs/artifacts/optional-detectors/2026-04-28/observability_matrix.comparison.md",
+      "detector_sets": [
+        {
+          "name": "presidio",
+          "status": "unavailable",
+          "reason": "Install presidio-analyzer to enable detector family 'presidio'",
+          "passed": 0,
+          "failed": 0
+        },
+        {
+          "name": "privacy",
+          "status": "unavailable",
+          "reason": "Install transformers and a supported model cache to enable detector family 'openai_privacy_filter'",
+          "passed": 0,
+          "failed": 0
+        },
+        {
+          "name": "default_optional",
+          "status": "unavailable",
+          "reason": "Install presidio-analyzer to enable detector family 'presidio'",
+          "passed": 0,
+          "failed": 0
+        }
+      ]
+    }
+  ],
+  "raw_value_policy": "raw sensitive values are redacted; reveal mode is not used"
+}

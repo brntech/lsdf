@@ -1,0 +1,66 @@
+# Dev executable policy for LLM Sensitive Data Firewall.
+
+version: 0.2
+name: dev
+
+detection:
+  adapters: []
+  entities:
+    - SECRET
+    - STRONG_ID
+    - INTERNAL_ID
+    - CREDIT_CARD
+    - BANK_ACCOUNT
+    - IBAN
+    - SWIFT
+    - EMAIL
+    - PHONE
+    - PERSON
+    - DATE_OF_BIRTH
+    - ADDRESS
+    - PHI
+    - EMPLOYEE_COMPENSATION
+    - CUSTOMER_CONFIDENTIAL
+
+action:
+  mode: redact
+  rules:
+    - id: redact-secrets-everywhere
+      match:
+        entity_in_category: SECRET
+        surface: any
+      action: redact
+      severity: high
+      priority: 90
+
+    - id: tokenize-sensitive-identifiers-before-model
+      match:
+        entity_any_of: [CREDIT_CARD, BANK_ACCOUNT, IBAN, SWIFT]
+        entity_in_category_any_of: [PHI, STRONG_ID, INTERNAL_ID]
+        surface_any_of: [input.messages, input.rag_context, input.tool_results]
+      action: tokenize
+      severity: medium
+      priority: 50
+
+    - id: redact-sensitive-identifiers-outbound
+      match:
+        entity_any_of: [CREDIT_CARD, BANK_ACCOUNT, IBAN, SWIFT]
+        entity_in_category_any_of: [PHI, STRONG_ID, INTERNAL_ID]
+        surface_any_of: [output.content, output.stream_chunk, output.tool_calls.arguments, output.reasoning, logs.traces]
+      action: redact
+      severity: high
+      priority: 60
+
+    - id: log-generic-identity-low-noise
+      match:
+        entity_any_of: [EMAIL, PHONE, PERSON]
+        surface: any
+      action: redact
+      on_fail: observe
+      severity: info
+      priority: 10
+
+audit:
+  store_raw_values: false
+  store_redacted_evidence: true
+  include_policy_decision: true

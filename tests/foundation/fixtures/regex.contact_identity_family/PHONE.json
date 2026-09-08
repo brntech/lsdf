@@ -1,0 +1,49 @@
+{
+  "detector": "regex.contact_identity_family",
+  "entity": "PHONE",
+  "description": "Synthetic phone number fixtures using reserved or test-style numbers.",
+  "cases": [
+    {
+      "id": "phone_positive_nanp_dashed",
+      "role": "positive",
+      "text": "Phone: 212-555-0100",
+      "note": "Reserved NANP 555-0100 range."
+    },
+    {
+      "id": "phone_positive_nanp_parentheses",
+      "role": "positive",
+      "text": "callback (415) 555-0199",
+      "note": "Reserved NANP 555-0199 range."
+    },
+    {
+      "id": "phone_positive_nanp_country",
+      "role": "positive",
+      "text": "+1 202 555 0142",
+      "note": "Reserved NANP example range."
+    },
+    {
+      "id": "phone_positive_brazil",
+      "role": "positive",
+      "text": "Telefone: (11) 90116-2128",
+      "note": "Synthetic Brazilian mobile shape."
+    },
+    {
+      "id": "phone_negative_too_short",
+      "role": "negative",
+      "text": "Phone: 555-010",
+      "note": "Too short."
+    },
+    {
+      "id": "phone_negative_extension_only",
+      "role": "negative",
+      "text": "extension 1234",
+      "note": "Extension is not a full phone number."
+    },
+    {
+      "id": "phone_negative_ip_address",
+      "role": "negative",
+      "text": "router address 192.168.001.010",
+      "note": "IP-like digits should not be a phone fixture."
+    }
+  ]
+}

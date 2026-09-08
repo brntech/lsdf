@@ -1,0 +1,49 @@
+{
+  "detector": "regex.contact_identity_family",
+  "entity": "DATE_OF_BIRTH",
+  "description": "Synthetic date-of-birth fixtures with explicit anchors.",
+  "cases": [
+    {
+      "id": "date_of_birth_positive_dob",
+      "role": "positive",
+      "text": "DOB: 1985-03-22",
+      "note": "Synthetic date of birth."
+    },
+    {
+      "id": "date_of_birth_positive_long_label",
+      "role": "positive",
+      "text": "Date of Birth: 1977-08-15",
+      "note": "Long English anchor."
+    },
+    {
+      "id": "date_of_birth_positive_birthdate",
+      "role": "positive",
+      "text": "birthdate: 2001/04/09",
+      "note": "Slash-separated synthetic date."
+    },
+    {
+      "id": "date_of_birth_positive_birthday",
+      "role": "positive",
+      "text": "birthday: January 2, 1990",
+      "note": "Month-name value."
+    },
+    {
+      "id": "date_of_birth_negative_event_date",
+      "role": "negative",
+      "text": "Event Date: 2026-05-06",
+      "note": "Date value without DOB anchor."
+    },
+    {
+      "id": "date_of_birth_negative_no_delimiter",
+      "role": "negative",
+      "text": "DOB 1985-03-22",
+      "note": "Missing explicit delimiter."
+    },
+    {
+      "id": "date_of_birth_negative_blank",
+      "role": "negative",
+      "text": "Date of Birth: ",
+      "note": "Anchor without value."
+    }
+  ]
+}

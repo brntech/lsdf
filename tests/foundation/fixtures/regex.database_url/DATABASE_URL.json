@@ -1,0 +1,49 @@
+{
+  "detector": "regex.database_url",
+  "entity": "DATABASE_URL",
+  "description": "Synthetic database URLs with embedded credentials for regex database-url foundation coverage.",
+  "cases": [
+    {
+      "id": "database-url-pos-postgres",
+      "role": "positive",
+      "text": "DATABASE_URL=postgres://fixture_user:fixture_pass@example.test/db",
+      "note": "Postgres URL with username and password."
+    },
+    {
+      "id": "database-url-pos-mysql",
+      "role": "positive",
+      "text": "mysql://demo:secret123@db.example.test/app",
+      "note": "MySQL URL with credentials."
+    },
+    {
+      "id": "database-url-pos-redis",
+      "role": "positive",
+      "text": "redis://cache_user:cachePass99@cache.example.test/0",
+      "note": "Redis URL with credentials."
+    },
+    {
+      "id": "database-url-pos-mongodb",
+      "role": "positive",
+      "text": "mongodb://fixture:demoPass77@mongo.example.test/admin",
+      "note": "MongoDB URL with credentials."
+    },
+    {
+      "id": "database-url-neg-no-password",
+      "role": "negative",
+      "text": "postgres://fixture_user@example.test/db",
+      "note": "Database URL without embedded password."
+    },
+    {
+      "id": "database-url-neg-web-url",
+      "role": "negative",
+      "text": "https://example.test/db/docs",
+      "note": "Web URL, not a database connection string."
+    },
+    {
+      "id": "database-url-neg-placeholder",
+      "role": "negative",
+      "text": "DATABASE_URL=postgres://fixture_user@example.test/db",
+      "note": "Database URL missing embedded password."
+    }
+  ]
+}

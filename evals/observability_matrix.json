@@ -1,0 +1,1428 @@
+{
+  "name": "observability_matrix",
+  "version": "0.2",
+  "description": "Reasoning, tool-call, trace, log, and transcript-style leak battery.",
+  "cases": [
+    {
+      "id": "observability-api-key-logs-traces-000",
+      "category": "credentials",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Eval case 0 contains API key api_fixture0000000001 for policy verification"
+        }
+      },
+      "sensitive_values": [
+        "api_fixture0000000001"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.api_key"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "api_fixture0000000001"
+      ]
+    },
+    {
+      "id": "observability-api-key-output-reasoning-001",
+      "category": "credentials",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Eval case 1 contains API key sk_fixture0000000002 for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "sk_fixture0000000002"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.reasoning"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.api_key"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "sk_fixture0000000002"
+      ]
+    },
+    {
+      "id": "observability-api-key-output-tool-calls-arguments-002",
+      "category": "credentials",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Eval case 2 contains API key api_LSDF_FIXTURE_EVAL_000003 for policy verification\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "api_LSDF_FIXTURE_EVAL_000003"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.api_key"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "api_LSDF_FIXTURE_EVAL_000003"
+      ],
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "observability-other-secret-logs-traces-003",
+      "category": "credentials",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Eval case 3 contains credential specimen N0deCache_77!Rotate for policy verification"
+        }
+      },
+      "sensitive_values": [
+        "N0deCache_77!Rotate"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "OTHER_SECRET"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "entropy.secret"
+      ],
+      "expected_detector_families": [
+        "entropy"
+      ],
+      "expected_absent": [
+        "N0deCache_77!Rotate"
+      ]
+    },
+    {
+      "id": "observability-other-secret-output-reasoning-004",
+      "category": "credentials",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Eval case 4 contains credential specimen R3d1s_Pr0d_2024!Secure for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "R3d1s_Pr0d_2024!Secure"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "OTHER_SECRET"
+      ],
+      "expected_surfaces": [
+        "output.reasoning"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "entropy.secret"
+      ],
+      "expected_detector_families": [
+        "entropy"
+      ],
+      "expected_absent": [
+        "R3d1s_Pr0d_2024!Secure"
+      ]
+    },
+    {
+      "id": "observability-other-secret-output-tool-calls-arguments-005",
+      "category": "credentials",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Eval case 5 contains credential specimen VaultSync_2026!Key for policy verification\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "VaultSync_2026!Key"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "OTHER_SECRET"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "entropy.secret"
+      ],
+      "expected_detector_families": [
+        "entropy"
+      ],
+      "expected_absent": [
+        "VaultSync_2026!Key"
+      ],
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "observability-us-ssn-logs-traces-006",
+      "category": "pii",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Eval case 6 contains SSN 111-22-3333 for policy verification"
+        }
+      },
+      "sensitive_values": [
+        "111-22-3333"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "US_SSN"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.ssn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "111-22-3333"
+      ]
+    },
+    {
+      "id": "observability-us-ssn-output-reasoning-007",
+      "category": "pii",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Eval case 7 contains SSN 222-33-4444 for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "222-33-4444"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "US_SSN"
+      ],
+      "expected_surfaces": [
+        "output.reasoning"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.ssn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "222-33-4444"
+      ]
+    },
+    {
+      "id": "observability-us-ssn-output-tool-calls-arguments-008",
+      "category": "pii",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Eval case 8 contains SSN 000-00-0000 for policy verification\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "000-00-0000"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "US_SSN"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.ssn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "000-00-0000"
+      ],
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "observability-mrn-logs-traces-009",
+      "category": "phi",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Eval case 9 contains medical record number MRN: B77889 for policy verification"
+        }
+      },
+      "sensitive_values": [
+        "MRN: B77889"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MRN"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.mrn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "MRN: B77889"
+      ]
+    },
+    {
+      "id": "observability-mrn-output-reasoning-010",
+      "category": "phi",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Eval case 10 contains medical record number MRN: C99887 for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "MRN: C99887"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MRN"
+      ],
+      "expected_surfaces": [
+        "output.reasoning"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.mrn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "MRN: C99887"
+      ]
+    },
+    {
+      "id": "observability-mrn-output-tool-calls-arguments-011",
+      "category": "phi",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Eval case 11 contains medical record number MRN# Z44556 for policy verification\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "MRN# Z44556"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "MRN"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.mrn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "MRN# Z44556"
+      ],
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "observability-medication-logs-traces-012",
+      "category": "phi",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Eval case 12 contains clinical detail metformin 500mg for policy verification"
+        }
+      },
+      "sensitive_values": [
+        "metformin 500mg"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MEDICATION"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "medical-regex.phi_pattern"
+      ],
+      "expected_detector_families": [
+        "medical-regex"
+      ],
+      "expected_absent": [
+        "metformin 500mg"
+      ]
+    },
+    {
+      "id": "observability-medication-output-reasoning-013",
+      "category": "phi",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Eval case 13 contains clinical detail lisinopril 10mg for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "lisinopril 10mg"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MEDICATION"
+      ],
+      "expected_surfaces": [
+        "output.reasoning"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "medical-regex.phi_pattern"
+      ],
+      "expected_detector_families": [
+        "medical-regex"
+      ],
+      "expected_absent": [
+        "lisinopril 10mg"
+      ]
+    },
+    {
+      "id": "observability-medication-output-tool-calls-arguments-014",
+      "category": "phi",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Eval case 14 contains clinical detail atorvastatin 20mg for policy verification\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "atorvastatin 20mg"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "MEDICATION"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "medical-regex.phi_pattern"
+      ],
+      "expected_detector_families": [
+        "medical-regex"
+      ],
+      "expected_absent": [
+        "atorvastatin 20mg"
+      ],
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "observability-credit-card-logs-traces-015",
+      "category": "financial",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Eval case 15 contains payment card 378282246310005 for policy verification"
+        }
+      },
+      "sensitive_values": [
+        "378282246310005"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "CREDIT_CARD"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.credit_card_luhn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "378282246310005"
+      ]
+    },
+    {
+      "id": "observability-credit-card-output-reasoning-016",
+      "category": "financial",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Eval case 16 contains payment card 4111 1111 1111 1111 for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "4111 1111 1111 1111"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "CREDIT_CARD"
+      ],
+      "expected_surfaces": [
+        "output.reasoning"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.credit_card_luhn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "4111 1111 1111 1111"
+      ]
+    },
+    {
+      "id": "observability-credit-card-output-tool-calls-arguments-017",
+      "category": "financial",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Eval case 17 contains payment card 4242 4242 4242 4242 for policy verification\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "4242 4242 4242 4242"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "CREDIT_CARD"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.credit_card_luhn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "4242 4242 4242 4242"
+      ],
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "observability-iban-logs-traces-018",
+      "category": "financial",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Eval case 18 contains IBAN FR1420041010050500013M02606 for policy verification"
+        }
+      },
+      "sensitive_values": [
+        "FR1420041010050500013M02606"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "IBAN"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.iban"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "FR1420041010050500013M02606"
+      ]
+    },
+    {
+      "id": "observability-iban-output-reasoning-019",
+      "category": "financial",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Eval case 19 contains IBAN ES9121000418450200051332 for policy verification"
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "ES9121000418450200051332"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "IBAN"
+      ],
+      "expected_surfaces": [
+        "output.reasoning"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.iban"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "ES9121000418450200051332"
+      ]
+    },
+    {
+      "id": "observability-iban-output-tool-calls-arguments-020",
+      "category": "financial",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Eval case 20 contains IBAN GB82WEST12345698765432 for policy verification\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "GB82WEST12345698765432"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "IBAN"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.iban"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "GB82WEST12345698765432"
+      ],
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "observability-transcript-api-key-021",
+      "category": "credentials",
+      "surface": "logs.traces",
+      "payload": {
+        "transcript": [
+          {
+            "role": "assistant",
+            "content": "Eval case 21 contains API key sk_fixture0000000002 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "sk_fixture0000000002"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.api_key"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "sk_fixture0000000002"
+      ]
+    },
+    {
+      "id": "observability-transcript-other-secret-022",
+      "category": "credentials",
+      "surface": "logs.traces",
+      "payload": {
+        "transcript": [
+          {
+            "role": "assistant",
+            "content": "Eval case 22 contains credential specimen Pgr_Bkup_77#Rotate_2026 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Pgr_Bkup_77#Rotate_2026"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "OTHER_SECRET"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "entropy.secret"
+      ],
+      "expected_detector_families": [
+        "entropy"
+      ],
+      "expected_absent": [
+        "Pgr_Bkup_77#Rotate_2026"
+      ]
+    },
+    {
+      "id": "observability-transcript-us-ssn-023",
+      "category": "pii",
+      "surface": "logs.traces",
+      "payload": {
+        "transcript": [
+          {
+            "role": "assistant",
+            "content": "Eval case 23 contains SSN 222-33-4444 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "222-33-4444"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "US_SSN"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.ssn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "222-33-4444"
+      ]
+    },
+    {
+      "id": "observability-transcript-mrn-024",
+      "category": "phi",
+      "surface": "logs.traces",
+      "payload": {
+        "transcript": [
+          {
+            "role": "assistant",
+            "content": "Eval case 24 contains medical record number MRN: LSDF-FIXTURE-00001 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "MRN: LSDF-FIXTURE-00001"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MRN"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.mrn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "MRN: LSDF-FIXTURE-00001"
+      ]
+    },
+    {
+      "id": "observability-transcript-medication-025",
+      "category": "phi",
+      "surface": "logs.traces",
+      "payload": {
+        "transcript": [
+          {
+            "role": "assistant",
+            "content": "Eval case 25 contains clinical detail lisinopril 10mg for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "lisinopril 10mg"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MEDICATION"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "medical-regex.phi_pattern"
+      ],
+      "expected_detector_families": [
+        "medical-regex"
+      ],
+      "expected_absent": [
+        "lisinopril 10mg"
+      ]
+    },
+    {
+      "id": "observability-transcript-credit-card-026",
+      "category": "financial",
+      "surface": "logs.traces",
+      "payload": {
+        "transcript": [
+          {
+            "role": "assistant",
+            "content": "Eval case 26 contains payment card 5555 5555 5555 4444 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "5555 5555 5555 4444"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "CREDIT_CARD"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.credit_card_luhn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "5555 5555 5555 4444"
+      ]
+    },
+    {
+      "id": "observability-transcript-iban-027",
+      "category": "financial",
+      "surface": "logs.traces",
+      "payload": {
+        "transcript": [
+          {
+            "role": "assistant",
+            "content": "Eval case 27 contains IBAN ES9121000418450200051332 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "ES9121000418450200051332"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "IBAN"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.iban"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "ES9121000418450200051332"
+      ]
+    },
+    {
+      "id": "observability-trace-mrn-redacted-000",
+      "category": "phi",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": [
+          {
+            "message": "Eval case 0 contains medical record number MRN: LSDF-FIXTURE-00001 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "MRN: LSDF-FIXTURE-00001"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MRN"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.mrn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "MRN: LSDF-FIXTURE-00001"
+      ]
+    },
+    {
+      "id": "observability-logs-mrn-redacted-001",
+      "category": "phi",
+      "surface": "logs.traces",
+      "payload": {
+        "logs": [
+          {
+            "message": "Eval case 1 contains medical record number MRN: B77889 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "MRN: B77889"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MRN"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.mrn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "MRN: B77889"
+      ]
+    },
+    {
+      "id": "observability-spans-mrn-redacted-002",
+      "category": "phi",
+      "surface": "logs.traces",
+      "payload": {
+        "spans": [
+          {
+            "message": "Eval case 2 contains medical record number MRN: C99887 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "MRN: C99887"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MRN"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.mrn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "MRN: C99887"
+      ]
+    },
+    {
+      "id": "observability-transcript-mrn-redacted-003",
+      "category": "phi",
+      "surface": "logs.traces",
+      "payload": {
+        "transcript": [
+          {
+            "message": "Eval case 3 contains medical record number MRN# Z44556 for policy verification"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "MRN# Z44556"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MRN"
+      ],
+      "expected_surfaces": [
+        "logs.traces"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.mrn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_absent": [
+        "MRN# Z44556"
+      ]
+    },
+    {
+      "id": "utility-observability-benign-output-tool-calls-arguments-032",
+      "category": "observability-benign",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"trace span completed in 42ms for route /v1/chat/completions\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "utility-observability-benign-logs-traces-033",
+      "category": "observability-benign",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "observability sink received two chunks and zero policy decisions"
+        }
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-observability-benign-output-reasoning-034",
+      "category": "observability-benign",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "tool executor invoked get_weather with city Boston and units metric"
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-observability-benign-output-tool-calls-arguments-035",
+      "category": "observability-benign",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"reasoning summary says choose the shorter branch because it is cheaper\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "utility-observability-benign-logs-traces-036",
+      "category": "observability-benign",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "transcript line contains a public release note and no private data"
+        }
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-observability-benign-output-reasoning-037",
+      "category": "observability-benign",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "logger wrote request_id req-local-demo and status success"
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-observability-benign-output-tool-calls-arguments-038",
+      "category": "observability-benign",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"span attributes include model demo-model and profile default\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "utility-observability-benign-logs-traces-039",
+      "category": "observability-benign",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "debug payload has cache_hit true and retry_count zero"
+        }
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    }
+  ]
+}

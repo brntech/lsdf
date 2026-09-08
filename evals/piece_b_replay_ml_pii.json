@@ -1,0 +1,169 @@
+{
+  "name": "piece_b_replay_ml_pii",
+  "version": "0.1",
+  "description": "Companion corpus to piece_b_replay.json \u2014 exercises ML-only PII shapes the regex layer cannot catch (international phone formats; less-common given names). Used by the score_threshold sweep to characterise recall when the regex layer cannot backstop the privacy-filter.",
+  "cases": [
+    {
+      "id": "ml-pii-uk-phone-output",
+      "category": "pii",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Reach our London correspondent at +44 20 7946 0100 after 6pm GMT."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "+44 20 7946 0100"
+      ],
+      "expected_entities": [
+        "PHONE"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "+44 20 7946 0100"
+      ],
+      "notes": "UK +44 phone (4-group format) is outside the NANP regex's 3-3-4 shape; ML-only."
+    },
+    {
+      "id": "ml-pii-fr-phone-output",
+      "category": "pii",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The Paris support line is +33 1 70 18 99 09; please leave a message."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "+33 1 70 18 99 09"
+      ],
+      "expected_entities": [
+        "PHONE"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "+33 1 70 18 99 09"
+      ],
+      "notes": "French phone shape (5 short groups); regex.phone won't fire."
+    },
+    {
+      "id": "ml-pii-in-phone-output",
+      "category": "pii",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The on-call engineer in Bangalore can be reached at +91 98765 43210."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "+91 98765 43210"
+      ],
+      "expected_entities": [
+        "PHONE"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "+91 98765 43210"
+      ],
+      "notes": "Indian +91 mobile shape (5+5 grouping); not NANP."
+    },
+    {
+      "id": "ml-pii-person-cn-output",
+      "category": "pii",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The patient Wei Chen reported renewed shoulder pain at the followup appointment."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Wei Chen"
+      ],
+      "expected_entities": [
+        "PERSON"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "Wei Chen"
+      ],
+      "notes": "Two-word PERSON; no PERSON regex exists, so privacy-filter alone gates this."
+    },
+    {
+      "id": "ml-pii-person-ar-output",
+      "category": "pii",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Coordinate the meeting next week with Ali Hassan from the regional office."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Ali Hassan"
+      ],
+      "expected_entities": [
+        "PERSON"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "Ali Hassan"
+      ],
+      "notes": "Arabic-origin PERSON; ML-only."
+    },
+    {
+      "id": "ml-pii-person-yo-output",
+      "category": "pii",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Forward the engagement letter to Fatima Okonkwo at the West Africa branch."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Fatima Okonkwo"
+      ],
+      "expected_entities": [
+        "PERSON"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "Fatima Okonkwo"
+      ],
+      "notes": "Yoruba-origin PERSON; ML-only."
+    }
+  ]
+}

@@ -1,0 +1,120 @@
+{
+  "profile": "default",
+  "mode": "redact",
+  "detector_families": [
+    "regex",
+    "entropy",
+    "medical-regex",
+    "contextual-anchored"
+  ],
+  "dataset_count": 3,
+  "datasets": [
+    {
+      "dataset": "safety_matrix",
+      "dataset_path": "evals/safety_matrix.json",
+      "case_count": 91,
+      "passed": 91,
+      "failed": 0,
+      "blocked": 17,
+      "known_gap_cases": 28,
+      "known_gap_leaked_after": 28,
+      "known_gap_would_fail": 28,
+      "sensitive_values_leaked_after": 62,
+      "audit_raw_value_violations": 0
+    },
+    {
+      "dataset": "utility_matrix",
+      "dataset_path": "evals/utility_matrix.json",
+      "case_count": 65,
+      "passed": 65,
+      "failed": 0,
+      "blocked": 0,
+      "known_gap_cases": 5,
+      "known_gap_leaked_after": 0,
+      "known_gap_would_fail": 2,
+      "sensitive_values_leaked_after": 0,
+      "audit_raw_value_violations": 0
+    },
+    {
+      "dataset": "observability_matrix",
+      "dataset_path": "evals/observability_matrix.json",
+      "case_count": 40,
+      "passed": 40,
+      "failed": 0,
+      "blocked": 13,
+      "known_gap_cases": 0,
+      "known_gap_leaked_after": 0,
+      "known_gap_would_fail": 0,
+      "sensitive_values_leaked_after": 0,
+      "audit_raw_value_violations": 0
+    }
+  ],
+  "totals": {
+    "case_count": 196,
+    "passed": 196,
+    "failed": 0,
+    "blocked": 30,
+    "known_gap_cases": 33,
+    "known_gap_leaked_after": 28,
+    "known_gap_would_fail": 30,
+    "sensitive_values_leaked_after": 62,
+    "audit_raw_value_violations": 0
+  },
+  "summary": {
+    "by_category": {
+      "credentials": 22,
+      "pii": 25,
+      "phi": 26,
+      "financial": 22,
+      "known-gap-person": 4,
+      "known-gap-address": 4,
+      "known-gap-dob": 4,
+      "known-gap-financial": 4,
+      "known-gap-contextual-dlp": 4,
+      "known-gap-contextual-business": 4,
+      "known-gap-contextual-phi": 4,
+      "utility-developer-prose": 6,
+      "utility-code-placeholders": 6,
+      "utility-stack-traces": 6,
+      "utility-model-config": 6,
+      "utility-public-figures": 6,
+      "utility-urls-paths": 6,
+      "utility-json-schema": 6,
+      "utility-sql": 6,
+      "utility-docs-snippets": 6,
+      "utility-business-benign": 6,
+      "known-gap-benign-medical-fp": 5,
+      "observability-benign": 8
+    },
+    "by_surface": {
+      "input.messages": 23,
+      "input.rag_context": 18,
+      "input.tool_results": 18,
+      "output.content": 25,
+      "output.reasoning": 33,
+      "output.tool_calls.arguments": 34,
+      "logs.traces": 45
+    },
+    "by_action": {
+      "block": 30,
+      "redact": 50,
+      "tokenize": 17
+    },
+    "by_entity": {
+      "API_KEY": 11,
+      "SECRET": 11,
+      "SSN": 11,
+      "MRN": 15,
+      "PHI": 13,
+      "CREDIT_CARD": 11,
+      "IBAN": 11,
+      "EMAIL": 7,
+      "PHONE": 7
+    },
+    "by_detector_family": {
+      "regex": 73,
+      "entropy": 11,
+      "medical-regex": 13
+    }
+  }
+}

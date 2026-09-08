@@ -1,0 +1,1289 @@
+{
+  "name": "utility_matrix",
+  "version": "0.2",
+  "description": "Benign utility and false-positive battery for dependency-light LSDF defaults.",
+  "cases": [
+    {
+      "id": "utility-utility-developer-prose-input-messages-000",
+      "category": "utility-developer-prose",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "The vLLM service runs on port 8000 inside the local model network with one model loaded."
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-developer-prose-input-rag-context-001",
+      "category": "utility-developer-prose",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved context."
+          }
+        ],
+        "rag_context": [
+          "The eval runner compares blocked counts and JSON validity after each pass."
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-developer-prose-input-tool-results-002",
+      "category": "utility-developer-prose",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "Use the local gateway only after the upstream health endpoint responds."
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-developer-prose-output-content-003",
+      "category": "utility-developer-prose",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The scanner should preserve ordinary architecture notes and benchmark prose."
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-developer-prose-output-reasoning-004",
+      "category": "utility-developer-prose",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "A developer can keep this note in a README without losing useful context."
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-developer-prose-output-tool-calls-arguments-005",
+      "category": "utility-developer-prose",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"The retry loop backs off after transient provider errors and records status codes.\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "utility-utility-code-placeholders-logs-traces-006",
+      "category": "utility-code-placeholders",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "const token = process.env.API_TOKEN; const url = process.env.API_URL;"
+        }
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-code-placeholders-input-messages-007",
+      "category": "utility-code-placeholders",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "api_key = os.environ['OPENAI_API_KEY']; base_url = os.environ['BASE_URL']"
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-code-placeholders-input-rag-context-008",
+      "category": "utility-code-placeholders",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved context."
+          }
+        ],
+        "rag_context": [
+          "password = PASSWORD_PLACEHOLDER  # never commit a real value here"
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-code-placeholders-input-tool-results-009",
+      "category": "utility-code-placeholders",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "headers = {'Authorization': f'Bearer {TOKEN_PLACEHOLDER}'}"
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-code-placeholders-output-content-010",
+      "category": "utility-code-placeholders",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Set LSDF_UPSTREAM_BASE_URL in the local env file for gateway tests."
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-code-placeholders-output-reasoning-011",
+      "category": "utility-code-placeholders",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "settings name uses a dev only sample value"
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-stack-traces-output-tool-calls-arguments-012",
+      "category": "utility-stack-traces",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Traceback File app/main.py line 42 in run_handler raised ValueError invalid state\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "utility-utility-stack-traces-logs-traces-013",
+      "category": "utility-stack-traces",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "ERROR worker retry count three for eval matrix job while retrying"
+        }
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-stack-traces-input-messages-014",
+      "category": "utility-stack-traces",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "at Object.render (/src/components/App.tsx:88:12) while testing layout"
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-stack-traces-input-rag-context-015",
+      "category": "utility-stack-traces",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved context."
+          }
+        ],
+        "rag_context": [
+          "panic at src/main.rs:17 called Result unwrap on Err during dry run"
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-stack-traces-input-tool-results-016",
+      "category": "utility-stack-traces",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "pytest tests/test_gateway.py::test_forwarding PASSED in 0.12s"
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-stack-traces-output-content-017",
+      "category": "utility-stack-traces",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "HTTP 502 from upstream during local smoke test with no body returned"
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-model-config-output-reasoning-018",
+      "category": "utility-model-config",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "The demo model profile serves a placeholder model with max context length 32768"
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-model-config-output-tool-calls-arguments-019",
+      "category": "utility-model-config",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"LM Studio listens on localhost port 1234 with an OpenAI compatible endpoint.\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "utility-utility-model-config-logs-traces-020",
+      "category": "utility-model-config",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Local model serving can use a native app or a container app."
+        }
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-model-config-input-messages-021",
+      "category": "utility-model-config",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "The benchmark label is demo local and the score is informational."
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-model-config-input-rag-context-022",
+      "category": "utility-model-config",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved context."
+          }
+        ],
+        "rag_context": [
+          "Use FP8 KV cache only when the serving profile documents the tradeoff."
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-model-config-input-tool-results-023",
+      "category": "utility-model-config",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "The Docker network is named local model network for local development."
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-public-figures-output-content-024",
+      "category": "utility-public-figures",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Compare public comments by Sam Altman, Satya Nadella, and Jensen Huang."
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-public-figures-output-reasoning-025",
+      "category": "utility-public-figures",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Summarize published interviews with Fei-Fei Li and Andrew Ng about education."
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-public-figures-output-tool-calls-arguments-026",
+      "category": "utility-public-figures",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"List public statements from Lina Khan about technology competition.\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "utility-utility-public-figures-logs-traces-027",
+      "category": "utility-public-figures",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Discuss Grace Hopper's historical role in compiler development."
+        }
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-public-figures-input-messages-028",
+      "category": "utility-public-figures",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Contrast Ada Lovelace and Alan Turing in a classroom lesson."
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-public-figures-input-rag-context-029",
+      "category": "utility-public-figures",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved context."
+          }
+        ],
+        "rag_context": [
+          "Write a neutral biography paragraph about Margaret Hamilton's NASA work."
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-urls-paths-input-tool-results-030",
+      "category": "utility-urls-paths",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "Fetch https://example.org/v1/users and //api.example.com/v1/status for docs."
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-urls-paths-output-content-031",
+      "category": "utility-urls-paths",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Read config/settings.yml before running app/main.py in the sample project."
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-urls-paths-output-reasoning-032",
+      "category": "utility-urls-paths",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "The package path is src/lsdf/eval_matrix.py and the docs path is docs/measured-protection.md."
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-urls-paths-output-tool-calls-arguments-033",
+      "category": "utility-urls-paths",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Open http://localhost:8000/health during the local vLLM smoke check.\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "utility-utility-urls-paths-logs-traces-034",
+      "category": "utility-urls-paths",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "The relative route /v1/chat/completions is proxied by the gateway."
+        }
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-urls-paths-input-messages-035",
+      "category": "utility-urls-paths",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Static assets live under public/images/demo.png in the example app."
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-json-schema-input-rag-context-036",
+      "category": "utility-json-schema",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved context."
+          }
+        ],
+        "rag_context": [
+          "{\"type\":\"object\",\"properties\":{\"token\":{\"type\":\"string\"}}}"
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-json-schema-input-tool-results-037",
+      "category": "utility-json-schema",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "{\"tool\":\"search\",\"arguments\":{\"query\":\"public docs\",\"limit\":5}}"
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-json-schema-output-content-038",
+      "category": "utility-json-schema",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "{\"status\":\"ok\",\"metrics\":{\"latency_ms\":42,\"blocked\":0}}"
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-json-schema-output-reasoning-039",
+      "category": "utility-json-schema",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "{\"env\":{\"UPSTREAM_BASE_URL\":\"http://localhost:8000/v1\"}}"
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-json-schema-output-tool-calls-arguments-040",
+      "category": "utility-json-schema",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"{\\\"rules\\\":[{\\\"entity\\\":\\\"EMAIL\\\",\\\"action\\\":\\\"redact\\\"}]}\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "utility-utility-json-schema-logs-traces-041",
+      "category": "utility-json-schema",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "{\"example\":{\"authorization_header\":\"Bearer PLACEHOLDER\"}}"
+        }
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-sql-input-messages-042",
+      "category": "utility-sql",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "SELECT id, email_opt_in FROM users WHERE created_at > CURRENT_DATE;"
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-sql-input-rag-context-043",
+      "category": "utility-sql",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved context."
+          }
+        ],
+        "rag_context": [
+          "UPDATE jobs SET status = 'done' WHERE id = 42;"
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-sql-input-tool-results-044",
+      "category": "utility-sql",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "CREATE INDEX idx_messages_role ON messages(role);"
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-sql-output-content-045",
+      "category": "utility-sql",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "EXPLAIN ANALYZE SELECT count(*) FROM eval_cases;"
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-sql-output-reasoning-046",
+      "category": "utility-sql",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "INSERT INTO audit_counts(bucket, total) VALUES ('safe', 7);"
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-sql-output-tool-calls-arguments-047",
+      "category": "utility-sql",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"DELETE FROM temp_rows WHERE expires_at < now();\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "utility-utility-docs-snippets-logs-traces-048",
+      "category": "utility-docs-snippets",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "Run docker compose run --rm cli eval evals/basic.json."
+        }
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-docs-snippets-input-messages-049",
+      "category": "utility-docs-snippets",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Profiles are full policies until domain-pack composition lands later."
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-docs-snippets-input-rag-context-050",
+      "category": "utility-docs-snippets",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved context."
+          }
+        ],
+        "rag_context": [
+          "Known gaps are measured misses, not accidental green test cases."
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-docs-snippets-input-tool-results-051",
+      "category": "utility-docs-snippets",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "The README should teach local users how to plug in the gateway quickly."
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-docs-snippets-output-content-052",
+      "category": "utility-docs-snippets",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Detector adapters stay optional until the proof matrix shows their value."
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-docs-snippets-output-reasoning-053",
+      "category": "utility-docs-snippets",
+      "surface": "output.reasoning",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "reasoning_content": "Markdown reports are for humans and JSON reports are for automation."
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-business-benign-output-tool-calls-arguments-054",
+      "category": "utility-business-benign",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "eval_tool",
+                    "arguments": "{\"note\": \"Acme is a fictional vendor in this sample proposal and no account is present.\", \"ok\": \"yes\"}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true,
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ]
+    },
+    {
+      "id": "utility-utility-business-benign-logs-traces-055",
+      "category": "utility-business-benign",
+      "surface": "logs.traces",
+      "payload": {
+        "trace": {
+          "span": "The renewal deck uses placeholder pricing bands for a mock customer."
+        }
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-business-benign-input-messages-056",
+      "category": "utility-business-benign",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Quarterly planning notes mention hiring themes without employee records."
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-business-benign-input-rag-context-057",
+      "category": "utility-business-benign",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarize the retrieved context."
+          }
+        ],
+        "rag_context": [
+          "The incident review describes a simulated outage in the staging system."
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-business-benign-input-tool-results-058",
+      "category": "utility-business-benign",
+      "surface": "input.tool_results",
+      "payload": {
+        "messages": [
+          {
+            "role": "tool",
+            "content": "Contract language in this fixture is public boilerplate for demos."
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-utility-business-benign-output-content-059",
+      "category": "utility-business-benign",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "A support queue summary can mention volume trends without private tickets."
+            }
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "utility-benign-icd-ticket-input-messages-060",
+      "category": "known-gap-benign-medical-fp",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Release J45.909 is the internal milestone tag, not diagnosis data"
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true,
+      "known_gap": true
+    },
+    {
+      "id": "utility-benign-icd-module-input-messages-061",
+      "category": "known-gap-benign-medical-fp",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Module E11A handles import queues in a synthetic code sample"
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true,
+      "known_gap": true
+    },
+    {
+      "id": "utility-benign-icd-sku-input-messages-062",
+      "category": "known-gap-benign-medical-fp",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "SKU A12.34 moved from warehouse bin seven to bin nine"
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true,
+      "known_gap": true
+    },
+    {
+      "id": "utility-benign-lab-label-input-messages-063",
+      "category": "known-gap-benign-medical-fp",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Dashboard label HDL 80 belongs to a chart mock, not a lab result"
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true,
+      "known_gap": true
+    },
+    {
+      "id": "utility-benign-medication-doc-input-messages-064",
+      "category": "known-gap-benign-medical-fp",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "The detector docs include metformin 500mg as a synthetic example"
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true,
+      "known_gap": true
+    }
+  ]
+}

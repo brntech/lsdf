@@ -1,0 +1,49 @@
+{
+    "detector":  "regex.contact_identity_family",
+    "entity":  "PERSON",
+    "description":  "Synthetic anchored person-name fixtures.",
+    "cases":  [
+                  {
+                      "id":  "person_positive_first_name",
+                      "role":  "positive",
+                      "text":  "First Name: Mira",
+                      "note":  "Synthetic first name with explicit anchor."
+                  },
+                  {
+                      "id":  "person_positive_full_name",
+                      "role":  "positive",
+                      "text":  "Full Name: Rowan Vale",
+                      "note":  "Synthetic full name."
+                  },
+                  {
+                      "id":  "person_positive_patient_name",
+                      "role":  "positive",
+                      "text":  "Patient Name: Ellis Hart",
+                      "note":  "Anchored synthetic patient name."
+                  },
+                  {
+                      "id":  "person_positive_given_name_json",
+                      "role":  "positive",
+                      "text":  "\"given_name\": \"Ylli\"",
+                      "note":  "JSON-style anchored name."
+                  },
+                  {
+                      "id":  "person_negative_lowercase_file",
+                      "role":  "negative",
+                      "text":  "File Name: report.pdf",
+                      "note":  "Lowercase value should not be PERSON."
+                  },
+                  {
+                      "id":  "person_negative_no_delimiter",
+                      "role":  "negative",
+                      "text":  "First Name Mira appeared in a sentence without a delimiter.",
+                      "note":  "No explicit delimiter."
+                  },
+                  {
+                      "id":  "person_negative_single_letter",
+                      "role":  "negative",
+                      "text":  "The speaker field is intentionally blank in this fixture.",
+                      "note":  "Mentions a field concept without label-value form."
+                  }
+              ]
+}

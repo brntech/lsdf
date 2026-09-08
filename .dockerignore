@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+build/
+dist/
+*.egg-info/
+.git/
+.lsdf/
+.lsdf.env
+*.sqlite
+*.sqlite3
+*.db
+*.key
+*.sig
+docs/artifacts/optional-detectors/*/
+!docs/artifacts/optional-detectors/2026-04-28/
+*.zip
+
+# External operator-supplied benchmarks must never enter image layers.
+evals/ai4privacy_multilingual.json

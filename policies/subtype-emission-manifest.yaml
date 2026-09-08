@@ -1,0 +1,436 @@
+version: 0.2
+
+# Foundation-layer engine contracts: per-detector recall_floor and
+# specificity_floor blocks are measured against synthetic foundation
+# fixtures in isolation. Profile-level gate_promise blocks are the
+# separate assembly-layer product promise.
+detectors:
+  regex.api_key_family:
+    emits: [API_KEY]
+    pattern_summary: "Anchored and prefix-shaped API keys across common providers."
+    recall_floor:
+      foundation:
+        API_KEY: 0.95
+    specificity_floor:
+      foundation:
+        API_KEY: 0.95
+  regex.aws_key:
+    emits: [AWS_KEY]
+    pattern_summary: "AWS access key, secret access key, and session-token shapes."
+    recall_floor:
+      foundation:
+        AWS_KEY: 0.95
+    specificity_floor:
+      foundation:
+        AWS_KEY: 0.95
+  regex.jwt:
+    emits: [JWT]
+    pattern_summary: "Three-part JWTs with identity-bearing payload claims."
+    recall_floor:
+      foundation:
+        JWT: 0.95
+    specificity_floor:
+      foundation:
+        JWT: 0.95
+  regex.pem_private_key:
+    emits: [PEM_BLOCK]
+    pattern_summary: "PEM private-key blocks."
+    recall_floor:
+      foundation:
+        PEM_BLOCK: 0.95
+    specificity_floor:
+      foundation:
+        PEM_BLOCK: 0.95
+  regex.private_key:
+    emits: [PRIVATE_KEY]
+    pattern_summary: "Private-key field anchors such as service-account JSON."
+    recall_floor:
+      foundation:
+        PRIVATE_KEY: 0.95
+    specificity_floor:
+      foundation:
+        PRIVATE_KEY: 0.95
+  regex.database_url:
+    emits: [DATABASE_URL]
+    pattern_summary: "Database connection URLs carrying credentials."
+    recall_floor:
+      foundation:
+        DATABASE_URL: 0.95
+    specificity_floor:
+      foundation:
+        DATABASE_URL: 0.95
+  regex.bearer_token:
+    emits: [BEARER_TOKEN]
+    pattern_summary: "Authorization bearer-token assignments."
+    recall_floor:
+      foundation:
+        BEARER_TOKEN: 0.95
+    specificity_floor:
+      foundation:
+        BEARER_TOKEN: 0.95
+  regex.azure_key:
+    emits: [AZURE_KEY]
+    pattern_summary: "Azure storage keys and SAS token shapes."
+    recall_floor:
+      foundation:
+        AZURE_KEY: 0.95
+    specificity_floor:
+      foundation:
+        AZURE_KEY: 0.95
+  regex.datadog_key:
+    emits: [DATADOG_KEY]
+    pattern_summary: "Datadog API/app key assignments."
+    recall_floor:
+      foundation:
+        DATADOG_KEY: 0.95
+    specificity_floor:
+      foundation:
+        DATADOG_KEY: 0.95
+  regex.secret_assignment:
+    emits: [API_KEY, BEARER_TOKEN, PASSWORD, PRIVATE_KEY, OTHER_SECRET]
+    pattern_summary: "Label/value secret assignments mapped by label specificity."
+    recall_floor:
+      foundation:
+        API_KEY: 0.95
+        BEARER_TOKEN: 0.95
+        PASSWORD: 0.95
+        PRIVATE_KEY: 0.95
+        OTHER_SECRET: 0.95
+    specificity_floor:
+      foundation:
+        API_KEY: 0.95
+        BEARER_TOKEN: 0.95
+        PASSWORD: 0.95
+        PRIVATE_KEY: 0.95
+        OTHER_SECRET: 0.95
+  regex.strong_identifier_family:
+    emits: [US_SSN, NATIONAL_ID, TAX_ID, BR_CPF, OTHER_STRONG_ID]
+    pattern_summary: "US SSN, international national-ID anchors, tax-ID anchors, and Brazilian CPF shapes."
+    recall_floor:
+      foundation:
+        US_SSN: 0.95
+        NATIONAL_ID: 0.95
+        TAX_ID: 0.95
+        BR_CPF: 0.95
+        OTHER_STRONG_ID: 0.95
+    specificity_floor:
+      foundation:
+        US_SSN: 0.95
+        NATIONAL_ID: 0.95
+        TAX_ID: 0.95
+        BR_CPF: 0.95
+        OTHER_STRONG_ID: 0.95
+  regex.financial_family:
+    emits: [BANK_ACCOUNT, CREDIT_CARD, IBAN]
+    pattern_summary: "Anchored bank accounts, Luhn-valid cards, and IBAN shapes."
+    recall_floor:
+      foundation:
+        BANK_ACCOUNT: 0.95
+        CREDIT_CARD: 0.95
+        IBAN: 0.95
+    specificity_floor:
+      foundation:
+        BANK_ACCOUNT: 0.95
+        CREDIT_CARD: 0.95
+        IBAN: 0.95
+  regex.contact_identity_family:
+    emits: [EMAIL, PHONE, PERSON, ADDRESS, DATE_OF_BIRTH]
+    pattern_summary: "Dependency-light contact and labeled identity recognizers."
+    recall_floor:
+      foundation:
+        EMAIL: 0.95
+        PHONE: 0.95
+        PERSON: 0.95
+        ADDRESS: 0.95
+        DATE_OF_BIRTH: 0.95
+    specificity_floor:
+      foundation:
+        EMAIL: 0.95
+        PHONE: 0.95
+        PERSON: 0.95
+        ADDRESS: 0.95
+        DATE_OF_BIRTH: 0.95
+  regex.medical_identifier_family:
+    emits: [MRN]
+    pattern_summary: "MRN label/value recognizer."
+    recall_floor:
+      foundation:
+        MRN: 0.95
+    specificity_floor:
+      foundation:
+        MRN: 0.95
+  entropy.secret:
+    emits: [OTHER_SECRET]
+    pattern_summary: "High-entropy credential-like strings without known prefixes."
+    recall_floor:
+      foundation:
+        OTHER_SECRET: 0.95
+    specificity_floor:
+      foundation:
+        OTHER_SECRET: 0.95
+  medical-regex.phi_pattern:
+    emits: [MEDICATION, MEDICAL_CONDITION, LAB_VALUE, ICD_CODE, DIAGNOSIS_TEXT, OTHER_PHI]
+    pattern_summary: "Clinical context patterns for medication, diagnosis, lab, code, and procedure text."
+    recall_floor:
+      foundation:
+        MEDICATION: 0.95
+        MEDICAL_CONDITION: 0.95
+        LAB_VALUE: 0.95
+        ICD_CODE: 0.95
+        DIAGNOSIS_TEXT: 0.95
+        OTHER_PHI: 0.95
+    specificity_floor:
+      foundation:
+        MEDICATION: 0.95
+        MEDICAL_CONDITION: 0.95
+        LAB_VALUE: 0.95
+        ICD_CODE: 0.95
+        DIAGNOSIS_TEXT: 0.95
+        OTHER_PHI: 0.95
+  contextual.identity_document:
+    emits: [PASSPORT, DRIVER_LICENSE, NATIONAL_ID, EMPLOYEE_ID, CUSTOMER_ID, STUDENT_ID, USER_ID, LICENSE_PLATE, OTHER_STRONG_ID, OTHER_INTERNAL_ID]
+    pattern_summary: "Label/value identity-document and internal-ID context patterns."
+    recall_floor:
+      foundation:
+        PASSPORT: 0.95
+        DRIVER_LICENSE: 0.95
+        NATIONAL_ID: 0.95
+        EMPLOYEE_ID: 0.95
+        CUSTOMER_ID: 0.95
+        STUDENT_ID: 0.95
+        USER_ID: 0.95
+        LICENSE_PLATE: 0.95
+        OTHER_STRONG_ID: 0.95
+        OTHER_INTERNAL_ID: 0.95
+    specificity_floor:
+      foundation:
+        PASSPORT: 0.95
+        DRIVER_LICENSE: 0.95
+        NATIONAL_ID: 0.95
+        EMPLOYEE_ID: 0.95
+        CUSTOMER_ID: 0.95
+        STUDENT_ID: 0.95
+        USER_ID: 0.95
+        LICENSE_PLATE: 0.95
+        OTHER_STRONG_ID: 0.95
+        OTHER_INTERNAL_ID: 0.95
+  contextual.secret_field:
+    emits: [PASSWORD, API_KEY, BEARER_TOKEN, OTHER_SECRET]
+    pattern_summary: "Label/value secret context patterns."
+    recall_floor:
+      foundation:
+        PASSWORD: 0.95
+        API_KEY: 0.95
+        BEARER_TOKEN: 0.95
+        OTHER_SECRET: 0.95
+    specificity_floor:
+      foundation:
+        PASSWORD: 0.95
+        API_KEY: 0.95
+        BEARER_TOKEN: 0.95
+        OTHER_SECRET: 0.95
+  contextual.xml_identity:
+    emits: [PASSPORT, DRIVER_LICENSE, EMAIL, PHONE]
+    pattern_summary: "Inline XML contact and identity-document tags."
+    # out_of_scope: detector_id slot preempted by an anchored sibling that carries the
+    # floor; see CONTRIBUTING.md "out_of_scope" paragraph before changing.
+    out_of_scope:
+      foundation:
+        PASSPORT: true
+        DRIVER_LICENSE: true
+    recall_floor:
+      foundation:
+        EMAIL: 0.95
+        PHONE: 0.95
+    specificity_floor:
+      foundation:
+        EMAIL: 0.95
+        PHONE: 0.95
+  contextual-broad.generic_identity:
+    emits: [EMAIL, PHONE, PERSON, ADDRESS, DATE_OF_BIRTH, BLOOD_TYPE, OTHER_PHI]
+    pattern_summary: "Broad contextual PII and demographic field labels."
+    # out_of_scope: detector_id slot preempted by an anchored sibling that carries the
+    # floor; see CONTRIBUTING.md "out_of_scope" paragraph before changing.
+    out_of_scope:
+      foundation:
+        EMAIL: true
+        PHONE: true
+    recall_floor:
+      foundation:
+        PERSON: 0.95
+        ADDRESS: 0.95
+        DATE_OF_BIRTH: 0.95
+        BLOOD_TYPE: 0.95
+        OTHER_PHI: 0.95
+    specificity_floor:
+      foundation:
+        PERSON: 0.95
+        ADDRESS: 0.95
+        DATE_OF_BIRTH: 0.95
+        BLOOD_TYPE: 0.95
+        OTHER_PHI: 0.95
+  contextual-broad.output_shapes:
+    emits: [ADDRESS, DATE_OF_BIRTH, PHONE, OTHER_STRONG_ID, PERSON]
+    pattern_summary: "Broad output-only quasi-identifier shape patterns."
+    recall_floor:
+      foundation:
+        ADDRESS: 0.95
+        DATE_OF_BIRTH: 0.95
+        PHONE: 0.95
+        OTHER_STRONG_ID: 0.95
+        PERSON: 0.95
+    specificity_floor:
+      foundation:
+        ADDRESS: 0.95
+        DATE_OF_BIRTH: 0.95
+        PHONE: 0.95
+        OTHER_STRONG_ID: 0.95
+        PERSON: 0.95
+  gliner.pii_phi:
+    emits: [PERSON, ADDRESS, MEDICATION, MEDICAL_CONDITION, BLOOD_TYPE, HEALTH_INSURANCE_ID, US_SSN, PASSPORT, DRIVER_LICENSE, NATIONAL_ID, TAX_ID, MRN, EMAIL, PHONE, DATE_OF_BIRTH, BANK_ACCOUNT, CREDIT_CARD, IBAN, EMPLOYEE_ID, CUSTOMER_ID, STUDENT_ID, USER_ID, LICENSE_PLATE, OTHER_INTERNAL_ID]
+    pattern_summary: "Open-vocabulary PII/PHI model labels normalized to LSDF entities."
+    recall_floor:
+      foundation:
+        PERSON: 0.95
+        ADDRESS: 0.95
+        MEDICATION: 0.95
+        MEDICAL_CONDITION: 0.95
+        BLOOD_TYPE: 0.95
+        HEALTH_INSURANCE_ID: 0.95
+        US_SSN: 0.95
+        PASSPORT: 0.95
+        DRIVER_LICENSE: 0.95
+        NATIONAL_ID: 0.95
+        TAX_ID: 0.95
+        MRN: 0.95
+        EMAIL: 0.95
+        PHONE: 0.95
+        DATE_OF_BIRTH: 0.95
+        BANK_ACCOUNT: 0.95
+        CREDIT_CARD: 0.95
+        IBAN: 0.95
+        EMPLOYEE_ID: 0.95
+        CUSTOMER_ID: 0.95
+        STUDENT_ID: 0.95
+        USER_ID: 0.95
+        LICENSE_PLATE: 0.95
+        OTHER_INTERNAL_ID: 0.95
+    specificity_floor:
+      foundation:
+        PERSON: 0.90
+        ADDRESS: 0.95
+        MEDICATION: 0.95
+        MEDICAL_CONDITION: 0.95
+        BLOOD_TYPE: 0.95
+        HEALTH_INSURANCE_ID: 0.95
+        US_SSN: 0.95
+        PASSPORT: 0.95
+        DRIVER_LICENSE: 0.95
+        NATIONAL_ID: 0.95
+        TAX_ID: 0.95
+        MRN: 0.95
+        EMAIL: 0.95
+        PHONE: 0.95
+        DATE_OF_BIRTH: 0.95
+        BANK_ACCOUNT: 0.95
+        CREDIT_CARD: 0.95
+        IBAN: 0.95
+        EMPLOYEE_ID: 0.95
+        CUSTOMER_ID: 0.95
+        STUDENT_ID: 0.95
+        USER_ID: 0.95
+        LICENSE_PLATE: 0.95
+        OTHER_INTERNAL_ID: 0.95
+  openai_privacy_filter.reference_model:
+    emits: [PERSON, ADDRESS, DATE_OF_BIRTH, EMAIL, PHONE, OTHER_SECRET, BANK_ACCOUNT]
+    pattern_summary: "Reference ML privacy-filter categories normalized to LSDF entities."
+    recall_floor:
+      foundation:
+        PERSON: 0.95
+        ADDRESS: 0.95
+        DATE_OF_BIRTH: 0.95
+        EMAIL: 0.95
+        PHONE: 0.95
+        OTHER_SECRET: 0.95
+        BANK_ACCOUNT: 0.95
+    specificity_floor:
+      foundation:
+        PERSON: 0.95
+        ADDRESS: 0.95
+        DATE_OF_BIRTH: 0.95
+        EMAIL: 0.95
+        PHONE: 0.95
+        OTHER_SECRET: 0.95
+        BANK_ACCOUNT: 0.90
+  presidio.analyzer:
+    emits: [CREDIT_CARD, EMAIL, IBAN, ADDRESS, OTHER_PHI, PERSON, PHONE, BANK_ACCOUNT, US_SSN]
+    pattern_summary: "Presidio analyzer entity types normalized to LSDF entities."
+    recall_floor:
+      foundation:
+        CREDIT_CARD: 0.95
+        EMAIL: 0.95
+        IBAN: 0.95
+        ADDRESS: 0.95
+        OTHER_PHI: 0.95
+        PERSON: 0.95
+        PHONE: 0.95
+        BANK_ACCOUNT: 0.95
+        US_SSN: 0.95
+    specificity_floor:
+      foundation:
+        CREDIT_CARD: 0.95
+        EMAIL: 0.95
+        IBAN: 0.95
+        ADDRESS: 0.95
+        OTHER_PHI: 0.95
+        PERSON: 0.95
+        PHONE: 0.90
+        BANK_ACCOUNT: 0.95
+        US_SSN: 0.95
+  xpia.indirect_injection:
+    emits: [PROMPT_INJECTION]
+    pattern_summary: "Indirect prompt-injection heuristics for RAG and tool-result surfaces."
+    recall_floor:
+      foundation:
+        PROMPT_INJECTION: 0.95
+    specificity_floor:
+      foundation:
+        PROMPT_INJECTION: 0.95
+
+standalone_entities:
+  - EMAIL
+  - PHONE
+  - PERSON
+  - ADDRESS
+  - DATE_OF_BIRTH
+  - BANK_ACCOUNT
+  - IBAN
+  - CREDIT_CARD
+  - SWIFT
+  - CUSTOMER_CONFIDENTIAL
+  - EMPLOYEE_COMPENSATION
+  - PROMPT_INJECTION
+
+reserved_subtypes:
+  OAUTH_TOKEN:
+    status: unavailable
+    fallback_emitter: regex.gcp_oauth
+    note: "No dedicated OAuth-token detector is available."
+  WEBHOOK_URL:
+    status: unavailable
+    fallback_emitter: regex.stripe_key
+    note: "No dedicated webhook recognizer is available."
+  HEALTH_INSURANCE_ID:
+    status: gliner-only
+    fallback_emitter: gliner.pii_phi
+    note: "Only emitted when an ML adapter labels this subtype precisely."
+  EMPLOYEE_COMPENSATION:
+    status: unavailable
+    fallback_emitter: none
+    note: "No compensation-data recognizer is available."
+
+categories:
+  PHI: [MEDICATION, MEDICAL_CONDITION, BLOOD_TYPE, HEALTH_INSURANCE_ID, LAB_VALUE, ICD_CODE, DIAGNOSIS_TEXT, MRN, OTHER_PHI]
+  SECRET: [AWS_KEY, AZURE_KEY, DATADOG_KEY, JWT, OAUTH_TOKEN, BEARER_TOKEN, PEM_BLOCK, PRIVATE_KEY, DATABASE_URL, WEBHOOK_URL, PASSWORD, API_KEY, OTHER_SECRET]
+  STRONG_ID: [US_SSN, PASSPORT, DRIVER_LICENSE, NATIONAL_ID, TAX_ID, BR_CPF, OTHER_STRONG_ID]
+  INTERNAL_ID: [EMPLOYEE_ID, CUSTOMER_ID, STUDENT_ID, USER_ID, LICENSE_PLATE, OTHER_INTERNAL_ID]

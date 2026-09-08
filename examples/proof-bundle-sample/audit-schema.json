@@ -1,0 +1,13 @@
+{
+  "raw_value_safe": true,
+  "event_shape": {
+    "source": "gateway",
+    "stage": "request_preflight|response_inspection|stream_terminal",
+    "blocked": "boolean",
+    "decision_count": "integer",
+    "scope": "span|surface on each decision",
+    "scope_escalated": "boolean on each decision",
+    "audit_event": "raw-value-safe decision metadata"
+  },
+  "evidence": "non-reversible placeholders only"
+}

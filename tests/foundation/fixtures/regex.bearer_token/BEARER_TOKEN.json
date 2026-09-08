@@ -1,0 +1,49 @@
+{
+  "detector": "regex.bearer_token",
+  "entity": "BEARER_TOKEN",
+  "description": "Synthetic authorization bearer assignments for regex bearer-token foundation coverage.",
+  "cases": [
+    {
+      "id": "bearer-token-pos-header-colon",
+      "role": "positive",
+      "text": "authorization: bearer FixtureBearerTokenABC12345",
+      "note": "Authorization header with bearer token."
+    },
+    {
+      "id": "bearer-token-pos-header-equals",
+      "role": "positive",
+      "text": "authorization=bearer FixtureBearerValue987654321",
+      "note": "Equals-delimited authorization bearer value."
+    },
+    {
+      "id": "bearer-token-pos-quoted",
+      "role": "positive",
+      "text": "authorization=\"bearer FixtureBearerTokenWithDots.12345\"",
+      "note": "Quoted authorization bearer value."
+    },
+    {
+      "id": "bearer-token-pos-case",
+      "role": "positive",
+      "text": "Authorization: Bearer FixtureBearerTokenXYZ99999",
+      "note": "Case-insensitive authorization bearer value."
+    },
+    {
+      "id": "bearer-token-neg-too-short",
+      "role": "negative",
+      "text": "authorization: bearer short",
+      "note": "Too short for the bearer-token recognizer."
+    },
+    {
+      "id": "bearer-token-neg-placeholder",
+      "role": "negative",
+      "text": "authorization: bearer process.env.API_TOKEN",
+      "note": "Placeholder-like environment reference."
+    },
+    {
+      "id": "bearer-token-neg-prose",
+      "role": "negative",
+      "text": "The API uses bearer authorization in production.",
+      "note": "No concrete bearer token."
+    }
+  ]
+}

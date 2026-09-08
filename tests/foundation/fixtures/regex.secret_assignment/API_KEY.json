@@ -1,0 +1,49 @@
+{
+    "detector":  "regex.secret_assignment",
+    "entity":  "API_KEY",
+    "description":  "Synthetic API key assignment cases that avoid known real provider prefixes.",
+    "cases":  [
+                  {
+                      "id":  "api_key_positive_snake_case",
+                      "role":  "positive",
+                      "text":  "api_key: FixtureKeyValue123456",
+                      "note":  "Synthetic value avoids provider-specific prefixes."
+                  },
+                  {
+                      "id":  "api_key_positive_spaced_label",
+                      "role":  "positive",
+                      "text":  "api key = DemoFixtureKey987654",
+                      "note":  "Spaced API key label."
+                  },
+                  {
+                      "id":  "api_key_positive_hyphen_label",
+                      "role":  "positive",
+                      "text":  "api-key: PublicFixtureKeyABCDE12345",
+                      "note":  "Hyphenated API key label."
+                  },
+                  {
+                      "id":  "api_key_positive_quoted_value",
+                      "role":  "positive",
+                      "text":  "api_key = \"FixtureApiKeyValue777\"",
+                      "note":  "Quoted synthetic value."
+                  },
+                  {
+                      "id":  "api_key_negative_known_placeholder",
+                      "role":  "negative",
+                      "text":  "api_key: demo",
+                      "note":  "Too short to meet secret-assignment minimum length."
+                  },
+                  {
+                      "id":  "api_key_negative_short_value",
+                      "role":  "negative",
+                      "text":  "api_key: abc123",
+                      "note":  "Too short for generic assignment."
+                  },
+                  {
+                      "id":  "api_key_negative_description",
+                      "role":  "negative",
+                      "text":  "The API key field is documented in the onboarding guide.",
+                      "note":  "No assignment value."
+                  }
+              ]
+}

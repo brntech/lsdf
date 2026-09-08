@@ -1,0 +1,817 @@
+{
+  "name": "br_agentic_pii",
+  "version": "0.1",
+  "source": "guardion/BR-Agentic-PII-Benchmark",
+  "source_license": "MIT",
+  "source_url": "https://huggingface.co/datasets/guardion/BR-Agentic-PII-Benchmark",
+  "description": "MIT-licensed synthetic Brazilian Portuguese banking-agent PII corpus. This committed sample uses the customer-registration scenario slice from BR-Agentic-PII-Benchmark because it adds agentic OpenAI-style messages, tool arguments, and tool-result coverage without the larger PIIBench composite-license burden or the financial-value labels LSDF does not release-gate today. Default builder invocation rewrites this committed snapshot; pass `--fetch-upstream` or `--input` to rebuild from source JSONL.",
+  "selection_note": "Surveyed PIIBench, HiveTrace PII-Bench (ru), ai4privacy PHI, and BR-Agentic-PII-Benchmark. BR-Agentic was selected because it is small, MIT-licensed, fully synthetic, Portuguese, and explicitly models agent tool arguments/results; PIIBench overlaps existing ai4privacy/Nemotron sources and carries constituent-license complexity, while HiveTrace is access-gated/evaluation-only and ai4privacy PHI overlaps the existing medical_phi_replay focus.",
+  "scenarios": [
+    "atualizacao_cadastral"
+  ],
+  "language": "Portuguese",
+  "locale": "pt_BR",
+  "case_count": 8,
+  "by_source_label_count": {
+    "CPF": 8,
+    "EMAIL": 7,
+    "PERSON_NAME": 8,
+    "PHONE_NUMBER": 8,
+    "STREET_ADDRESS": 8
+  },
+  "by_surface_count": {
+    "input.messages": 8,
+    "input.tool_results": 7,
+    "output.tool_calls.arguments": 8
+  },
+  "cases": [
+    {
+      "id": "br-agentic-pii-conv_fin_0000",
+      "category": "pii",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Olá! Gostaria de atualizar meus dados cadastrais, por favor."
+          },
+          {
+            "role": "assistant",
+            "content": "Olá! Serei seu assistente virtual. Para prosseguirmos com a atualização, poderia, por gentileza, informar seu nome completo e CPF?"
+          },
+          {
+            "role": "user",
+            "content": "Claro, meu nome é Cauã Rocha e meu CPF é 275 860 391 86."
+          },
+          {
+            "role": "assistant",
+            "content": "Obrigado, Cauã Rocha. Confirmei seus dados em nosso sistema. Quais informações você deseja atualizar hoje? Seria o telefone, e-mail ou endereço?"
+          },
+          {
+            "role": "user",
+            "content": "Preciso atualizar meu telefone e também meu endereço. Meu novo telefone é (11) 90116-2128 e o novo endereço é Conjunto Hellena Peixoto, 2359, Santa Sofia, Pastor - SP, 92610-902."
+          },
+          {
+            "role": "assistant",
+            "content": "Entendido, Cauã Rocha. Você deseja atualizar o telefone para (11) 90116-2128 e o endereço para Conjunto Hellena Peixoto, 2359, Santa Sofia, Pastor - SP, 92610-902. Confirma essas informações para que eu possa prosseguir?"
+          },
+          {
+            "role": "user",
+            "content": "Sim, confirmo! Pode seguir com a atualização."
+          },
+          {
+            "role": "assistant",
+            "tool_calls": [
+              {
+                "id": "call_123abc",
+                "type": "function",
+                "function": {
+                  "name": "update_customer_info",
+                  "arguments": "{\"cpf\": \"275 860 391 86\", \"phone\": \"(11) 90116-2128\", \"address\": \"Conjunto Hellena Peixoto, 2359, Santa Sofia, Pastor - SP, 92610-902\"}"
+                }
+              }
+            ],
+            "content": "Registrando as novas informações de contato e endereço para o CPF 275 860 391 86."
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_123abc",
+            "content": "{\"status\": \"success\", \"message\": \"Dados cadastrais atualizados com sucesso para o CPF 275 860 391 86.\", \"updated_fields\": [\"phone\", \"address\"]}"
+          },
+          {
+            "role": "assistant",
+            "content": "Excelente! Seus dados de telefone e endereço foram atualizados com sucesso em nosso sistema para o CPF 275 860 391 86. Há mais alguma informação que gostaria de atualizar, como seu e-mail, ou alguma outra solicitação?"
+          },
+          {
+            "role": "user",
+            "content": "Por enquanto é só isso. Muito obrigado!"
+          },
+          {
+            "role": "assistant",
+            "content": "De nada, Cauã Rocha! O Banco está sempre à disposição para o que precisar. Tenha um ótimo dia!"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "(11) 90116-2128",
+        "275 860 391 86",
+        "Cauã Rocha",
+        "Conjunto Hellena Peixoto, 2359, Santa Sofia, Pastor - SP, 92610-902"
+      ],
+      "expected_entities": [
+        "BR_CPF",
+        "PERSON",
+        "PHONE",
+        "ADDRESS"
+      ],
+      "expected_surfaces": [
+        "input.messages",
+        "input.tool_results",
+        "output.tool_calls.arguments"
+      ],
+      "expected_absent": [
+        "(11) 90116-2128",
+        "275 860 391 86",
+        "Cauã Rocha",
+        "Conjunto Hellena Peixoto, 2359, Santa Sofia, Pastor - SP, 92610-902"
+      ],
+      "br_agentic_labels": [
+        "CPF",
+        "PERSON_NAME",
+        "PHONE_NUMBER",
+        "STREET_ADDRESS"
+      ],
+      "scenario": "atualizacao_cadastral",
+      "language": "Portuguese",
+      "locale": "pt_BR"
+    },
+    {
+      "id": "br-agentic-pii-conv_fin_0001",
+      "category": "pii",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Boa tarde! Preciso atualizar meus dados cadastrais. Meu nome é Ana Beatriz Alves e meu CPF é 12698074558."
+          },
+          {
+            "role": "assistant",
+            "content": "Boa tarde, Ana Beatriz Alves! Fico feliz em ajudar com a atualização dos seus dados. Para qual informação você gostaria de solicitar a alteração: telefone, e-mail ou endereço?"
+          },
+          {
+            "role": "user",
+            "content": "Quero mudar tudo, na real. Meu telefone agora é (87) 94921-8191, o e-mail novo é anaalves@gmail.com e o endereço atualizado é Largo Henrique Pires, 3690, Estoril, da Conceição - PE, 05617-733."
+          },
+          {
+            "role": "assistant",
+            "content": "Entendido, Ana Beatriz Alves. Você deseja atualizar seu telefone para (87) 94921-8191, seu e-mail para anaalves@gmail.com e seu endereço para Largo Henrique Pires, 3690, Estoril, da Conceição - PE, 05617-733. Confirma que essas são as novas informações para prosseguirmos?"
+          },
+          {
+            "role": "user",
+            "content": "Isso mesmo, pode seguir com a atualização."
+          },
+          {
+            "role": "assistant",
+            "tool_calls": [
+              {
+                "id": "call_update_info_1",
+                "type": "function",
+                "function": {
+                  "name": "update_customer_info",
+                  "arguments": "{\"cpf\": \"12698074558\", \"phone\": \"(87) 94921-8191\", \"email\": \"anaalves@gmail.com\", \"address\": \"Largo Henrique Pires, 3690, Estoril, da Conceição - PE, 05617-733\"}"
+                }
+              }
+            ],
+            "content": null
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_update_info_1",
+            "content": "{\"status\": \"success\", \"message\": \"Dados cadastrais atualizados com sucesso para o CPF 12698074558.\"}"
+          },
+          {
+            "role": "assistant",
+            "content": "Perfeito, Ana Beatriz Alves! Seus dados foram atualizados com sucesso. O novo telefone (87) 94921-8191, e-mail anaalves@gmail.com e endereço Largo Henrique Pires, 3690, Estoril, da Conceição - PE, 05617-733 já estão registrados em seu cadastro."
+          },
+          {
+            "role": "user",
+            "content": "Show de bola! Obrigado pela agilidade."
+          },
+          {
+            "role": "assistant",
+            "content": "De nada! Se precisar de algo mais, estou à disposição. Tenha um ótimo dia!"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "(87) 94921-8191",
+        "12698074558",
+        "Ana Beatriz Alves",
+        "Largo Henrique Pires, 3690, Estoril, da Conceição - PE, 05617-733",
+        "anaalves@gmail.com"
+      ],
+      "expected_entities": [
+        "BR_CPF",
+        "EMAIL",
+        "PERSON",
+        "PHONE",
+        "ADDRESS"
+      ],
+      "expected_surfaces": [
+        "input.messages",
+        "input.tool_results",
+        "output.tool_calls.arguments"
+      ],
+      "expected_absent": [
+        "(87) 94921-8191",
+        "12698074558",
+        "Ana Beatriz Alves",
+        "Largo Henrique Pires, 3690, Estoril, da Conceição - PE, 05617-733",
+        "anaalves@gmail.com"
+      ],
+      "br_agentic_labels": [
+        "CPF",
+        "EMAIL",
+        "PERSON_NAME",
+        "PHONE_NUMBER",
+        "STREET_ADDRESS"
+      ],
+      "scenario": "atualizacao_cadastral",
+      "language": "Portuguese",
+      "locale": "pt_BR"
+    },
+    {
+      "id": "br-agentic-pii-conv_fin_0008",
+      "category": "pii",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Olá, bom dia! Preciso atualizar alguns dos meus dados cadastrais. Meu CPF é 478.316.295-64."
+          },
+          {
+            "role": "assistant",
+            "content": "Bom dia, Sr. Vitor Siqueira! Agradeço por entrar em contato. Confirmo que seu CPF é 478.316.295-64. Quais dados você gostaria de atualizar hoje? Pode me informar o novo telefone, e-mail ou endereço, por favor?"
+          },
+          {
+            "role": "user",
+            "content": "Certo! Meu novo número de telefone é (84) 94648-2144, o e-mail atualizado é sr..s@hotmail.com e meu novo endereço é Trecho Brayan Garcia, 7914, Vila Independencia 3ª Seção, Martins - RN, 54030226."
+          },
+          {
+            "role": "assistant",
+            "content": "Entendido! Para prosseguir com a atualização, vou registrar o novo telefone (84) 94648-2144, o e-mail sr..s@hotmail.com e o endereço Trecho Brayan Garcia, 7914, Vila Independencia 3ª Seção, Martins - RN, 54030226 em seu cadastro. Por favor, aguarde um momento enquanto processo essa solicitação."
+          },
+          {
+            "role": "assistant",
+            "tool_calls": [
+              {
+                "id": "call_123abc",
+                "type": "function",
+                "function": {
+                  "name": "update_customer_info",
+                  "arguments": "{\"cpf\": \"478.316.295-64\", \"phone\": \"(84) 94648-2144\", \"email\": \"sr..s@hotmail.com\", \"address\": \"Trecho Brayan Garcia, 7914, Vila Independencia 3ª Seção, Martins - RN, 54030226\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_123abc",
+            "content": "{\"status\": \"success\", \"message\": \"Dados cadastrais atualizados com sucesso.\", \"updated_fields\": {\"phone\": \"(84) 94648-2144\", \"email\": \"sr..s@hotmail.com\", \"address\": \"Trecho Brayan Garcia, 7914, Vila Independencia 3ª Seção, Martins - RN, 54030226\"}}"
+          },
+          {
+            "role": "assistant",
+            "content": "Excelente, Sr. Vitor Siqueira! Seus dados cadastrais foram atualizados com sucesso. O novo telefone registrado é (84) 94648-2144, o e-mail é sr..s@hotmail.com e o endereço é Trecho Brayan Garcia, 7914, Vila Independencia 3ª Seção, Martins - RN, 54030226. Precisa de mais alguma assistência hoje?"
+          },
+          {
+            "role": "user",
+            "content": "Não, por enquanto é tudo. Muito obrigada pela agilidade!"
+          },
+          {
+            "role": "assistant",
+            "content": "De nada! O Banco [Nome do Banco] agradece seu contato. Tenha um ótimo dia!"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "(84) 94648-2144",
+        "478.316.295-64",
+        "Sr. Vitor Siqueira",
+        "Trecho Brayan Garcia, 7914, Vila Independencia 3ª Seção, Martins - RN, 54030226",
+        "sr..s@hotmail.com"
+      ],
+      "expected_entities": [
+        "BR_CPF",
+        "EMAIL",
+        "PERSON",
+        "PHONE",
+        "ADDRESS"
+      ],
+      "expected_surfaces": [
+        "input.messages",
+        "input.tool_results",
+        "output.tool_calls.arguments"
+      ],
+      "expected_absent": [
+        "(84) 94648-2144",
+        "478.316.295-64",
+        "Sr. Vitor Siqueira",
+        "Trecho Brayan Garcia, 7914, Vila Independencia 3ª Seção, Martins - RN, 54030226",
+        "sr..s@hotmail.com"
+      ],
+      "br_agentic_labels": [
+        "CPF",
+        "EMAIL",
+        "PERSON_NAME",
+        "PHONE_NUMBER",
+        "STREET_ADDRESS"
+      ],
+      "scenario": "atualizacao_cadastral",
+      "language": "Portuguese",
+      "locale": "pt_BR"
+    },
+    {
+      "id": "br-agentic-pii-conv_fin_0010",
+      "category": "pii",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Olá, preciso atualizar meus dados cadastrais aqui no banco. É possível fazer isso por aqui?"
+          },
+          {
+            "role": "assistant",
+            "content": "Olá! Sim, é totalmente possível. Para começarmos, por favor, me informe seu CPF para que eu possa localizar seu cadastro."
+          },
+          {
+            "role": "user",
+            "content": "Meu CPF é 903 427 516 70."
+          },
+          {
+            "role": "assistant",
+            "content": "Agradeço a informação, Heitor Nunes. Confirmei seus dados. Atualmente, seu telefone cadastrado é (11) 98492-9226, seu e-mail é hnunes@hotmail.com e seu endereço é Distrito de Pastor, 317, João Pinheiro, Cunha do Amparo - SP, 82965-988. Quais informações você gostaria de atualizar?"
+          },
+          {
+            "role": "user",
+            "content": "Isso mesmo! Eu quero atualizar meu telefone para o número (11) 98492-9226, meu e-mail para hnunes@hotmail.com e meu endereço para Distrito de Pastor, 317, João Pinheiro, Cunha do Amparo - SP, 82965-988. Mudei recentemente."
+          },
+          {
+            "role": "assistant",
+            "tool_calls": [
+              {
+                "id": "call_123abc",
+                "type": "function",
+                "function": {
+                  "name": "update_customer_info",
+                  "arguments": "{\"cpf\": \"903 427 516 70\", \"phone\": \"(11) 98492-9226\", \"email\": \"hnunes@hotmail.com\", \"address\": \"Distrito de Pastor, 317, João Pinheiro, Cunha do Amparo - SP, 82965-988\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_123abc",
+            "content": "{\"status\": \"success\", \"message\": \"Dados cadastrais atualizados com sucesso.\", \"updated_fields\": {\"phone\": \"(11) 98492-9226\", \"email\": \"hnunes@hotmail.com\", \"address\": \"Distrito de Pastor, 317, João Pinheiro, Cunha do Amparo - SP, 82965-988\"}}"
+          },
+          {
+            "role": "assistant",
+            "content": "Excelente! Seus dados foram atualizados com sucesso. O novo telefone cadastrado é (11) 98492-9226, o e-mail é hnunes@hotmail.com e o endereço é Distrito de Pastor, 317, João Pinheiro, Cunha do Amparo - SP, 82965-988. Há algo mais em que posso ajudar hoje, Heitor Nunes?"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "(11) 98492-9226",
+        "903 427 516 70",
+        "Distrito de Pastor, 317, João Pinheiro, Cunha do Amparo - SP, 82965-988",
+        "Heitor Nunes",
+        "hnunes@hotmail.com"
+      ],
+      "expected_entities": [
+        "BR_CPF",
+        "EMAIL",
+        "PERSON",
+        "PHONE",
+        "ADDRESS"
+      ],
+      "expected_surfaces": [
+        "input.messages",
+        "input.tool_results",
+        "output.tool_calls.arguments"
+      ],
+      "expected_absent": [
+        "(11) 98492-9226",
+        "903 427 516 70",
+        "Distrito de Pastor, 317, João Pinheiro, Cunha do Amparo - SP, 82965-988",
+        "Heitor Nunes",
+        "hnunes@hotmail.com"
+      ],
+      "br_agentic_labels": [
+        "CPF",
+        "EMAIL",
+        "PERSON_NAME",
+        "PHONE_NUMBER",
+        "STREET_ADDRESS"
+      ],
+      "scenario": "atualizacao_cadastral",
+      "language": "Portuguese",
+      "locale": "pt_BR"
+    },
+    {
+      "id": "br-agentic-pii-conv_fin_0014",
+      "category": "pii",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Oi, moço. Preciso mudar umas coisas no meu cadastro, sabe? Tipo, meu telefone e onde eu moro. E o e-mail também, que agora é outro."
+          },
+          {
+            "role": "assistant",
+            "content": "Olá! Compreendo perfeitamente. Para que eu possa te ajudar com a atualização dos seus dados, por favor, me informe seu nome completo e o número do seu CPF."
+          },
+          {
+            "role": "user",
+            "content": "Meu nome é Sr. Otávio Peixoto e meu CPF é 549 670 312 34. Eu sou cliente novo, abri a conta faz pouco tempo, então pode ser que não tenha tudo certinho ainda."
+          },
+          {
+            "role": "assistant",
+            "content": "Obrigado, Sr. Otávio Peixoto. Confirmei seu CPF 549 670 312 34. Agora, por favor, me diga quais são os novos dados que você gostaria de registrar para o seu telefone, e-mail e endereço. Pode me informar um por um, se preferir."
+          },
+          {
+            "role": "user",
+            "content": "Ah, sim! Então, o telefone novo é (18) 95062-2644. O e-mail, que mudou, é sr..peixoto85@hotmail.com. E o endereço agora é Loteamento de Macedo, 5253, Lagoinha Leblon, Garcia dos Dourados - SP, 29466-322. Anota aí pra mim, por favor."
+          },
+          {
+            "role": "assistant",
+            "content": "Certo, Sr. Otávio Peixoto. Entendido. Você deseja atualizar seu telefone para (18) 95062-2644, seu e-mail para sr..peixoto85@hotmail.com e seu endereço para Loteamento de Macedo, 5253, Lagoinha Leblon, Garcia dos Dourados - SP, 29466-322. Confere se está tudo certinho antes de eu prosseguir com a atualização."
+          },
+          {
+            "role": "user",
+            "content": "Isso mesmo! Tá tudo certinho. Pode atualizar."
+          },
+          {
+            "role": "assistant",
+            "tool_calls": [
+              {
+                "id": "call_update_info_1",
+                "type": "function",
+                "function": {
+                  "name": "update_customer_info",
+                  "arguments": "{\"cpf\": \"549 670 312 34\", \"phone\": \"(18) 95062-2644\", \"email\": \"sr..peixoto85@hotmail.com\", \"address\": \"Loteamento de Macedo, 5253, Lagoinha Leblon, Garcia dos Dourados - SP, 29466-322\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_update_info_1",
+            "content": "{\"status\": \"success\", \"message\": \"Dados cadastrais atualizados com sucesso para 549 670 312 34.\"}"
+          },
+          {
+            "role": "assistant",
+            "content": "Excelente! Seus dados cadastrais foram atualizados com sucesso. O novo telefone registrado é (18) 95062-2644, o e-mail é sr..peixoto85@hotmail.com e o endereço é Loteamento de Macedo, 5253, Lagoinha Leblon, Garcia dos Dourados - SP, 29466-322. Há algo mais em que posso ajudar?"
+          },
+          {
+            "role": "user",
+            "content": "Não, por enquanto é só isso. Muito obrigado pela ajuda, moço!"
+          },
+          {
+            "role": "assistant",
+            "content": "De nada, Sr. Otávio Peixoto! O Banco agradece seu contato e fica à disposição. Tenha um ótimo dia!"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "(18) 95062-2644",
+        "549 670 312 34",
+        "Loteamento de Macedo, 5253, Lagoinha Leblon, Garcia dos Dourados - SP, 29466-322",
+        "Sr. Otávio Peixoto",
+        "sr..peixoto85@hotmail.com"
+      ],
+      "expected_entities": [
+        "BR_CPF",
+        "EMAIL",
+        "PERSON",
+        "PHONE",
+        "ADDRESS"
+      ],
+      "expected_surfaces": [
+        "input.messages",
+        "input.tool_results",
+        "output.tool_calls.arguments"
+      ],
+      "expected_absent": [
+        "(18) 95062-2644",
+        "549 670 312 34",
+        "Loteamento de Macedo, 5253, Lagoinha Leblon, Garcia dos Dourados - SP, 29466-322",
+        "Sr. Otávio Peixoto",
+        "sr..peixoto85@hotmail.com"
+      ],
+      "br_agentic_labels": [
+        "CPF",
+        "EMAIL",
+        "PERSON_NAME",
+        "PHONE_NUMBER",
+        "STREET_ADDRESS"
+      ],
+      "scenario": "atualizacao_cadastral",
+      "language": "Portuguese",
+      "locale": "pt_BR"
+    },
+    {
+      "id": "br-agentic-pii-conv_fin_0015",
+      "category": "pii",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "E aí, quero atualizar meus dados cadastrais."
+          },
+          {
+            "role": "assistant",
+            "content": "Olá! Para sua segurança, poderia me informar seu nome completo e CPF, por favor? Assim consigo te ajudar com a atualização."
+          },
+          {
+            "role": "user",
+            "content": "Claro, sou o Isis Novaes, meu CPF é 74518690320. Queria mudar meu telefone e e-mail."
+          },
+          {
+            "role": "assistant",
+            "content": "Certo, Isis Novaes. Entendi que deseja atualizar seu telefone e e-mail. Poderia me informar os novos dados, por gentileza?"
+          },
+          {
+            "role": "user",
+            "content": "Meu novo telefone é (49) 93158-7909 e o e-mail é isis.novaes7@gmail.com."
+          },
+          {
+            "role": "assistant",
+            "tool_calls": [
+              {
+                "id": "call_abc123",
+                "type": "function",
+                "function": {
+                  "name": "update_customer_info",
+                  "arguments": "{\"cpf\": \"74518690320\", \"phone\": \"(49) 93158-7909\", \"email\": \"isis.novaes7@gmail.com\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_abc123",
+            "content": "{\"status\": \"success\", \"message\": \"Dados de telefone e e-mail atualizados com sucesso.\"}"
+          },
+          {
+            "role": "assistant",
+            "content": "Excelente, Isis Novaes! Seus dados de telefone ((49) 93158-7909) e e-mail (isis.novaes7@gmail.com) foram atualizados com sucesso em nosso sistema. Precisa atualizar mais alguma coisa, como seu endereço?"
+          },
+          {
+            "role": "user",
+            "content": "Ah, sim! Aproveitando, meu endereço também mudou para Lagoa Caroline Fonseca, 3902, Piraja, Rodrigues - SC, 44963943."
+          },
+          {
+            "role": "assistant",
+            "tool_calls": [
+              {
+                "id": "call_def456",
+                "type": "function",
+                "function": {
+                  "name": "update_customer_info",
+                  "arguments": "{\"cpf\": \"74518690320\", \"address\": \"Lagoa Caroline Fonseca, 3902, Piraja, Rodrigues - SC, 44963943\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_def456",
+            "content": "{\"status\": \"success\", \"message\": \"Endereço atualizado com sucesso.\"}"
+          },
+          {
+            "role": "assistant",
+            "content": "Perfeito! Seu novo endereço, Lagoa Caroline Fonseca, 3902, Piraja, Rodrigues - SC, 44963943, também foi atualizado. Há algo mais em que posso ajudar hoje, Isis Novaes?"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "(49) 93158-7909",
+        "74518690320",
+        "Isis Novaes",
+        "Lagoa Caroline Fonseca, 3902, Piraja, Rodrigues - SC, 44963943",
+        "isis.novaes7@gmail.com"
+      ],
+      "expected_entities": [
+        "BR_CPF",
+        "EMAIL",
+        "PERSON",
+        "PHONE",
+        "ADDRESS"
+      ],
+      "expected_surfaces": [
+        "input.messages",
+        "output.tool_calls.arguments"
+      ],
+      "expected_absent": [
+        "(49) 93158-7909",
+        "74518690320",
+        "Isis Novaes",
+        "Lagoa Caroline Fonseca, 3902, Piraja, Rodrigues - SC, 44963943",
+        "isis.novaes7@gmail.com"
+      ],
+      "br_agentic_labels": [
+        "CPF",
+        "EMAIL",
+        "PERSON_NAME",
+        "PHONE_NUMBER",
+        "STREET_ADDRESS"
+      ],
+      "scenario": "atualizacao_cadastral",
+      "language": "Portuguese",
+      "locale": "pt_BR"
+    },
+    {
+      "id": "br-agentic-pii-conv_fin_0016",
+      "category": "pii",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Olá, preciso atualizar meus dados cadastrais. Meu nome é Juliana Vargas e meu CPF é 71650983484."
+          },
+          {
+            "role": "assistant",
+            "content": "Olá, Juliana Vargas! Confirmo que seu CPF é 71650983484. Em que posso ajudar com a atualização dos seus dados, meu rei?"
+          },
+          {
+            "role": "user",
+            "content": "Gostaria de atualizar meu número de telefone. O novo número é (75) 90923-9866."
+          },
+          {
+            "role": "assistant",
+            "content": "Certo, Juliana Vargas. O novo telefone registrado será (75) 90923-9866. Há mais alguma informação que gostaria de atualizar?"
+          },
+          {
+            "role": "user",
+            "content": "Sim, meu e-mail também mudou. O novo é juliana.v@gmail.com."
+          },
+          {
+            "role": "assistant",
+            "content": "Perfeito. O e-mail será atualizado para juliana.v@gmail.com. Há mais algum dado para alterarmos?"
+          },
+          {
+            "role": "user",
+            "content": "Por último, meu endereço foi alterado para Núcleo de Mendonça, 4145, Vila Mantiqueira, Camargo da Mata - BA, 10059510."
+          },
+          {
+            "role": "assistant",
+            "content": "Ok, Juliana Vargas. O novo endereço a ser registrado é Núcleo de Mendonça, 4145, Vila Mantiqueira, Camargo da Mata - BA, 10059510. Vou prosseguir com a atualização de todos os dados informados: telefone (75) 90923-9866, e-mail juliana.v@gmail.com e endereço Núcleo de Mendonça, 4145, Vila Mantiqueira, Camargo da Mata - BA, 10059510. Posso confirmar?"
+          },
+          {
+            "role": "assistant",
+            "content": "Confirmando as informações, estou realizando a atualização dos seus dados cadastrais.",
+            "tool_calls": [
+              {
+                "id": "call_update_customer_info_1",
+                "type": "function",
+                "function": {
+                  "name": "update_customer_info",
+                  "arguments": "{\"cpf\": \"71650983484\", \"phone\": \"(75) 90923-9866\", \"email\": \"juliana.v@gmail.com\", \"address\": \"Núcleo de Mendonça, 4145, Vila Mantiqueira, Camargo da Mata - BA, 10059510\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_update_customer_info_1",
+            "content": "{\"status\": \"success\", \"message\": \"Dados cadastrais atualizados com sucesso para o cliente 71650983484.\"}"
+          },
+          {
+            "role": "assistant",
+            "content": "Oxente, que bom! A atualização dos seus dados cadastrais (telefone, e-mail e endereço) foi realizada com sucesso, Juliana Vargas. Precisa de mais alguma coisa, meu rei?"
+          },
+          {
+            "role": "user",
+            "content": "Não, por enquanto é só. Muito obrigado pela ajuda!"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "(75) 90923-9866",
+        "71650983484",
+        "Juliana Vargas",
+        "Núcleo de Mendonça, 4145, Vila Mantiqueira, Camargo da Mata - BA, 10059510",
+        "juliana.v@gmail.com"
+      ],
+      "expected_entities": [
+        "BR_CPF",
+        "EMAIL",
+        "PERSON",
+        "PHONE",
+        "ADDRESS"
+      ],
+      "expected_surfaces": [
+        "input.messages",
+        "input.tool_results",
+        "output.tool_calls.arguments"
+      ],
+      "expected_absent": [
+        "(75) 90923-9866",
+        "71650983484",
+        "Juliana Vargas",
+        "Núcleo de Mendonça, 4145, Vila Mantiqueira, Camargo da Mata - BA, 10059510",
+        "juliana.v@gmail.com"
+      ],
+      "br_agentic_labels": [
+        "CPF",
+        "EMAIL",
+        "PERSON_NAME",
+        "PHONE_NUMBER",
+        "STREET_ADDRESS"
+      ],
+      "scenario": "atualizacao_cadastral",
+      "language": "Portuguese",
+      "locale": "pt_BR"
+    },
+    {
+      "id": "br-agentic-pii-conv_fin_0029",
+      "category": "pii",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Olá, preciso atualizar meus dados cadastrais. Meu nome é Carlos Eduardo Aragão e meu CPF é 84261750317."
+          },
+          {
+            "role": "assistant",
+            "content": "Olá, Carlos Eduardo Aragão! Para sua segurança e para que eu possa prosseguir com a atualização, por favor, me informe qual dado você gostaria de alterar (telefone, e-mail ou endereço) e qual seria o novo valor. Por exemplo, você pode dizer 'quero atualizar meu telefone para (47) 95571-7203'."
+          },
+          {
+            "role": "user",
+            "content": "Certo. Gostaria de atualizar meu telefone para (47) 95571-7203, meu e-mail para carlos.a@icloud.com e meu endereço para Lagoa Benjamim Nascimento, 4787, Marilandia, Borges - SC, 66464-054."
+          },
+          {
+            "role": "assistant",
+            "content": "Entendido, Carlos Eduardo Aragão. Você deseja atualizar seu telefone para (47) 95571-7203, seu e-mail para carlos.a@icloud.com e seu endereço para Lagoa Benjamim Nascimento, 4787, Marilandia, Borges - SC, 66464-054. Confirma que essas são as novas informações?"
+          },
+          {
+            "role": "user",
+            "content": "Sim, confirmo. Pode prosseguir com as atualizações."
+          },
+          {
+            "role": "assistant",
+            "tool_calls": [
+              {
+                "id": "call_12345",
+                "type": "function",
+                "function": {
+                  "name": "update_customer_info",
+                  "arguments": "{\"cpf\": \"84261750317\", \"phone\": \"(47) 95571-7203\", \"email\": \"carlos.a@icloud.com\", \"address\": \"Lagoa Benjamim Nascimento, 4787, Marilandia, Borges - SC, 66464-054\"}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "tool_call_id": "call_12345",
+            "content": "{\"status\": \"success\", \"message\": \"Dados cadastrais atualizados com sucesso para o CPF 84261750317.\"}"
+          },
+          {
+            "role": "assistant",
+            "content": "Excelente! Seus dados foram atualizados com sucesso em nosso sistema. Seu novo telefone é (47) 95571-7203, seu novo e-mail é carlos.a@icloud.com e seu novo endereço é Lagoa Benjamim Nascimento, 4787, Marilandia, Borges - SC, 66464-054. Há algo mais em que posso ajudar?"
+          },
+          {
+            "role": "user",
+            "content": "Não, por enquanto é só. Muito obrigado pela ajuda!"
+          },
+          {
+            "role": "assistant",
+            "content": "De nada, Carlos Eduardo Aragão! O Banco Agradece seu contato. Tenha um ótimo dia!"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "(47) 95571-7203",
+        "84261750317",
+        "Carlos Eduardo Aragão",
+        "Lagoa Benjamim Nascimento, 4787, Marilandia, Borges - SC, 66464-054",
+        "carlos.a@icloud.com"
+      ],
+      "expected_entities": [
+        "BR_CPF",
+        "EMAIL",
+        "PERSON",
+        "PHONE",
+        "ADDRESS"
+      ],
+      "expected_surfaces": [
+        "input.messages",
+        "input.tool_results",
+        "output.tool_calls.arguments"
+      ],
+      "expected_absent": [
+        "(47) 95571-7203",
+        "84261750317",
+        "Carlos Eduardo Aragão",
+        "Lagoa Benjamim Nascimento, 4787, Marilandia, Borges - SC, 66464-054",
+        "carlos.a@icloud.com"
+      ],
+      "br_agentic_labels": [
+        "CPF",
+        "EMAIL",
+        "PERSON_NAME",
+        "PHONE_NUMBER",
+        "STREET_ADDRESS"
+      ],
+      "scenario": "atualizacao_cadastral",
+      "language": "Portuguese",
+      "locale": "pt_BR"
+    }
+  ]
+}

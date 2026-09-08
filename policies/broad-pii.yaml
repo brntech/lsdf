@@ -1,0 +1,115 @@
+# Broad PII local privacy policy for LLM Sensitive Data Firewall.
+
+version: 0.2
+name: broad-pii
+
+# Assembly-layer product promise: this composed profile's end-to-end
+# release gate, distinct from foundation-layer detector floors in
+# policies/subtype-emission-manifest.yaml.
+gate_promise:
+  corpora:
+    - piece_b_replay
+    - medical_phi_replay
+    - br_agentic_pii
+  recall_floor: 0.90
+  specificity_floor: 0.95
+
+detection:
+  adapters: [contextual-broad, gliner]
+  settings:
+    gliner:
+      threshold: 0.45
+      entity_thresholds:
+        PERSON: 0.52
+        ADDRESS: 0.42
+        DATE_OF_BIRTH: 0.40
+        BLOOD_TYPE: 0.38
+        HEALTH_INSURANCE_ID: 0.38
+        MEDICAL_CONDITION: 0.38
+        MEDICATION: 0.38
+        MRN: 0.38
+  entities:
+    - SECRET
+    - STRONG_ID
+    - INTERNAL_ID
+    - CREDIT_CARD
+    - BANK_ACCOUNT
+    - IBAN
+    - SWIFT
+    - EMAIL
+    - PHONE
+    - PERSON
+    - DATE_OF_BIRTH
+    - ADDRESS
+    - PHI
+    - EMPLOYEE_COMPENSATION
+    - CUSTOMER_CONFIDENTIAL
+
+action:
+  mode: redact
+  rules:
+    - id: block-secrets-everywhere
+      match:
+        entity_in_category: SECRET
+        surface: any
+        min_confidence: 0.70
+      action: block
+      severity: critical
+      priority: 100
+
+    - id: redact-generic-identity-before-model
+      match:
+        entity_any_of: [EMAIL, PHONE, PERSON, DATE_OF_BIRTH, ADDRESS]
+        entity_in_category: PHI
+        entity_except: [MRN]
+        surface_any_of: [input.messages, input.system, input.developer, input.rag_context, input.tool_results]
+        min_confidence: 0.38
+      action: redact
+      severity: medium
+      priority: 65
+
+    - id: tokenize-hard-identifiers-before-model
+      match:
+        entity_any_of: [CREDIT_CARD, BANK_ACCOUNT, IBAN, SWIFT]
+        entity_in_category_any_of: [PHI, STRONG_ID, INTERNAL_ID]
+        surface_any_of: [input.messages, input.system, input.developer, input.rag_context, input.tool_results]
+        min_confidence: 0.70
+      action: tokenize
+      severity: high
+      priority: 60
+
+    - id: block-hard-identifiers-dispatch-surfaces
+      match:
+        entity_any_of: [CREDIT_CARD, BANK_ACCOUNT, IBAN, SWIFT]
+        entity_in_category_any_of: [PHI, STRONG_ID, INTERNAL_ID]
+        surface_any_of: [output.tool_calls.arguments, output.reasoning, logs.traces]
+        min_confidence: 0.70
+      action: block
+      severity: critical
+      priority: 90
+
+    - id: redact-hard-identifiers-final-content
+      match:
+        entity_any_of: [CREDIT_CARD, BANK_ACCOUNT, IBAN, SWIFT]
+        entity_in_category_any_of: [PHI, STRONG_ID, INTERNAL_ID]
+        surface_any_of: [output.content, output.stream_chunk]
+        min_confidence: 0.70
+      action: redact
+      severity: high
+      priority: 70
+
+    - id: redact-generic-identity-outbound
+      match:
+        entity_any_of: [EMAIL, PHONE, PERSON, DATE_OF_BIRTH, ADDRESS]
+        entity_in_category: PHI
+        entity_except: [MRN]
+        surface_any_of: [output.content, output.stream_chunk, output.tool_calls.arguments, output.reasoning, logs.traces]
+        min_confidence: 0.38
+      action: redact
+      severity: medium
+      priority: 60
+
+audit:
+  store_raw_values: false
+  store_redacted_evidence: true
+  include_policy_decision: true

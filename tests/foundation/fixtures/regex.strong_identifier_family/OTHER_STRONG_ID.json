@@ -1,0 +1,49 @@
+{
+  "detector": "regex.strong_identifier_family",
+  "entity": "OTHER_STRONG_ID",
+  "description": "Synthetic residual strong-identifier labels for regex strong-identifier foundation coverage.",
+  "cases": [
+    {
+      "id": "other-strong-id-pos-social-number",
+      "role": "positive",
+      "text": "Social Number: SN778899",
+      "note": "Social-number label maps to residual strong identifier."
+    },
+    {
+      "id": "other-strong-id-pos-socialsecurity",
+      "role": "positive",
+      "text": "SocialSecurityNumber: FIXTURE123",
+      "note": "Compound social-security label maps to residual strong identifier."
+    },
+    {
+      "id": "other-strong-id-pos-social-underscore",
+      "role": "positive",
+      "text": "Numéro_Social: ABCD1234",
+      "note": "Synthetic social-number label with underscore."
+    },
+    {
+      "id": "other-strong-id-pos-social-delimited",
+      "role": "positive",
+      "text": "social number: 5286379000",
+      "note": "Lowercase social-number label."
+    },
+    {
+      "id": "other-strong-id-neg-no-delimiter",
+      "role": "negative",
+      "text": "The social number field remains empty.",
+      "note": "No delimiter and no concrete value."
+    },
+    {
+      "id": "other-strong-id-neg-short",
+      "role": "negative",
+      "text": "Social Number: 12345",
+      "note": "Value below anchored detector length."
+    },
+    {
+      "id": "other-strong-id-neg-prose",
+      "role": "negative",
+      "text": "This fixture discusses identifiers without printing one.",
+      "note": "No identifier-shaped value."
+    }
+  ]
+}

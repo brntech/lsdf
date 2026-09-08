@@ -1,0 +1,49 @@
+{
+  "detector": "regex.contact_identity_family",
+  "entity": "ADDRESS",
+  "description": "Synthetic anchored address and postcode fixtures.",
+  "cases": [
+    {
+      "id": "address_positive_street_address",
+      "role": "positive",
+      "text": "Street Address: 123 Main Street",
+      "note": "Fictional street address."
+    },
+    {
+      "id": "address_positive_mailing_address",
+      "role": "positive",
+      "text": "Mailing Address: 742 Evergreen Terrace",
+      "note": "Fictional address-style fixture."
+    },
+    {
+      "id": "address_positive_uk_postcode",
+      "role": "positive",
+      "text": "UK postcode SW1A 1AA appears in the reply.",
+      "note": "Published postcode example shape."
+    },
+    {
+      "id": "address_positive_canadian_postcode",
+      "role": "positive",
+      "text": "Canadian postcode K1A 0B1 appears in the reply.",
+      "note": "Published postal-code example shape."
+    },
+    {
+      "id": "address_negative_ip_address",
+      "role": "negative",
+      "text": "IP Address: 192.168.1.1",
+      "note": "IP address label should not be ADDRESS."
+    },
+    {
+      "id": "address_negative_email_address_label",
+      "role": "negative",
+      "text": "Email address: alex.fixture@example.test",
+      "note": "Email address label should not be street address."
+    },
+    {
+      "id": "address_negative_no_delimiter",
+      "role": "negative",
+      "text": "Street Address appears as a column heading only.",
+      "note": "No delimiter and value."
+    }
+  ]
+}

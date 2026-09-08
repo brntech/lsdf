@@ -1,0 +1,49 @@
+{
+    "detector":  "medical-regex.phi_pattern",
+    "entity":  "MEDICAL_CONDITION",
+    "description":  "Synthetic medical conditions with clinical context and benign controls.",
+    "cases":  [
+                  {
+                      "id":  "pos-001",
+                      "role":  "positive",
+                      "text":  "Patient has diabetes in the synthetic chart.",
+                      "note":  "patient has condition."
+                  },
+                  {
+                      "id":  "pos-002",
+                      "role":  "positive",
+                      "text":  "History of asthma is listed in the mock record.",
+                      "note":  "history of condition."
+                  },
+                  {
+                      "id":  "pos-003",
+                      "role":  "positive",
+                      "text":  "Diagnosed with hypertension during the demo visit.",
+                      "note":  "diagnosed with condition."
+                  },
+                  {
+                      "id":  "pos-004",
+                      "role":  "positive",
+                      "text":  "Patient reports migraine in the sample note.",
+                      "note":  "patient reports condition."
+                  },
+                  {
+                      "id":  "neg-001",
+                      "role":  "negative",
+                      "text":  "The synthetic workflow is ready for review.",
+                      "note":  "No entity-shaped value."
+                  },
+                  {
+                      "id":  "neg-002",
+                      "role":  "negative",
+                      "text":  "Operators can leave this demonstration row empty.",
+                      "note":  "Generic operational text."
+                  },
+                  {
+                      "id":  "neg-003",
+                      "role":  "negative",
+                      "text":  "The public fixture contains only harmless prose here.",
+                      "note":  "No detector trigger."
+                  }
+              ]
+}

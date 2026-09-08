@@ -1,0 +1,16 @@
+{
+  "model": "gpt-example",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a careful assistant."
+    },
+    {
+      "role": "user",
+      "content": "Summarize the account note for Jane. SSN is 000-00-0000 and email is person@example.invalid."
+    }
+  ],
+  "rag_context": [
+    "Patient MRN: LSDF-FIXTURE-00001 has a follow-up appointment."
+  ]
+}

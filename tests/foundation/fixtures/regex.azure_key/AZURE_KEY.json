@@ -1,0 +1,49 @@
+{
+  "detector": "regex.azure_key",
+  "entity": "AZURE_KEY",
+  "description": "Synthetic Azure storage key and SAS shapes for regex Azure-key foundation coverage.",
+  "cases": [
+    {
+      "id": "azure-key-pos-account-key",
+      "role": "positive",
+      "text": "AccountKey=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqr==",
+      "note": "Synthetic AccountKey value."
+    },
+    {
+      "id": "azure-key-pos-connection-string",
+      "role": "positive",
+      "text": "DefaultEndpointsProtocol=https;AccountName=fixture;AccountKey=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef==",
+      "note": "Synthetic connection string with AccountKey."
+    },
+    {
+      "id": "azure-key-pos-sas",
+      "role": "positive",
+      "text": "sv=2024-11-04&ss=b&srt=o&sp=rwd&sig=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789%3D",
+      "note": "Synthetic SAS query string."
+    },
+    {
+      "id": "azure-key-pos-sas-short-params",
+      "role": "positive",
+      "text": "sv=2025-01-01&sp=rw&sig=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%2F%3D",
+      "note": "Synthetic SAS query with mandatory signed version and signature."
+    },
+    {
+      "id": "azure-key-neg-short-account-key",
+      "role": "negative",
+      "text": "AccountKey=short",
+      "note": "Too short for an AccountKey."
+    },
+    {
+      "id": "azure-key-neg-sas-no-signature",
+      "role": "negative",
+      "text": "sv=2025-01-01&sp=rw&se=2026-01-01",
+      "note": "SAS-like query without sig parameter."
+    },
+    {
+      "id": "azure-key-neg-prose",
+      "role": "negative",
+      "text": "The fixture discusses Azure storage keys without printing one.",
+      "note": "No key-shaped value."
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-sensitive-data-firewall"
+version = "0.3.1"
+description = "Open-source sensitive-data firewall for LLM apps and agents."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "Apache-2.0"}
+authors = [{name = "Broadnet Technologies LLC"}]
+maintainers = [{name = "Broadnet Engineering", email = "info@broadnet.ai"}]
+classifiers = [
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Security",
+]
+dependencies = [
+  "cryptography>=42.0",
+  "PyYAML>=6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/brntech/lsdf"
+Repository = "https://github.com/brntech/lsdf"
+Issues = "https://github.com/brntech/lsdf/issues"
+Research = "https://doi.org/10.5281/zenodo.19574049"
+
+[project.scripts]
+lsdf = "lsdf.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

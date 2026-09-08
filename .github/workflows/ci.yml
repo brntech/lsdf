@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Docker Compose test suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build base image
+        run: docker compose build test
+      - name: Unit and foundation tests
+        run: docker compose run --rm test
+      - name: Whitespace check
+        run: git diff --check
+
+  demo:
+    name: Five-minute demo (dependency-free upstream)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Demo profile
+        run: docker compose --profile demo up --build --abort-on-container-exit --exit-code-from demo-runner demo-runner
+      - name: Tear down
+        if: always()
+        run: docker compose --profile demo down
+
+  litellm-demo:
+    name: LiteLLM preset demo
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: LiteLLM demo profile
+        run: docker compose --profile litellm-demo up --build --abort-on-container-exit --exit-code-from litellm-demo-runner litellm-demo-runner
+      - name: Tear down
+        if: always()
+        run: docker compose --profile litellm-demo down
+
+  runtime:
+    name: Standalone runtime image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Runtime assets and CLI without a source mount
+        run: docker compose --profile runtime-smoke run --build --rm runtime-check
+      - name: HTTP and streaming through the runtime image
+        run: docker compose --profile runtime-smoke up --build --abort-on-container-exit --exit-code-from runtime-smoke-runner runtime-smoke-runner
+      - name: Tear down
+        if: always()
+        run: docker compose --profile runtime-smoke down

@@ -1,0 +1,49 @@
+{
+  "detector": "regex.strong_identifier_family",
+  "entity": "BR_CPF",
+  "description": "Synthetic Brazilian CPF fixtures using checksum-valid test values.",
+  "cases": [
+    {
+      "id": "br_cpf_positive_spaces",
+      "role": "positive",
+      "text": "cpf: 275 860 391 86",
+      "note": "Checksum-valid synthetic CPF from existing test corpus."
+    },
+    {
+      "id": "br_cpf_positive_dots_dash",
+      "role": "positive",
+      "text": "CPF: 390.533.447-05",
+      "note": "Checksum-valid formatted synthetic CPF."
+    },
+    {
+      "id": "br_cpf_positive_plain",
+      "role": "positive",
+      "text": "fixture_cpf=52998224725",
+      "note": "Checksum-valid unformatted synthetic CPF."
+    },
+    {
+      "id": "br_cpf_positive_mixed_separator",
+      "role": "positive",
+      "text": "CPF sample 111.444.777-35 appears in the fixture.",
+      "note": "Known valid CPF test number."
+    },
+    {
+      "id": "br_cpf_negative_repeated",
+      "role": "negative",
+      "text": "cpf: 111.111.111-11",
+      "note": "Repeated digits should fail validation."
+    },
+    {
+      "id": "br_cpf_negative_bad_check_digit",
+      "role": "negative",
+      "text": "cpf: 275 860 391 87",
+      "note": "Checksum-invalid neighbor value."
+    },
+    {
+      "id": "br_cpf_negative_too_short",
+      "role": "negative",
+      "text": "cpf: 275 860 391",
+      "note": "Missing check digits."
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+    "detector":  "medical-regex.phi_pattern",
+    "entity":  "LAB_VALUE",
+    "description":  "Synthetic lab values with clinical context and benign controls.",
+    "cases":  [
+                  {
+                      "id":  "pos-001",
+                      "role":  "positive",
+                      "text":  "Patient lab HbA1c 6.8% was entered in the mock chart.",
+                      "note":  "HbA1c pattern."
+                  },
+                  {
+                      "id":  "pos-002",
+                      "role":  "positive",
+                      "text":  "Clinical labs show eGFR 72 mL/min/1.73m2.",
+                      "note":  "eGFR pattern."
+                  },
+                  {
+                      "id":  "pos-003",
+                      "role":  "positive",
+                      "text":  "The patient record lists creatinine 1.1 mg/dL.",
+                      "note":  "creatinine pattern."
+                  },
+                  {
+                      "id":  "pos-004",
+                      "role":  "positive",
+                      "text":  "Lab result LDL 140 mg/dL appears in the synthetic note.",
+                      "note":  "LDL pattern."
+                  },
+                  {
+                      "id":  "neg-001",
+                      "role":  "negative",
+                      "text":  "The benchmark score was 7.2 out of 10.",
+                      "note":  "Numeric score, not lab."
+                  },
+                  {
+                      "id":  "neg-002",
+                      "role":  "negative",
+                      "text":  "Version 6.8 of the fixture plan was retired.",
+                      "note":  "Version number."
+                  },
+                  {
+                      "id":  "neg-003",
+                      "role":  "negative",
+                      "text":  "The table contains 250 rows of synthetic examples.",
+                      "note":  "Count without lab context."
+                  }
+              ]
+}

@@ -1,0 +1,49 @@
+{
+  "detector": "regex.api_key_family",
+  "entity": "API_KEY",
+  "description": "Synthetic provider API-key shapes for regex API-key-family foundation coverage.",
+  "cases": [
+    {
+      "id": "api-key-family-pos-github",
+      "role": "positive",
+      "text": "GitHub token ghp_abcdefghijklmnopqrstuvwxyz0123456789 was copied into a fixture.",
+      "note": "Synthetic GitHub-prefixed token shape."
+    },
+    {
+      "id": "api-key-family-pos-google",
+      "role": "positive",
+      "text": "Google key AIzaabcdefghijklmnopqrstuvwxyz012345678 was present in the demo row.",
+      "note": "Synthetic Google API-key shape."
+    },
+    {
+      "id": "api-key-family-pos-sendgrid",
+      "role": "positive",
+      "text": "SendGrid value SG.abcdefghijklmnopqrstuv.abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQ appeared in the test note.",
+      "note": "Synthetic SendGrid token shape."
+    },
+    {
+      "id": "api-key-family-pos-digitalocean",
+      "role": "positive",
+      "text": "DigitalOcean token dop_v1_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef was rotated.",
+      "note": "Synthetic DigitalOcean token shape."
+    },
+    {
+      "id": "api-key-family-neg-short-provider",
+      "role": "negative",
+      "text": "GitHub token ghp_short was only a placeholder.",
+      "note": "Too short for the provider shape."
+    },
+    {
+      "id": "api-key-family-neg-prose",
+      "role": "negative",
+      "text": "The sample mentions provider keys without printing one.",
+      "note": "No concrete token value."
+    },
+    {
+      "id": "api-key-family-neg-config-name",
+      "role": "negative",
+      "text": "Set API_TOKEN_NAME in the demo environment.",
+      "note": "Configuration name, not token value."
+    }
+  ]
+}

@@ -1,0 +1,939 @@
+{
+  "name": "medical_phi_replay",
+  "version": "0.2",
+  "description": "Sanitised clinical PHI replay corpus \u2014 30 synthetic cases across four sub-domains (primary care, radiology, oncology, mental health) plus 2 cross-domain edge cases. 15 cases cover the bundled medical-regex baseline (icd_code with clinical context, six-drug-list medication-dosage, lab_value with clinical context, diagnosis_text prefix). 15 cases marked known_gap: true exercise coverage gaps that require an adapter-side medical NER model \u2014 drug names without dosage, drugs outside the six-drug list, free-text symptom narratives, procedure mentions, condition narratives in RAG context, TNM staging, chemotherapy regimens, targeted-therapy mentions, imaging-finding free text, CPT procedure codes, and suicidality narratives. All patient identifiers and clinical narratives are synthetic \u2014 no real patient data. Public clinical references (ICD codes, lab marker names, generic drug names, CPT codes) are kept literal because the regex shapes depend on them; those are public diagnostic / pharmaceutical / billing identifiers, not PHI. Companion artifact for docs/medical-ner-adapter-recipe.md \u2014 operators wiring a medical-NER detector via register_detector_family() can use this corpus as a baseline-versus-known-gap regression target across multiple clinical sub-specialties before measuring against their own internal validation set.",
+  "domains": [
+    "primary-care",
+    "radiology",
+    "oncology",
+    "mental-health",
+    "cross-domain"
+  ],
+  "cases": [
+    {
+      "id": "med-regex-icd-diagnosis-context",
+      "category": "phi-medical-regex",
+      "domain": "primary-care",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Latest patient note: diagnosis includes E11.9 with associated retinopathy follow-up scheduled for next month."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "E11.9"
+      ],
+      "expected_entities": [
+        "ICD_CODE"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "E11.9"
+      ],
+      "notes": "ICD-10 code (type 2 diabetes mellitus without complications) caught by medical-regex's icd_code pattern. ICD codes themselves are public diagnostic identifiers; the PHI character comes from associating them with a patient context, which the firewall redacts to keep clinical-narrative outputs safe."
+    },
+    {
+      "id": "med-regex-lab-value-hba1c",
+      "category": "phi-medical-regex",
+      "domain": "primary-care",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Per the patient's latest history, HbA1c: 8.4% and creatinine: 1.2 mg/dL \u2014 recommend follow-up at the next clinical visit."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "HbA1c: 8.4%",
+        "creatinine: 1.2 mg/dL"
+      ],
+      "expected_entities": [
+        "LAB_VALUE"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "HbA1c: 8.4%",
+        "creatinine: 1.2 mg/dL"
+      ],
+      "notes": "Two lab-value matches in one payload (HbA1c, creatinine) \u2014 medical-regex's lab_value pattern requires a clinical-context anchor (patient/clinical/history/...) within 60 chars. Lab marker names are public; the PHI shape is the patient-specific number-and-unit pairing in a clinical narrative."
+    },
+    {
+      "id": "med-regex-medication-dosage-builtin",
+      "category": "phi-medical-regex",
+      "domain": "primary-care",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Per the chart, the patient was started on metformin 500 mg twice daily and lisinopril 10 mg in the morning."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "metformin 500 mg",
+        "lisinopril 10 mg"
+      ],
+      "expected_entities": [
+        "MEDICATION"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "metformin 500 mg",
+        "lisinopril 10 mg"
+      ],
+      "notes": "Two medication-dosage matches from the bundled six-drug list (metformin + lisinopril). medical-regex's medication_dosage pattern requires both a known drug name and a numeric dosage; either alone won't fire."
+    },
+    {
+      "id": "med-regex-diagnosis-text-prefix",
+      "category": "phi-medical-regex",
+      "domain": "primary-care",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Summary: Diagnosis: hypertension, stage 2 with mild proteinuria. Patient referred to nephrology consult."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "hypertension, stage 2"
+      ],
+      "expected_entities": [
+        "DIAGNOSIS_TEXT"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "hypertension, stage 2"
+      ],
+      "notes": "diagnosis_text pattern fires on the 'Diagnosis: <free-text>' shape and captures the diagnosis string as the redactable group. Note: Stage descriptors and chronic-condition names are not themselves PHI; the redaction is conservative because the pattern fires whenever a model emits diagnosis-prefixed clinical content."
+    },
+    {
+      "id": "med-regex-icd-rag-context",
+      "category": "phi-medical-regex",
+      "domain": "primary-care",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Tell me about this case."
+          }
+        ],
+        "rag_context": [
+          "Retrieved note 003: Patient diagnosis E11.65 (type 2 diabetes with hyperglycemia) with HbA1c: 9.1% and active medication list includes insulin 24 units before bed."
+        ]
+      },
+      "sensitive_values": [
+        "E11.65",
+        "HbA1c: 9.1%",
+        "insulin 24 units"
+      ],
+      "expected_entities": [
+        "ICD_CODE",
+        "LAB_VALUE",
+        "MEDICATION"
+      ],
+      "expected_surfaces": [
+        "input.rag_context"
+      ],
+      "expected_absent": [
+        "E11.65",
+        "HbA1c: 9.1%",
+        "insulin 24 units"
+      ],
+      "notes": "Three medical-regex hits in a single RAG-context surface \u2014 the input gate of the healthcare profile tokenises PHI before it reaches the model, so the redacted RAG context is what the LLM sees. Validates surface-level coverage on input.rag_context, not just output.content."
+    },
+    {
+      "id": "med-ner-required-medication-no-dosage",
+      "category": "phi-medical-ner-required",
+      "domain": "primary-care",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Per the visit note, the patient discontinued gabapentin yesterday after three weeks on the medication."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "gabapentin"
+      ],
+      "expected_entities": [
+        "MEDICATION"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "gabapentin"
+      ],
+      "known_gap": true,
+      "notes": "medical-regex's medication_dosage pattern requires both a drug name AND a numeric dosage. Bare medication names without dosages are silently passed through. A medical NER adapter (med7, MedSpaCy, Medical-BERT) recognises drug names independently of dosage and is the intended path for catching this shape \u2014 see docs/medical-ner-adapter-recipe.md."
+    },
+    {
+      "id": "med-ner-required-medication-not-in-builtin-list",
+      "category": "phi-medical-ner-required",
+      "domain": "primary-care",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The patient was started on semaglutide 0.5 mg weekly per the endocrinology consult."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "semaglutide 0.5 mg"
+      ],
+      "expected_entities": [
+        "MEDICATION"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "semaglutide 0.5 mg"
+      ],
+      "known_gap": true,
+      "notes": "medical-regex's medication_dosage pattern hardcodes a six-drug list (metformin, lisinopril, atorvastatin, insulin, warfarin, albuterol). Dosage-format drugs outside that list \u2014 semaglutide here, but also any GLP-1, SGLT-2, biologic, or chemotherapy agent \u2014 are not detected. A medical NER adapter is required for general drug-name coverage."
+    },
+    {
+      "id": "med-ner-required-clinical-narrative",
+      "category": "phi-medical-ner-required",
+      "domain": "primary-care",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Pt reports persistent nausea, intermittent chest pain since last Tuesday, and increased fatigue over the past week \u2014 recommend ECG and basic metabolic panel."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "nausea",
+        "intermittent chest pain",
+        "increased fatigue"
+      ],
+      "expected_entities": [
+        "MEDICAL_CONDITION"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "nausea",
+        "intermittent chest pain",
+        "increased fatigue"
+      ],
+      "known_gap": true,
+      "notes": "Free-text symptom narratives are not pattern-matchable \u2014 there is no closed-set vocabulary the regex layer can enumerate. A medical NER model trained on clinical notes can extract symptom mentions; the regex layer cannot. Clinical free-text is the largest medical-regex coverage gap."
+    },
+    {
+      "id": "med-ner-required-procedure-mention",
+      "category": "phi-medical-ner-required",
+      "domain": "primary-care",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "The patient underwent percutaneous coronary intervention last week and is recovering well in the cardiac step-down unit."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "percutaneous coronary intervention"
+      ],
+      "expected_entities": [
+        "OTHER_PHI"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "percutaneous coronary intervention"
+      ],
+      "known_gap": true,
+      "notes": "Procedure mentions follow no fixed pattern that the regex layer can match. A clinical NER model with a PROCEDURE label can flag these; medical-regex passes them through. CPT/HCPCS code shapes (numeric procedure codes) might be a separate regex extension; free-text procedure names need NER."
+    },
+    {
+      "id": "med-ner-required-condition-narrative-rag",
+      "category": "phi-medical-ner-required",
+      "domain": "primary-care",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarise the case."
+          }
+        ],
+        "rag_context": [
+          "Retrieved note 005: The patient's congestive heart failure exacerbation responded well to diuretics, pulmonary edema cleared on follow-up imaging, and exercise tolerance is improving."
+        ]
+      },
+      "sensitive_values": [
+        "congestive heart failure",
+        "pulmonary edema"
+      ],
+      "expected_entities": [
+        "MEDICAL_CONDITION"
+      ],
+      "expected_surfaces": [
+        "input.rag_context"
+      ],
+      "expected_absent": [
+        "congestive heart failure",
+        "pulmonary edema"
+      ],
+      "known_gap": true,
+      "notes": "Chronic condition mentions in RAG-context narratives \u2014 analogous to the symptom case but on the input side. A medical NER adapter on input.rag_context tokenises these before the LLM sees them; medical-regex passes them through, leaving the model to ingest unredacted condition references."
+    },
+    {
+      "id": "rad-regex-icd-imaging-context",
+      "category": "phi-medical-regex",
+      "domain": "radiology",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Patient with acute dyspnea: CT pulmonary angiogram confirms I26.99 with bilateral segmental filling defects in the lower lobes."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "I26.99"
+      ],
+      "expected_entities": [
+        "ICD_CODE"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "I26.99"
+      ],
+      "notes": "Radiology dictation referencing a pulmonary embolism ICD-10 code (I26.99) with patient-anchored clinical context. icd_code regex fires; the imaging-finding free text around it is not separately matched (that is the gap exercised in rad-ner-required-imaging-finding)."
+    },
+    {
+      "id": "rad-regex-lab-creatinine-pre-contrast",
+      "category": "phi-medical-regex",
+      "domain": "radiology",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Per the patient's pre-imaging workup, creatinine: 1.4 mg/dL \u2014 within acceptable range for iodinated contrast administration during the CT abdomen study."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "creatinine: 1.4 mg/dL"
+      ],
+      "expected_entities": [
+        "LAB_VALUE"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "creatinine: 1.4 mg/dL"
+      ],
+      "notes": "Renal-function check is standard before contrast-enhanced radiology studies. lab_value regex fires on creatinine in patient-anchored context. The surrounding 'iodinated contrast' / 'CT abdomen' phrasing is uncaught radiology terminology \u2014 not included in sensitive_values because it is not the PHI shape this case is testing."
+    },
+    {
+      "id": "rad-regex-diagnosis-imaging",
+      "category": "phi-medical-regex",
+      "domain": "radiology",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Impression: Diagnosis: acute pulmonary embolism, right lower lobe segmental branches. Recommend anticoagulation initiation."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "acute pulmonary embolism, right lower lobe segmental branches"
+      ],
+      "expected_entities": [
+        "DIAGNOSIS_TEXT"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "acute pulmonary embolism, right lower lobe segmental branches"
+      ],
+      "notes": "Diagnosis-prefix dictation from a radiology report. diagnosis_text fires on the 'Diagnosis: <free-text>' shape independent of clinical-context anchors and captures up to the first period or 80-char limit."
+    },
+    {
+      "id": "rad-ner-required-imaging-finding",
+      "category": "phi-medical-ner-required",
+      "domain": "radiology",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Pt CT chest demonstrates a 3.2 cm spiculated mass in the right upper lobe with associated mediastinal lymphadenopathy and a small pleural effusion."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "3.2 cm spiculated mass",
+        "mediastinal lymphadenopathy",
+        "pleural effusion"
+      ],
+      "expected_entities": [
+        "DIAGNOSIS_TEXT"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "3.2 cm spiculated mass",
+        "mediastinal lymphadenopathy",
+        "pleural effusion"
+      ],
+      "known_gap": true,
+      "notes": "Imaging-finding free text does not match any bundled regex \u2014 measurements with 'cm', anatomical descriptors, and lesion-characterisation language need an NER model trained on radiology dictation. RadBERT and similar imaging-tuned models target exactly this shape; the bundled regex layer passes it through verbatim."
+    },
+    {
+      "id": "rad-ner-required-cpt-procedure-code",
+      "category": "phi-medical-ner-required",
+      "domain": "radiology",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Patient imaging order: 70551 followed by 71250 for the same encounter; clinical indication is documented in the chart."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "70551",
+        "71250"
+      ],
+      "expected_entities": [
+        "OTHER_PHI"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "70551",
+        "71250"
+      ],
+      "known_gap": true,
+      "notes": "CPT codes are 5-digit numerics (70551 = MRI brain w/o contrast; 71250 = CT chest w/o contrast). The bundled icd_code regex requires a leading [A-TV-Z] letter and explicitly excludes plain 5-digit numbers. The bundled detectors do not provide CPT/HCPCS code coverage; these cases remain known gaps. Note: 5-digit numbers are also the shape of US ZIP codes \u2014 adding a CPT regex without a clinical-context anchor would produce significant FPs."
+    },
+    {
+      "id": "rad-ner-required-modality-procedure-rag",
+      "category": "phi-medical-ner-required",
+      "domain": "radiology",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarise the imaging history."
+          }
+        ],
+        "rag_context": [
+          "Retrieved imaging note 027: Pt completed MRI brain with gadolinium last month, followed by repeat MRI lumbar spine without contrast this week to evaluate disc herniation progression."
+        ]
+      },
+      "sensitive_values": [
+        "MRI brain with gadolinium",
+        "MRI lumbar spine without contrast",
+        "disc herniation"
+      ],
+      "expected_entities": [
+        "OTHER_PHI",
+        "MEDICAL_CONDITION"
+      ],
+      "expected_surfaces": [
+        "input.rag_context"
+      ],
+      "expected_absent": [
+        "MRI brain with gadolinium",
+        "MRI lumbar spine without contrast",
+        "disc herniation"
+      ],
+      "known_gap": true,
+      "notes": "Imaging-modality narrative in RAG context. Modality terms (MRI, CT, PET, ultrasound) and contrast-protocol descriptors are not in any closed-set vocabulary the regex layer matches. A medical-NER adapter on input.rag_context with PROCEDURE / MODALITY labels is the catch path."
+    },
+    {
+      "id": "onc-regex-icd-malignancy",
+      "category": "phi-medical-regex",
+      "domain": "oncology",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Patient diagnosis C50.911 confirmed on biopsy; oncology team to coordinate neoadjuvant treatment planning at next clinical visit."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "C50.911"
+      ],
+      "expected_entities": [
+        "ICD_CODE"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "C50.911"
+      ],
+      "notes": "Malignancy ICD-10 (C50.911 = malignant neoplasm of unspecified site of right female breast) with patient-anchored clinical context. icd_code fires; the 'biopsy' / 'neoadjuvant' oncology terms are uncaught domain language exercised in onc-ner-required-* cases."
+    },
+    {
+      "id": "onc-regex-medication-warfarin-vte",
+      "category": "phi-medical-regex",
+      "domain": "oncology",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Per the patient's anticoagulation history, warfarin 5 mg daily was initiated for cancer-associated venous thromboembolism prophylaxis."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "warfarin 5 mg"
+      ],
+      "expected_entities": [
+        "MEDICATION"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "warfarin 5 mg"
+      ],
+      "notes": "Cancer-associated thrombosis is a common indication for warfarin in oncology. medication_dosage fires (warfarin is in the six-drug list, dosage present, patient/history context within 60 chars)."
+    },
+    {
+      "id": "onc-regex-diagnosis-stage",
+      "category": "phi-medical-regex",
+      "domain": "oncology",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Pt summary: Diagnosis: stage IIIA non-small cell lung cancer, adenocarcinoma subtype. Multidisciplinary tumor board pending."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "stage IIIA non-small cell lung cancer, adenocarcinoma subtype"
+      ],
+      "expected_entities": [
+        "DIAGNOSIS_TEXT"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "stage IIIA non-small cell lung cancer, adenocarcinoma subtype"
+      ],
+      "notes": "Stage-and-subtype text after a 'Diagnosis:' prefix. diagnosis_text captures up to the period. The capture group is bounded by [A-Za-z0-9 ,/-] characters; the comma before 'adenocarcinoma' is preserved by the char class."
+    },
+    {
+      "id": "onc-ner-required-tnm-staging",
+      "category": "phi-medical-ner-required",
+      "domain": "oncology",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Pathology stage: T2N1M0 with extracapsular extension; recommend adjuvant chemotherapy and consideration of regional radiation."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "T2N1M0",
+        "extracapsular extension"
+      ],
+      "expected_entities": [
+        "OTHER_PHI"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "T2N1M0",
+        "extracapsular extension"
+      ],
+      "known_gap": true,
+      "notes": "TNM cancer-staging notation (Tumor / Node / Metastasis) does not match the icd_code shape \u2014 `T2N` fails the [A-TV-Z][0-9][0-9AB] requirement (`N` is not in [0-9AB]). A medical-NER model with a STAGING label is the intended catch path."
+    },
+    {
+      "id": "onc-ner-required-chemo-regimen",
+      "category": "phi-medical-ner-required",
+      "domain": "oncology",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Pt is on FOLFOX cycle 3 of 12, tolerating treatment with grade 1 peripheral neuropathy and stable performance status."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "FOLFOX cycle 3",
+        "grade 1 peripheral neuropathy"
+      ],
+      "expected_entities": [
+        "MEDICATION",
+        "MEDICAL_CONDITION"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "FOLFOX cycle 3",
+        "grade 1 peripheral neuropathy"
+      ],
+      "known_gap": true,
+      "notes": "Chemotherapy regimen acronyms (FOLFOX, R-CHOP, ABVD, AC-T) and toxicity grade language are domain-specific oncology vocabulary not enumerable in regex. A medical-NER adapter trained on oncology notes flags these via REGIMEN / TOXICITY labels."
+    },
+    {
+      "id": "onc-ner-required-targeted-therapy-rag",
+      "category": "phi-medical-ner-required",
+      "domain": "oncology",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarise the immunotherapy course."
+          }
+        ],
+        "rag_context": [
+          "Retrieved oncology note 089: Pt was started on pembrolizumab Q3W per immunotherapy protocol; second-line addition of trastuzumab deruxtecan considered if HER2 status confirms."
+        ]
+      },
+      "sensitive_values": [
+        "pembrolizumab",
+        "trastuzumab deruxtecan",
+        "HER2 status"
+      ],
+      "expected_entities": [
+        "MEDICATION",
+        "OTHER_PHI"
+      ],
+      "expected_surfaces": [
+        "input.rag_context"
+      ],
+      "expected_absent": [
+        "pembrolizumab",
+        "trastuzumab deruxtecan",
+        "HER2 status"
+      ],
+      "known_gap": true,
+      "notes": "Targeted-therapy and biologic drug names (checkpoint inhibitors, antibody-drug conjugates) are absent from the six-drug medication_dosage list. Frequency dosing language ('Q3W' = every 3 weeks) and biomarker references ('HER2 status') are also uncaught. NER adapter handles drug-name extraction independent of dosage; biomarker labels need a clinical-trial-aware model."
+    },
+    {
+      "id": "mh-regex-icd-f-code",
+      "category": "phi-medical-regex",
+      "domain": "mental-health",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Patient diagnosis F33.1 with current major depressive episode, moderate severity; treatment plan continued with weekly therapy and medication review."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "F33.1"
+      ],
+      "expected_entities": [
+        "ICD_CODE"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "F33.1"
+      ],
+      "notes": "Mental-health ICD-10 F-code (F33.1 = recurrent major depressive disorder, moderate) with patient-anchored clinical context. icd_code fires. The 'major depressive episode' free text is not separately captured; that gap is exercised in mh-ner-required-condition-rag."
+    },
+    {
+      "id": "mh-regex-diagnosis-anxiety",
+      "category": "phi-medical-regex",
+      "domain": "mental-health",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Assessment summary: Diagnosis: generalized anxiety disorder, moderate severity with secondary insomnia. Recommend cognitive behavioral therapy referral."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "generalized anxiety disorder, moderate severity with secondary insomnia"
+      ],
+      "expected_entities": [
+        "DIAGNOSIS_TEXT"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "generalized anxiety disorder, moderate severity with secondary insomnia"
+      ],
+      "notes": "Diagnosis-prefix free text in a psychiatric assessment. diagnosis_text captures up to the period or 80-char limit. Note: the trailing CBT-referral language in this case is not captured by the regex; it falls outside the diagnosis_text capture window."
+    },
+    {
+      "id": "mh-regex-lab-creatinine-lithium-baseline",
+      "category": "phi-medical-regex",
+      "domain": "mental-health",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Per the patient's pre-treatment history, creatinine: 0.9 mg/dL noted prior to initiating lithium therapy for bipolar disorder."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "creatinine: 0.9 mg/dL"
+      ],
+      "expected_entities": [
+        "LAB_VALUE"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "creatinine: 0.9 mg/dL"
+      ],
+      "notes": "Renal-function baseline is standard before initiating lithium (renally cleared, narrow therapeutic index). lab_value regex fires on creatinine with patient-anchored context. The 'lithium therapy' / 'bipolar disorder' phrasing is uncaught psychiatry vocabulary \u2014 exercised in mh-ner-required-psych-medication."
+    },
+    {
+      "id": "mh-ner-required-psych-medication",
+      "category": "phi-medical-ner-required",
+      "domain": "mental-health",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Per the visit note, the patient was started on sertraline 50 mg daily and clonazepam 0.5 mg as needed for breakthrough anxiety."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "sertraline 50 mg",
+        "clonazepam 0.5 mg"
+      ],
+      "expected_entities": [
+        "MEDICATION"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "sertraline 50 mg",
+        "clonazepam 0.5 mg"
+      ],
+      "known_gap": true,
+      "notes": "SSRIs (sertraline, fluoxetine, escitalopram), SNRIs, benzodiazepines (clonazepam, lorazepam, alprazolam), and mood stabilisers (lithium, lamotrigine, valproate) are absent from the six-drug medication_dosage list. Psychiatric medication coverage is the largest mental-health gap and a primary driver for adopting an NER adapter in mental-health deployments."
+    },
+    {
+      "id": "mh-ner-required-suicidality-narrative",
+      "category": "phi-medical-ner-required",
+      "domain": "mental-health",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Pt reports passive suicidal ideation without active plan or intent over the past two weeks; no prior suicide attempts; safety plan reviewed and family contacts updated."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "passive suicidal ideation",
+        "safety plan"
+      ],
+      "expected_entities": [
+        "MEDICAL_CONDITION",
+        "OTHER_PHI"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "passive suicidal ideation",
+        "safety plan"
+      ],
+      "known_gap": true,
+      "notes": "Suicidality, self-harm, and safety-plan narratives are sensitive psychiatric content with no closed-set regex shape. An NER model trained on psychiatric notes (or a specialised risk-assessment classifier) flags these via SI / SAFETY-PLAN / RISK labels. Particularly important in mental-health deployments because passive disclosure of SI through model output can both leak PHI and create downstream duty-to-warn implications."
+    },
+    {
+      "id": "mh-ner-required-condition-rag",
+      "category": "phi-medical-ner-required",
+      "domain": "mental-health",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarise the recent psychiatric history."
+          }
+        ],
+        "rag_context": [
+          "Retrieved psych note 014: Pt's post-traumatic stress disorder with comorbid major depressive disorder has shown partial response to combined pharmacotherapy and trauma-focused cognitive behavioral therapy over the last six months."
+        ]
+      },
+      "sensitive_values": [
+        "post-traumatic stress disorder",
+        "major depressive disorder",
+        "trauma-focused cognitive behavioral therapy"
+      ],
+      "expected_entities": [
+        "MEDICAL_CONDITION",
+        "OTHER_PHI"
+      ],
+      "expected_surfaces": [
+        "input.rag_context"
+      ],
+      "expected_absent": [
+        "post-traumatic stress disorder",
+        "major depressive disorder",
+        "trauma-focused cognitive behavioral therapy"
+      ],
+      "known_gap": true,
+      "notes": "Psychiatric condition narratives and therapy-modality references in RAG context. Free-text mentions of PTSD, MDD, bipolar disorder, BPD, OCD, and the corresponding therapy modalities (CBT, DBT, EMDR, IFS) require an NER model with PSYCHIATRIC-CONDITION / THERAPY labels."
+    },
+    {
+      "id": "multi-regex-rag-multi-shape",
+      "category": "phi-medical-regex",
+      "domain": "cross-domain",
+      "surface": "input.rag_context",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Summarise the patient's pre-chemotherapy workup."
+          }
+        ],
+        "rag_context": [
+          "Retrieved chart 042: Patient with C50.911 on warfarin 2.5 mg daily; clinical creatinine: 0.9 mg/dL stable pre-chemo."
+        ]
+      },
+      "sensitive_values": [
+        "C50.911",
+        "warfarin 2.5 mg",
+        "creatinine: 0.9 mg/dL"
+      ],
+      "expected_entities": [
+        "ICD_CODE",
+        "MEDICATION",
+        "LAB_VALUE"
+      ],
+      "expected_surfaces": [
+        "input.rag_context"
+      ],
+      "expected_absent": [
+        "C50.911",
+        "warfarin 2.5 mg",
+        "creatinine: 0.9 mg/dL"
+      ],
+      "notes": "Three medical-regex pattern hits (icd_code + medication_dosage + lab_value) in a single RAG-context surface spanning oncology + anticoagulation + renal monitoring. Validates that all three pattern families fire concurrently when their respective context anchors are within the 60-char window."
+    },
+    {
+      "id": "multi-ner-required-cross-domain-narrative",
+      "category": "phi-medical-ner-required",
+      "domain": "cross-domain",
+      "surface": "output.content",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "content": "Pt presents to oncology clinic with worsening anxiety and insomnia since chemotherapy initiation; recommend psychiatric referral and consideration of trazodone for sleep."
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "worsening anxiety",
+        "insomnia since chemotherapy",
+        "trazodone"
+      ],
+      "expected_entities": [
+        "MEDICAL_CONDITION",
+        "MEDICATION"
+      ],
+      "expected_surfaces": [
+        "output.content"
+      ],
+      "expected_absent": [
+        "worsening anxiety",
+        "insomnia since chemotherapy",
+        "trazodone"
+      ],
+      "known_gap": true,
+      "notes": "Cross-domain symptom narrative spanning oncology and mental-health. Captures a realistic clinical handoff shape: psychiatric symptoms emerging during cancer treatment, with a non-six-drug-list medication recommendation (trazodone). Single-domain NER adapters typically miss at least one of the three sensitive segments; a multi-domain or general-purpose clinical-NER model is needed for full coverage."
+    }
+  ]
+}

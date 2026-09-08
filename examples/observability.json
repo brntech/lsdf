@@ -1,0 +1,13 @@
+{
+  "trace_id": "trace-demo",
+  "spans": [
+    {
+      "name": "tool.dispatch",
+      "attributes": {
+        "destination": "billing.lookup",
+        "account_note": "Customer SSN is 000-00-0000.",
+        "sampled": true
+      }
+    }
+  ]
+}

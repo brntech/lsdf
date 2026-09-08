@@ -1,0 +1,49 @@
+{
+    "detector":  "regex.jwt",
+    "entity":  "JWT",
+    "description":  "Synthetic JWT-shaped examples with identity-like claims for foundation coverage.",
+    "cases":  [
+                  {
+                      "id":  "jwt_positive_sub_email",
+                      "role":  "positive",
+                      "text":  "token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmaXh0dXJlLXVzZXIiLCJlbWFpbCI6ImZpeHR1cmUuZXhhbXBsZUBleGFtcGxlLnRlc3QifQ.LSDFFIXTUREsignaturepart1234567890",
+                      "note":  "Unsigned fixture token with synthetic subject and example email claim."
+                  },
+                  {
+                      "id":  "jwt_positive_name_claim",
+                      "role":  "positive",
+                      "text":  "Authorization fixture bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiRml4dHVyZSBVc2VyIiwiYXVkIjoibHNkZi10ZXN0In0.LSDFFIXTUREsignaturepartABCDEFGHIJ",
+                      "note":  "Payload includes a synthetic name claim."
+                  },
+                  {
+                      "id":  "jwt_positive_user_id_claim",
+                      "role":  "positive",
+                      "text":  "jwt_value = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmaXh0dXJlLTAwMSIsInJvbGUiOiJ0ZXN0In0.LSDFFIXTUREsignaturepartKLMNOPQRST",
+                      "note":  "Synthetic JWT with sub claim."
+                  },
+                  {
+                      "id":  "jwt_positive_phone_claim",
+                      "role":  "positive",
+                      "text":  "session jwt eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZSI6IisxLTU1NS0wMTAtMDEwMCIsImlzcyI6ImZpeHR1cmUifQ.LSDFFIXTUREsignaturepartUVWXYZ1234",
+                      "note":  "Payload includes a synthetic phone claim."
+                  },
+                  {
+                      "id":  "jwt_negative_two_segments",
+                      "role":  "negative",
+                      "text":  "token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJmaXh0dXJlIn0",
+                      "note":  "Missing signature segment."
+                  },
+                  {
+                      "id":  "jwt_negative_no_identity_claim",
+                      "role":  "negative",
+                      "text":  "token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDAwMDAwMDAsImlhdCI6MTY5OTk5OTAwMH0.LSDFFIXTUREsignaturepart1234567890",
+                      "note":  "JWT-shaped token without configured identity claims."
+                  },
+                  {
+                      "id":  "jwt_negative_plain_reference",
+                      "role":  "negative",
+                      "text":  "The system stores a session token reference named fixture-token-001.",
+                      "note":  "No JWT shape."
+                  }
+              ]
+}

@@ -1,0 +1,128 @@
+# Healthcare executable policy for LLM Sensitive Data Firewall.
+
+version: 0.2
+name: healthcare
+
+# Assembly-layer product promise: this composed profile's end-to-end
+# release gate, distinct from foundation-layer detector floors in
+# policies/subtype-emission-manifest.yaml.
+gate_promise:
+  corpora:
+    - piece_b_replay
+    - medical_phi_replay
+    - nemotron_pii
+    - ai4privacy_multilingual
+    - br_agentic_pii
+  recall_floor: 0.90
+  specificity_floor: 0.95
+
+detection:
+  adapters: []
+  entities:
+    - SECRET
+    - STRONG_ID
+    - INTERNAL_ID
+    - CREDIT_CARD
+    - BANK_ACCOUNT
+    - IBAN
+    - SWIFT
+    - EMAIL
+    - PHONE
+    - PERSON
+    - DATE_OF_BIRTH
+    - ADDRESS
+    - PHI
+    - EMPLOYEE_COMPENSATION
+    - CUSTOMER_CONFIDENTIAL
+
+action:
+  mode: redact
+  rules:
+    - id: block-secrets-before-model
+      match:
+        entity_in_category: SECRET
+        surface_any_of: [input.messages, input.system, input.developer, input.rag_context, input.tool_results]
+      action: block
+      severity: critical
+      priority: 90
+
+    - id: redact-secrets-final-content
+      match:
+        entity_in_category: SECRET
+        surface_any_of: [output.content, output.stream_chunk]
+      action: redact
+      severity: high
+      priority: 90
+
+    - id: block-secrets-dispatch-surfaces
+      match:
+        entity_in_category: SECRET
+        surface_any_of: [output.tool_calls.arguments, output.reasoning, logs.traces]
+      action: block
+      severity: critical
+      priority: 100
+
+    - id: tokenize-sensitive-identifiers-before-model
+      match:
+        entity_any_of: [CREDIT_CARD, BANK_ACCOUNT, IBAN, SWIFT]
+        entity_in_category_any_of: [PHI, STRONG_ID, INTERNAL_ID]
+        surface_any_of: [input.messages, input.rag_context, input.tool_results]
+      action: tokenize
+      severity: high
+      priority: 50
+
+    - id: healthcare.block-phi-dispatch
+      match:
+        entity_in_category: PHI
+        surface_any_of: [output.tool_calls.arguments, output.reasoning, logs.traces]
+      action: block
+      severity: critical
+      priority: 110
+
+    - id: healthcare.phi-output-containment
+      match:
+        entity_in_category: PHI
+        surface: output.content
+      action: redact
+      scope: surface
+      severity: high
+      priority: 90
+
+    - id: healthcare.redact-phi-content
+      match:
+        entity_in_category: PHI
+        surface_any_of: [output.content, output.stream_chunk]
+      action: redact
+      severity: high
+      priority: 90
+
+    - id: block-sensitive-tool-args
+      match:
+        entity_any_of: [CREDIT_CARD, BANK_ACCOUNT, IBAN, SWIFT]
+        entity_in_category_any_of: [STRONG_ID, INTERNAL_ID]
+        surface: output.tool_calls.arguments
+      action: block
+      severity: critical
+      priority: 100
+
+    - id: redact-sensitive-identifiers-output
+      match:
+        entity_any_of: [CREDIT_CARD, BANK_ACCOUNT, IBAN, SWIFT]
+        entity_in_category_any_of: [STRONG_ID, INTERNAL_ID]
+        surface_any_of: [output.content, output.stream_chunk, output.reasoning, logs.traces]
+      action: redact
+      severity: high
+      priority: 50
+
+    - id: healthcare.redact-identity-outbound
+      match:
+        entity_any_of: [EMAIL, PHONE, PERSON]
+        surface_any_of: [output.content, output.stream_chunk, output.tool_calls.arguments, output.reasoning, logs.traces]
+      action: redact
+      severity: medium
+      priority: 60
+
+audit:
+  store_raw_values: false
+  store_redacted_evidence: true
+  include_policy_decision: true

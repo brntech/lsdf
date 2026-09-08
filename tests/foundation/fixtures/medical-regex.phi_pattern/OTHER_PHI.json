@@ -1,0 +1,49 @@
+{
+    "detector":  "medical-regex.phi_pattern",
+    "entity":  "OTHER_PHI",
+    "description":  "Synthetic residual PHI procedure-code labels and benign controls.",
+    "cases":  [
+                  {
+                      "id":  "pos-001",
+                      "role":  "positive",
+                      "text":  "CPT: 99213",
+                      "note":  "CPT code."
+                  },
+                  {
+                      "id":  "pos-002",
+                      "role":  "positive",
+                      "text":  "procedure code: 93000",
+                      "note":  "procedure code label."
+                  },
+                  {
+                      "id":  "pos-003",
+                      "role":  "positive",
+                      "text":  "CPT 71046",
+                      "note":  "CPT label."
+                  },
+                  {
+                      "id":  "pos-004",
+                      "role":  "positive",
+                      "text":  "procedure code 97110",
+                      "note":  "procedure label."
+                  },
+                  {
+                      "id":  "neg-001",
+                      "role":  "negative",
+                      "text":  "The synthetic workflow is ready for review.",
+                      "note":  "No entity-shaped value."
+                  },
+                  {
+                      "id":  "neg-002",
+                      "role":  "negative",
+                      "text":  "Operators can leave this demonstration row empty.",
+                      "note":  "Generic operational text."
+                  },
+                  {
+                      "id":  "neg-003",
+                      "role":  "negative",
+                      "text":  "The public fixture contains only harmless prose here.",
+                      "note":  "No detector trigger."
+                  }
+              ]
+}

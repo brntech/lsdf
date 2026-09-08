@@ -1,0 +1,277 @@
+{
+  "detector": "contextual-broad.generic_identity",
+  "entity": "DATE_OF_BIRTH",
+  "description": "Synthetic date-of-birth labels and benign controls.",
+  "cases": [
+    {
+      "id": "pos-001",
+      "role": "positive",
+      "text": "date of birth: 1970-01-01",
+      "note": "Positive synthetic contextual label `date of birth`."
+    },
+    {
+      "id": "pos-002",
+      "role": "positive",
+      "text": "birth date = 1971-02-02",
+      "note": "Positive synthetic contextual label `birth date`."
+    },
+    {
+      "id": "pos-003",
+      "role": "positive",
+      "text": "Synthetic row has dob: 1972-03-03.",
+      "note": "Positive synthetic contextual label `dob`."
+    },
+    {
+      "id": "pos-004",
+      "role": "positive",
+      "text": "Demo packet lists date = 1973-04-04.",
+      "note": "Positive synthetic contextual label `date`."
+    },
+    {
+      "id": "pos-005",
+      "role": "positive",
+      "text": "Review field datum: 1974-05-05.",
+      "note": "Positive synthetic contextual label `datum`."
+    },
+    {
+      "id": "pos-006",
+      "role": "positive",
+      "text": "Training form says fecha = 1975-06-06.",
+      "note": "Positive synthetic contextual label `fecha`."
+    },
+    {
+      "id": "pos-007",
+      "role": "positive",
+      "text": "age: 1976-07-07",
+      "note": "Positive synthetic contextual label `age`."
+    },
+    {
+      "id": "pos-008",
+      "role": "positive",
+      "text": "date of birth = 1977-08-08",
+      "note": "Positive synthetic contextual label `date of birth`."
+    },
+    {
+      "id": "pos-009",
+      "role": "positive",
+      "text": "Synthetic row has birth date: 1978-09-09.",
+      "note": "Positive synthetic contextual label `birth date`."
+    },
+    {
+      "id": "pos-010",
+      "role": "positive",
+      "text": "Demo packet lists dob = 1979-10-10.",
+      "note": "Positive synthetic contextual label `dob`."
+    },
+    {
+      "id": "pos-011",
+      "role": "positive",
+      "text": "Review field date: 1980-11-11.",
+      "note": "Positive synthetic contextual label `date`."
+    },
+    {
+      "id": "pos-012",
+      "role": "positive",
+      "text": "Training form says datum = 1981-12-12.",
+      "note": "Positive synthetic contextual label `datum`."
+    },
+    {
+      "id": "pos-013",
+      "role": "positive",
+      "text": "fecha: 1982-01-13",
+      "note": "Positive synthetic contextual label `fecha`."
+    },
+    {
+      "id": "pos-014",
+      "role": "positive",
+      "text": "age = 1983-02-14",
+      "note": "Positive synthetic contextual label `age`."
+    },
+    {
+      "id": "pos-015",
+      "role": "positive",
+      "text": "Synthetic row has date of birth: 1984-03-15.",
+      "note": "Positive synthetic contextual label `date of birth`."
+    },
+    {
+      "id": "pos-016",
+      "role": "positive",
+      "text": "Demo packet lists birth date = 1985-04-16.",
+      "note": "Positive synthetic contextual label `birth date`."
+    },
+    {
+      "id": "pos-017",
+      "role": "positive",
+      "text": "Review field dob: 1986-05-17.",
+      "note": "Positive synthetic contextual label `dob`."
+    },
+    {
+      "id": "pos-018",
+      "role": "positive",
+      "text": "Training form says date = 1987-06-18.",
+      "note": "Positive synthetic contextual label `date`."
+    },
+    {
+      "id": "pos-019",
+      "role": "positive",
+      "text": "datum: 1988-07-19",
+      "note": "Positive synthetic contextual label `datum`."
+    },
+    {
+      "id": "pos-020",
+      "role": "positive",
+      "text": "fecha = 1989-08-20",
+      "note": "Positive synthetic contextual label `fecha`."
+    },
+    {
+      "id": "pos-021",
+      "role": "positive",
+      "text": "Synthetic row has age: 1990-09-21.",
+      "note": "Positive synthetic contextual label `age`."
+    },
+    {
+      "id": "pos-022",
+      "role": "positive",
+      "text": "Demo packet lists date of birth = 1991-10-22.",
+      "note": "Positive synthetic contextual label `date of birth`."
+    },
+    {
+      "id": "pos-023",
+      "role": "positive",
+      "text": "Review field birth date: 1992-11-23.",
+      "note": "Positive synthetic contextual label `birth date`."
+    },
+    {
+      "id": "pos-024",
+      "role": "positive",
+      "text": "Training form says dob = 1993-12-24.",
+      "note": "Positive synthetic contextual label `dob`."
+    },
+    {
+      "id": "pos-025",
+      "role": "positive",
+      "text": "date: 1994-01-25",
+      "note": "Positive synthetic contextual label `date`."
+    },
+    {
+      "id": "pos-026",
+      "role": "positive",
+      "text": "datum = 1970-02-26",
+      "note": "Positive synthetic contextual label `datum`."
+    },
+    {
+      "id": "pos-027",
+      "role": "positive",
+      "text": "Synthetic row has fecha: 1971-03-27.",
+      "note": "Positive synthetic contextual label `fecha`."
+    },
+    {
+      "id": "pos-028",
+      "role": "positive",
+      "text": "Demo packet lists age = 1972-04-01.",
+      "note": "Positive synthetic contextual label `age`."
+    },
+    {
+      "id": "pos-029",
+      "role": "positive",
+      "text": "Review field date of birth: 1973-05-02.",
+      "note": "Positive synthetic contextual label `date of birth`."
+    },
+    {
+      "id": "pos-030",
+      "role": "positive",
+      "text": "Training form says birth date = birth date withheld in words.",
+      "note": "Positive synthetic contextual label `birth date`."
+    },
+    {
+      "id": "neg-001",
+      "role": "negative",
+      "text": "The demo ticket says the field was intentionally left blank.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-002",
+      "role": "negative",
+      "text": "Use generic placeholder data for this public test scenario.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-003",
+      "role": "negative",
+      "text": "No customer, patient, credential, or financial identifier appears here.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-004",
+      "role": "negative",
+      "text": "The reviewer checked the synthetic workflow summary.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-005",
+      "role": "negative",
+      "text": "All columns in this row are intentionally empty.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-006",
+      "role": "negative",
+      "text": "Training notes describe policy behavior without concrete values.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-007",
+      "role": "negative",
+      "text": "Sample prose mentions categories but no labeled value follows.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-008",
+      "role": "negative",
+      "text": "The public fixture contains only harmless operational text.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-009",
+      "role": "negative",
+      "text": "Operators can mark the optional field as skipped.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-010",
+      "role": "negative",
+      "text": "Documentation explains the concept using words only.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-011",
+      "role": "negative",
+      "text": "No identifier is present in this sandbox paragraph.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-012",
+      "role": "negative",
+      "text": "The exported row uses blank cells for sensitive columns.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-013",
+      "role": "negative",
+      "text": "This line carries status, priority, and owner role only.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-014",
+      "role": "negative",
+      "text": "The synthetic form says value unavailable.",
+      "note": "Negative synthetic control without target entity value."
+    },
+    {
+      "id": "neg-015",
+      "role": "negative",
+      "text": "Demonstration content avoids entity-shaped strings here.",
+      "note": "Negative synthetic control without target entity value."
+    }
+  ]
+}
