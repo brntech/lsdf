@@ -33,3 +33,20 @@ To refresh the captured artifacts after a demo change:
 ```bash
 bash scripts/record-demo.sh
 ```
+
+## Run and Inspect the Demo
+
+The demo starts its own upstream and gateway and checks requests, responses, streaming, tool-call arguments, trace sanitation, health, metrics, and safe summaries. It requires no real model or provider key. Stop the demo services when finished:
+
+```bash
+docker compose --profile demo down
+```
+
+Generate a safe narration script or a proof bundle that includes the demo audit and metrics summaries:
+
+```bash
+docker compose run --rm cli demo-script --format markdown
+docker compose run --rm cli proof-bundle --output .lsdf/proof --audit-jsonl-path .lsdf/demo/audit.jsonl --metrics-jsonl-path .lsdf/demo/metrics.jsonl --format markdown
+```
+
+Use actual demo output for captures and check that no raw sensitive fixture values appear before sharing a recording. The transcript and cast above are the included captured artifacts.

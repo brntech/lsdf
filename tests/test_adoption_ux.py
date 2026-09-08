@@ -336,6 +336,8 @@ class ProofBundleTests(unittest.TestCase):
 
     def test_adoption_docs_and_samples_are_safe(self):
         docs = [
+            Path("docs/installation.md"),
+            Path("docs/production-operations.md"),
             Path("docs/policy-cookbook.md"),
             Path("docs/provider-playbook.md"),
             Path("docs/operational-rollout-guide.md"),
@@ -360,6 +362,8 @@ class ProofBundleTests(unittest.TestCase):
                 self.assertNotIn("000-00-0000", text)
                 self.assertNotIn("LSDF-FIXTURE-00001", text)
         for path in (
+            Path("docs/installation.md"),
+            Path("docs/production-operations.md"),
             Path("docs/policy-cookbook.md"),
             Path("docs/provider-playbook.md"),
             Path("docs/operational-rollout-guide.md"),

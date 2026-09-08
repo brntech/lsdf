@@ -2,22 +2,12 @@
 
 ## Policy dimensions
 
-- Entity type: SSN, MRN, name, phone, email, API key, salary, account number
-- Surface: input, output, tool_call, rag_context, trace, log
-- Direction: inbound or outbound
-- Confidence threshold
-- Severity
-- Destination provider
-- Environment: dev, staging, production
-- Tenant/customer
-- User role
-- Action
+Rules match entities or entity categories, surfaces, and optional minimum confidence. Rules also carry an action, severity metadata, priority, span/surface scope, and optional `on_fail` behavior. Tenant, environment, destination, and user role are not implemented rule matchers; select the appropriate policy in the application or gateway configuration.
 
 ## Actions
 
-- `allow`
-- `warn`
-- `log`
+The executable YAML actions are listed below. Unmatched findings use the engine's allow fallback. Observation uses monitor mode or per-rule `on_fail: observe`; `allow`, `warn`, and `log` are not rule action names.
+
 - `redact`
 - `mask`
 - `tokenize`
@@ -42,13 +32,8 @@ Omitting `on_fail` honours the policy-level `mode` (enforce applies transforms; 
 
 ## Policy file format
 
-Policies use YAML for readability and GitOps compatibility.
+Policies use YAML. See the [Policy Cookbook](policy-cookbook.md) for profile choices, rule examples, and validation commands.
 
 ## Built-In Profiles
 
-- `default`: dependency-light starting enforcement.
-- `strict`: stronger blocking for high-risk workflows.
-- `broad-pii-ml`: optional ML-backed profile using OpenAI privacy-filter plus regex, entropy, and medical-pattern detectors.
-- `monitor`: decision logging without enforcement.
-- `dev`: lower-friction local testing.
-- `healthcare`: lightweight PHI-oriented demo posture, not full HIPAA de-identification.
+See the [Policy Cookbook profile inventory](policy-cookbook.md#profile-inventory) for the maintained list of profiles and domain packs, their detector requirements, and evaluation promises.

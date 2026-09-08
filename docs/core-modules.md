@@ -10,21 +10,21 @@ Normalizes LLM request/response objects into scan surfaces.
 
 ## 3. Detection engine
 
-Combines regex detectors, entropy/secrets detectors, Presidio recognizers, NER recognizers, custom business recognizers, and contextual rules.
+Combines configured regex, entropy, medical-pattern, contextual, and separately installed detector families. Application-supplied detectors use the library registry extension point.
 
 ## 4. Policy engine
 
-Decides what to do based on data type, surface, confidence, severity, tenant, environment, and destination.
+Matches findings by entity/category, surface, and confidence using the configured policy. Tenant, environment, and destination are not built-in rule matchers.
 
-Executable actions: allow, warn, redact, mask, tokenize, block, and log only. Manual approval is not implemented.
+Rules support redact, mask, tokenize, block, replace, hash, and encrypt. Monitor mode or per-rule observe behavior records findings without ordinary enforcement. Manual approval is not implemented. See [Policy Model](policy-model.md).
 
 ## 5. Transformation engine
 
-Applies privacy-preserving transformations such as replacement, partial masking, hashing, encryption, reversible tokenization, and pseudonymization.
+Applies redact, mask, tokenize, replace, hash, and encrypt actions. Reversible tokenization uses encrypted vault mode.
 
 ## 6. Tool-call firewall
 
-Scans and enforces policy before tool execution. This is a core differentiator because tool-call arguments can carry sensitive data even when final assistant text appears safe.
+Inspects model-returned tool-call arguments before release to the client, including assembled streamed arguments. The application owns actual tool execution; LSDF does not intercept a tool or MCP connection automatically.
 
 ## 7. RAG/context scanner
 
@@ -32,7 +32,7 @@ Scans retrieved documents and chunks before they are inserted into model context
 
 ## 8. Trace/log sanitizer
 
-Prevents sensitive data from entering observability systems, traces, logs, analytics, and transcript-like payloads. A distinct stored-transcript policy surface is not implemented.
+Sanitizes supplied trace/log/span and transcript-like payloads through application library or CLI hooks. A distinct stored-transcript policy surface is not implemented.
 
 ## 9. Audit/event system
 

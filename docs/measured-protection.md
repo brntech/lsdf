@@ -99,3 +99,18 @@ LSDF_REQUIRE_OPENAI_PRIVACY_FILTER=1 \
 ## Healthcare Limits
 
 The built-in `medical-regex` detector is a lightweight pattern scanner. It catches selected diagnosis text, ICD-like codes, lab-value strings, and medication-dosage patterns. It is not full HIPAA de-identification and does not replace medical NER, clinical review, or compliance validation.
+
+## Synthetic Safety and Utility Batteries
+
+The source checkout also includes `evals/safety_matrix.json` for configured surfaces and known contextual gaps, `evals/utility_matrix.json` for benign utility and false-positive pressure, and `evals/observability_matrix.json` for reasoning, tool-call, and trace/log payloads. These batteries complement the release corpora described above.
+
+Run or regenerate them through Docker Compose:
+
+```bash
+docker compose run --rm cli eval evals/safety_matrix.json --format markdown
+docker compose run --rm cli compare-detectors evals/utility_matrix.json --format markdown
+docker compose run --rm cli eval evals/observability_matrix.json --format markdown
+docker compose run --rm python -m lsdf.eval_matrix --battery all --output-dir .lsdf/generated-evals
+```
+
+Generated fixtures go to ignored output in this example, preserving the published snapshots. Reports include actions, detector provenance, misses, false positives, and structured-output checks where annotated. Output omits raw sensitive values by default; `--reveal-sensitive-values` is reserved for intentional synthetic-fixture debugging.

@@ -943,6 +943,7 @@ class CliTests(unittest.TestCase):
             Path("docs/integration-recipes.md"),
             Path("docs/production-operations.md"),
             Path("docs/security-model.md"),
+            Path("docs/installation.md"),
             Path("docs/compatibility-matrix.md"),
             Path("docs/provider-playbook.md"),
             Path("docs/policy-cookbook.md"),

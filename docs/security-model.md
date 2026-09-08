@@ -36,7 +36,7 @@ docker compose run --rm -e LSDF_OLD_VAULT_KEY -e LSDF_NEW_VAULT_KEY cli vault ro
 
 Vault backups use SQLite's online backup API, including committed WAL transactions. Choose a new output filename: existing outputs and source aliases are rejected. Keep writers coordinated during key rotation; a backup is a consistent point-in-time copy, not a continuously updated replica.
 
-Rotation writes a new vault file and leaves the source untouched. External KMS/HSM adapters are not implemented.
+Back up the source vault before key rotation using the [vault backup commands](production-operations.md#encrypted-token-vault). Rotation writes a new vault file and leaves the source untouched. External KMS/HSM adapters are not implemented.
 
 ## Policy Governance
 
