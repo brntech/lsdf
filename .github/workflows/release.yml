@@ -45,6 +45,7 @@ jobs:
           target: runtime-optional
           platforms: linux/amd64
           push: true
+          provenance: mode=min
           tags: ${{ steps.tags.outputs.optional }}
       - name: Build and push runtime image
         uses: docker/build-push-action@v6
@@ -53,4 +54,5 @@ jobs:
           target: runtime
           platforms: linux/amd64
           push: true
+          provenance: mode=min
           tags: ${{ steps.tags.outputs.runtime }}
