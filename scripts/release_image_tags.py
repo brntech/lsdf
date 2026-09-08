@@ -15,7 +15,7 @@ RELEASE_TAG = re.compile(
 def release_image_tags(tag: str) -> dict[str, list[str]]:
     if RELEASE_TAG.fullmatch(tag) is None or len(tag + "-optional") > 128 or tag.endswith("-optional"):
         raise ValueError("release tag must fit vX.Y.Z or vX.Y.Z-prerelease; the -optional suffix is reserved")
-    image = "ghcr.io/brntech/lsdf"
+    image = "ghcr.io/brntech/lsdf-runtime"
     tags = {"runtime": [f"{image}:{tag}"], "optional": [f"{image}:{tag}-optional"]}
     if "-" not in tag:
         tags["runtime"].append(f"{image}:latest")

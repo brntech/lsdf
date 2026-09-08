@@ -45,7 +45,7 @@ Most privacy tools inspect only prompt and response text. LSDF treats the whole 
 
 LSDF is local-first, dependency-light by default, and designed to make privacy behavior measurable. It also includes OpenRouter and LiteLLM presets, provider playbooks, demo-media assets, policy explanation, sample proof artifacts, and release-ready operational guidance.
 
-For the standalone gateway image prepared for v0.3.1 (unreleased), with required policy fixtures and first-party proof matrices, see [Production Operations](docs/production-operations.md#standalone-runtime-image). Both runtime variants start with the dependency-light `default` profile; ML profiles require explicit selection and a prepared cache. The lightweight runtime leaves out heavy detector dependencies, model weights, and external benchmark corpora; the development Compose services support full evaluations and demos.
+For the standalone gateway image in v0.3.1, with required policy fixtures and first-party proof matrices, see [Production Operations](docs/production-operations.md#standalone-runtime-image). Both runtime variants start with the dependency-light `default` profile; ML profiles require explicit selection and a prepared cache. The lightweight runtime leaves out heavy detector dependencies, model weights, and external benchmark corpora; the development Compose services support full evaluations and demos.
 
 ## Open Source and Optional Integrations
 

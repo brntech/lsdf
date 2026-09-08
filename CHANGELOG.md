@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.1 (unreleased)
+## 0.3.1 (2026-09-08)
 
 - Demo readiness waits for healthy upstream status. The local benchmark converter now reports malformed source data safely, records its exact sampling method, and reports language shortfalls without weakening containment expectations.
 
