@@ -2,6 +2,8 @@
 
 ## 0.3.1 (2026-09-08)
 
+- Evaluation reports describe the selected profiles without implying that optional ML profiles were tested.
+
 - Demo readiness waits for healthy upstream status. The local benchmark converter now reports malformed source data safely, records its exact sampling method, and reports language shortfalls without weakening containment expectations.
 
 - Both runtime images default to the dependency-light profile; ML profiles require explicit selection and a prepared cache. Image checks now exercise their own environment-selected profile and the optional worker's pipeline import.

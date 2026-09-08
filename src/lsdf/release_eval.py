@@ -319,8 +319,7 @@ def format_release_evaluation_markdown(report: dict[str, Any]) -> str:
     lines.append(f"_Generated {report['generated_at']}._")
     lines.append("")
     lines.append(
-        "Per-release signal-vs-noise snapshot for the dependency-light defaults "
-        "and the optional ML-enhanced profile."
+        "Signal-vs-noise results for the profiles and corpora listed in this report."
     )
     lines.append("")
     gate = report.get("release_gate", {})
