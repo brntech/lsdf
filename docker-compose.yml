@@ -6,6 +6,8 @@ x-lsdf-base: &lsdf-base
     target: base
   image: lsdf:dev
   working_dir: /workspace
+  extra_hosts:
+    - host.docker.internal:host-gateway
   volumes:
     - .:/workspace
   environment:
@@ -48,13 +50,14 @@ services:
       - --port
       - "8080"
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     environment:
       PYTHONPATH: /workspace/src
       PYTHONDONTWRITEBYTECODE: "1"
       PYTHONUNBUFFERED: "1"
       PIP_DISABLE_PIP_VERSION_CHECK: "1"
       LSDF_PROFILE: "${LSDF_PROFILE:-default}"
+      LSDF_POLICY: "${LSDF_POLICY:-}"
       LSDF_UPSTREAM_BASE_URL: "${LSDF_UPSTREAM_BASE_URL:-}"
       LSDF_UPSTREAM_API_KEY: "${LSDF_UPSTREAM_API_KEY:-}"
       LSDF_STREAM_HOLDBACK_CHARS: "${LSDF_STREAM_HOLDBACK_CHARS:-512}"
@@ -82,7 +85,7 @@ services:
       - --port
       - "8091"
     ports:
-      - "8091:8091"
+      - "127.0.0.1:8091:8091"
 
   demo-gateway:
     profiles: ["demo"]
@@ -175,6 +178,8 @@ services:
       context: .
       target: runtime
     image: lsdf:runtime
+    extra_hosts:
+      - host.docker.internal:host-gateway
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
@@ -185,6 +190,7 @@ services:
       PYTHONUNBUFFERED: "1"
       PIP_DISABLE_PIP_VERSION_CHECK: "1"
       LSDF_PROFILE: "${LSDF_PROFILE:-default}"
+      LSDF_POLICY: "${LSDF_POLICY:-}"
       LSDF_UPSTREAM_BASE_URL: "${LSDF_UPSTREAM_BASE_URL:-}"
       LSDF_UPSTREAM_API_KEY: "${LSDF_UPSTREAM_API_KEY:-}"
       LSDF_STREAM_HOLDBACK_CHARS: "${LSDF_STREAM_HOLDBACK_CHARS:-512}"
@@ -253,6 +259,8 @@ services:
       target: optional-detectors
     image: lsdf:optional
     working_dir: /workspace
+    extra_hosts:
+      - host.docker.internal:host-gateway
     volumes:
       - .:/workspace
       - lsdf-hf-cache:/opt/lsdf-cache/huggingface
@@ -262,6 +270,7 @@ services:
       PYTHONUNBUFFERED: "1"
       PIP_DISABLE_PIP_VERSION_CHECK: "1"
       HF_HOME: /opt/lsdf-cache/huggingface
+      LSDF_GLINER_LOCAL_FILES_ONLY: "${LSDF_GLINER_LOCAL_FILES_ONLY:-true}"
       LSDF_OPENAI_PRIVACY_FILTER_MODEL: "${LSDF_OPENAI_PRIVACY_FILTER_MODEL:-openai/privacy-filter}"
       LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY: "${LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY:-true}"
       LSDF_OPENAI_PRIVACY_FILTER_SCORE_THRESHOLD: "${LSDF_OPENAI_PRIVACY_FILTER_SCORE_THRESHOLD:-0.85}"
@@ -276,6 +285,8 @@ services:
       target: optional-detectors
     image: lsdf:optional
     working_dir: /workspace
+    extra_hosts:
+      - host.docker.internal:host-gateway
     volumes:
       - .:/workspace
       - lsdf-hf-cache:/opt/lsdf-cache/huggingface
@@ -287,14 +298,16 @@ services:
       - --port
       - "8080"
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     environment:
       PYTHONPATH: /workspace/src
       PYTHONDONTWRITEBYTECODE: "1"
       PYTHONUNBUFFERED: "1"
       PIP_DISABLE_PIP_VERSION_CHECK: "1"
       HF_HOME: /opt/lsdf-cache/huggingface
+      LSDF_GLINER_LOCAL_FILES_ONLY: "${LSDF_GLINER_LOCAL_FILES_ONLY:-true}"
       LSDF_PROFILE: "${LSDF_PROFILE:-broad-pii-ml}"
+      LSDF_POLICY: "${LSDF_POLICY:-}"
       LSDF_UPSTREAM_BASE_URL: "${LSDF_UPSTREAM_BASE_URL:-}"
       LSDF_UPSTREAM_API_KEY: "${LSDF_UPSTREAM_API_KEY:-}"
       LSDF_STREAM_HOLDBACK_CHARS: "${LSDF_STREAM_HOLDBACK_CHARS:-512}"
@@ -323,6 +336,8 @@ services:
       target: optional-detectors
     image: lsdf:optional
     working_dir: /workspace
+    extra_hosts:
+      - host.docker.internal:host-gateway
     volumes:
       - .:/workspace
       - lsdf-hf-cache:/opt/lsdf-cache/huggingface
@@ -332,6 +347,7 @@ services:
       PYTHONUNBUFFERED: "1"
       PIP_DISABLE_PIP_VERSION_CHECK: "1"
       HF_HOME: /opt/lsdf-cache/huggingface
+      LSDF_GLINER_LOCAL_FILES_ONLY: "${LSDF_GLINER_LOCAL_FILES_ONLY:-true}"
       LSDF_OPENAI_PRIVACY_FILTER_MODEL: "${LSDF_OPENAI_PRIVACY_FILTER_MODEL:-openai/privacy-filter}"
       LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY: "${LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY:-true}"
       LSDF_OPENAI_PRIVACY_FILTER_SCORE_THRESHOLD: "${LSDF_OPENAI_PRIVACY_FILTER_SCORE_THRESHOLD:-0.85}"

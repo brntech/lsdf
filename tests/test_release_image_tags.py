@@ -9,18 +9,18 @@ from scripts.release_image_tags import main, release_image_tags
 class ReleaseImageTagTests(unittest.TestCase):
     def test_stable_release_updates_both_latest_tags(self):
         tags = release_image_tags("v0.3.1")
-        self.assertEqual(tags["runtime"], ["ghcr.io/brntech/lsdf-runtime:v0.3.1", "ghcr.io/brntech/lsdf-runtime:latest"])
-        self.assertEqual(tags["optional"], ["ghcr.io/brntech/lsdf-runtime:v0.3.1-optional", "ghcr.io/brntech/lsdf-runtime:latest-optional"])
+        self.assertEqual(tags["runtime"], ["ghcr.io/brntech/lsdf:v0.3.1", "ghcr.io/brntech/lsdf:latest"])
+        self.assertEqual(tags["optional"], ["ghcr.io/brntech/lsdf:v0.3.1-ml", "ghcr.io/brntech/lsdf:latest-ml"])
 
     def test_prereleases_never_change_latest(self):
         for tag in ("v0.3.1-rc.1", "v1.0.0-beta", "v2.0.0-alpha-2"):
             with self.subTest(tag=tag):
                 tags = release_image_tags(tag)
-                self.assertEqual(tags["runtime"], [f"ghcr.io/brntech/lsdf-runtime:{tag}"])
-                self.assertEqual(tags["optional"], [f"ghcr.io/brntech/lsdf-runtime:{tag}-optional"])
+                self.assertEqual(tags["runtime"], [f"ghcr.io/brntech/lsdf:{tag}"])
+                self.assertEqual(tags["optional"], [f"ghcr.io/brntech/lsdf:{tag}-ml"])
 
     def test_invalid_or_injected_tags_are_rejected(self):
-        for tag in ("v0.3.1-optional", "v0.3.1-rc.1-optional", "vmain", "0.3.1", "v01.3.1", "v1.2.3-", "v1.2.3+build", "v1.2.3\nlatest", "v1.2.3-" + "a" * 128):
+        for tag in ("v0.3.1-optional", "v0.3.1-ml", "v0.3.1-rc.1-ml", "vmain", "0.3.1", "v01.3.1", "v1.2.3-", "v1.2.3+build", "v1.2.3\nlatest", "v1.2.3-" + "a" * 128):
             with self.subTest(tag=tag):
                 with self.assertRaises(ValueError):
                     release_image_tags(tag)
@@ -30,8 +30,8 @@ class ReleaseImageTagTests(unittest.TestCase):
         with redirect_stdout(stdout):
             self.assertEqual(main(["v0.3.1-rc.1"]), 0)
         self.assertEqual(stdout.getvalue(),
-            "runtime<<LSDF_IMAGE_TAGS\nghcr.io/brntech/lsdf-runtime:v0.3.1-rc.1\nLSDF_IMAGE_TAGS\n"
-            "optional<<LSDF_IMAGE_TAGS\nghcr.io/brntech/lsdf-runtime:v0.3.1-rc.1-optional\nLSDF_IMAGE_TAGS\n")
+            "runtime<<LSDF_IMAGE_TAGS\nghcr.io/brntech/lsdf:v0.3.1-rc.1\nLSDF_IMAGE_TAGS\n"
+            "optional<<LSDF_IMAGE_TAGS\nghcr.io/brntech/lsdf:v0.3.1-rc.1-ml\nLSDF_IMAGE_TAGS\n")
 
     def test_invalid_tag_exits_before_writing_workflow_outputs(self):
         stdout = io.StringIO()

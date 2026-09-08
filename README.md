@@ -6,20 +6,32 @@ LSDF is a Docker-first OpenAI-compatible proxy you put between your app and the 
 
 ## Start Here
 
-Run the full demo against a leaking OpenAI-compatible upstream:
+Install [Docker with Compose](https://docs.docker.com/compose/install/) and Git, and start Docker with Linux containers. Get the release source and enter its directory:
+
+```bash
+git clone --branch v0.3.1 --depth 1 https://github.com/brntech/lsdf.git
+cd lsdf
+docker compose version
+```
+
+You can also extract `lsdf-0.3.1-source.zip` from the [release downloads](https://github.com/brntech/lsdf/releases/tag/v0.3.1) and open its folder. These commands build images locally; no separate image pull is needed. The first build needs internet access and may take several minutes. For a prebuilt gateway without a source checkout, use the [installation guide](docs/installation.md#prebuilt-release-image).
+
+Try the self-contained demo; no model server or provider key is required:
 
 ```bash
 docker compose --profile demo up --build --abort-on-container-exit --exit-code-from demo-runner demo-runner
+docker compose --profile demo down
 ```
 
-Put LSDF in front of a local model endpoint:
+To use a real model, start its server first, then configure LSDF (this example uses LM Studio):
 
 ```bash
-docker compose run --rm cli init --upstream lmstudio --output .lsdf.env --force
-docker compose --env-file .lsdf.env up gateway
+docker compose build cli
+docker compose run --rm cli init --upstream lmstudio --output .lsdf.env
+docker compose --env-file .lsdf.env up --build -d gateway
 ```
 
-Then point any OpenAI-compatible client at LSDF instead of the model:
+Point your application at `http://localhost:8080/v1`. With the OpenAI SDK already installed in your application's environment:
 
 ```python
 from openai import OpenAI
@@ -27,9 +39,9 @@ from openai import OpenAI
 client = OpenAI(base_url="http://localhost:8080/v1", api_key="local-dev-key")
 ```
 
-Use `--upstream vllm`, `--upstream litellm`, `--upstream openrouter`, or `--upstream custom` for other providers. LSDF forwards `/v1/chat/completions` to the configured upstream and applies the selected policy before requests leave and before responses return.
+Use `--upstream vllm`, `litellm`, or `openrouter` for those providers; `custom` also requires `--upstream-base-url`. Edit `.lsdf.env` for your endpoint and provider key before starting. LSDF forwards `/v1/chat/completions`; the placeholder client key above is not upstream authentication or gateway access control.
 
-Need a starting policy for a specific workload? See `docs/policy-cookbook.md` for named recipes covering local coding agents, support chatbots, healthcare intake, multilingual gateways, and financial workflows.
+The [installation guide](docs/installation.md) covers a first chat request, supported image/platform choices, host networking, PowerShell settings, optional models, stopping, and upgrades. Choose a starting policy from the [policy cookbook](docs/policy-cookbook.md).
 
 ## What LSDF Protects
 
@@ -107,8 +119,8 @@ Then point OpenAI-compatible clients at `http://localhost:8080/v1`. The demo ups
 After the gateway is running:
 
 ```bash
-docker compose run --rm cli quickstart-report --gateway-base-url http://host.docker.internal:8080 --audit-jsonl-path .lsdf/audit.jsonl --metrics-jsonl-path .lsdf/metrics.jsonl --format markdown
-docker compose run --rm cli smoke --gateway-base-url http://host.docker.internal:8080
+docker compose run --rm cli quickstart-report --gateway-base-url http://gateway:8080 --audit-jsonl-path .lsdf/audit.jsonl --metrics-jsonl-path .lsdf/metrics.jsonl --format markdown
+docker compose run --rm cli smoke --gateway-base-url http://gateway:8080
 ```
 
 ## Proven Against Real-World Leaks
@@ -168,6 +180,8 @@ See `docs/measured-protection.md`, `docs/comparative-protection.md`, and `docs/d
 
 ## Daily Commands
 
+Run from the source checkout after building the CLI image. Create the ignored `.lsdf/` directory if it does not exist; generated reports below do not overwrite the published snapshots.
+
 ```bash
 docker compose run --rm cli doctor --format json
 docker compose run --rm cli init --upstream lmstudio --output .lsdf.env
@@ -175,8 +189,8 @@ docker compose run --rm cli scan examples/openai_request.json
 docker compose run --rm cli explain examples/openai_request.json --format text
 docker compose run --rm cli benchmark examples/openai_request.json --iterations 50 --format markdown
 docker compose run --rm cli protection-report --format markdown
-docker compose run --rm cli eval-report --format markdown > EVAL.md
-docker compose run --rm cli latency-table --format markdown > docs/performance.md
+docker compose run --rm cli eval-report --profile default --profile balanced --format markdown > .lsdf/eval-current.md
+docker compose run --rm cli latency-table --format markdown > .lsdf/latency-current.md
 docker compose run --rm cli adapters list
 docker compose run --rm cli entities list
 docker compose run --rm cli policy explain --profile default --format markdown
@@ -229,7 +243,7 @@ LSDF_UPSTREAM_BASE_URL=https://openrouter.ai/api/v1
 Optional ML-backed gateway:
 
 ```bash
-docker compose --profile optional build gateway-ml
+docker compose --profile optional build gateway-ml optional-cli
 docker compose run --rm cli policy-validate --profile broad-pii-ml
 docker compose --profile optional run --rm optional-cli doctor --profile broad-pii-ml
 LSDF_UPSTREAM_BASE_URL=http://host.docker.internal:8000 \
@@ -238,7 +252,7 @@ LSDF_UPSTREAM_BASE_URL=http://host.docker.internal:8000 \
 
 `gateway` and `gateway-ml` both bind `localhost:8080`; run one at a time or remap ports. `gateway-ml` uses the heavier optional image, Docker-managed model cache, and `LSDF_PROFILE=broad-pii-ml` by default. OpenAI privacy-filter is the bundled reference adapter, not the only possible ML detector.
 
-The privacy-filter adapter defaults to local-files-only loading. Until the model is present in the Docker cache, the doctor command should report a safe detector-unavailable diagnostic and `gateway-ml` should not be treated as ready. To deliberately populate or refresh the cache, run that doctor command with `LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY=false` in an environment where model download is allowed.
+Prepare both GLiNER and privacy-filter models using the [optional ML setup](docs/installation.md#optional-ml) before running this sequence. Both default to cache-only loading. Missing required GLiNER produces a detector-unavailable diagnostic. GLiNER is required by the broad profile, while privacy-filter may be skipped when unavailable; a successful doctor exit alone does not prove that the full ML stack loaded. Inspect the reported detector families.
 
 Policy selection precedence for the gateway is: explicit `--policy`, `LSDF_POLICY`, explicit `--profile`, `LSDF_PROFILE`, then `default`. If no explicit policy is supplied, `LSDF_DOMAIN_PACKS=healthcare,financial` compiles domain-pack rules into the selected profile. Use the upstream service root as `LSDF_UPSTREAM_BASE_URL`; the gateway forwards OpenAI-compatible `/v1/chat/completions` paths itself.
 
@@ -274,12 +288,12 @@ docker compose run --rm cli vault keygen
 
 Set `LSDF_TOKENIZATION_MODE=vault`, `LSDF_VAULT_PATH=/workspace/.lsdf/vault.sqlite`, and `LSDF_VAULT_KEY` in your environment. Vault values are encrypted at rest; audit, metrics, reports, and summaries never print plaintext. Resolving a token requires the Docker Compose vault command with `--reveal-sensitive-value`.
 
-Operational helpers:
+Operational helpers (set the key variables securely in the invoking shell; `run -e` forwards them without placing keys in command arguments):
 
 ```bash
 docker compose run --rm cli vault backup --vault-path .lsdf/vault.sqlite --output .lsdf/vault.backup.sqlite
-docker compose run --rm cli vault rotate-key --vault-path .lsdf/vault.sqlite --old-key-env LSDF_OLD_VAULT_KEY --new-key-env LSDF_NEW_VAULT_KEY --output .lsdf/vault.rotated.sqlite
-docker compose run --rm cli vault resolve TOKEN --vault-path .lsdf/vault.sqlite --reveal-sensitive-value
+docker compose run --rm -e LSDF_OLD_VAULT_KEY -e LSDF_NEW_VAULT_KEY cli vault rotate-key --vault-path .lsdf/vault.sqlite --old-key-env LSDF_OLD_VAULT_KEY --new-key-env LSDF_NEW_VAULT_KEY --output .lsdf/vault.rotated.sqlite
+docker compose run --rm -e LSDF_VAULT_KEY cli vault resolve TOKEN --vault-path .lsdf/vault.sqlite --reveal-sensitive-value
 ```
 
 ## Policy Signing
@@ -328,7 +342,7 @@ LSDF includes a safe eval harness and proof report:
 docker compose run --rm cli eval evals/safety_matrix.json --format markdown
 docker compose run --rm cli compare-detectors evals/safety_matrix.json --format markdown
 docker compose run --rm cli protection-report --format markdown
-docker compose run --rm cli eval-report --format markdown > EVAL.md
+docker compose run --rm cli eval-report --profile default --profile balanced --format markdown > .lsdf/eval-current.md
 docker compose run --rm cli proof-bundle --output .lsdf/proof --format markdown
 ```
 
@@ -342,8 +356,8 @@ The built-in `medical-regex` detector is lightweight pattern matching for common
 
 ## More Docs
 
-- `EVAL.md` (repo root): per-release per-detector-family signal-vs-noise snapshot. Regenerate with `cli eval-report --format markdown > EVAL.md`.
-- `docs/performance.md`: per-profile, per-payload latency table (small chat -> RAG-heavy session). Regenerate with `cli latency-table --format markdown > docs/performance.md`.
+- [EVAL.md](EVAL.md): dated per-detector signal-vs-noise snapshot. Use the commands above for fresh dependency-light reports; optional-profile results require prepared models.
+- [Performance](docs/performance.md): dated per-profile latency measurements. Save new measurements under `.lsdf/`.
 - `docs/container-workflow.md`: Docker-only workflow.
 - `docs/detector-composition.md`: how to choose detector families and profiles using measured recall, latency, and FP cells.
 - `docs/measured-protection.md`: scoped public evidence for the optional ML path.

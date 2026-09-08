@@ -15,6 +15,8 @@ PUBLIC_TEXT_ROOTS = [
     Path(".gitignore"),
     Path("Dockerfile"),
     Path("docker-compose.yml"),
+    Path("compose.release.yaml"),
+    Path("release.env.example"),
     Path("pyproject.toml"),
     Path("docs"),
     Path("evals"),

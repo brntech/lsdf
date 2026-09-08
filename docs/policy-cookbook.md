@@ -4,6 +4,8 @@ Recipes recorded: 2026-05-06. Distribution guidance updated: 2026-09-08.
 
 Use these recipes to move from observation to enforcement without surprising application teams. For detector-family trade-offs and measured profile costs, read `docs/detector-composition.md` before creating a custom policy with `detection.adapters` or `detection.entities`.
 
+Complete [Installation](installation.md) before using the source-checkout commands below. Each scenario is an alternative starting point; `init --force` replaces the existing `.lsdf.env`, so retain any local provider, telemetry, and management settings when changing profiles. Optional profiles require the [model-cache preparation and active-family check](installation.md#optional-ml).
+
 ## Profile Inventory
 
 `EVAL.md` records profiles that are directly comparable as containment tiers. The current default suite bundles four threat corpora: credential replay, synthetic medical PHI, Nemotron-PII, and BR-Agentic-PII. The earlier ai4privacy sample is not bundled; its metrics are historical external benchmark evidence.
@@ -22,7 +24,7 @@ These workflow profiles stay out of `EVAL.md` because they answer different oper
 | `monitor` | You need impact data before enforcing. | It intentionally observes decisions without transforms or blocks, so value-level containment would read as a failure by design. |
 | `dev` | You need lower-friction local testing and JSON-shape checks. | It is a developer ergonomics posture that redacts where production profiles may block. |
 | `strict` | RAG/tool-result prompt injection and dispatch surfaces are the main risk. | It adds the `prompt-injection` adapter and a threat model outside the PII/secret release-gate corpora. |
-| `healthcare` | You need a PHI/MRN-oriented starting profile for clinical pilots. | Its five-corpus surface-containment promise includes external ai4privacy evidence; selecting this profile fails the gate if that required corpus is missing. Clinical fixtures and review are also needed. |
+| `healthcare` | You need a PHI/MRN-oriented starting profile for clinical pilots. | Its five-corpus surface-containment promise includes external ai4privacy evidence; evaluating this profile with `eval-report` fails the gate if that required corpus is missing. Clinical fixtures and review are also needed. |
 
 Domain packs are composable rule fragments, not standalone profiles. Add them to a base profile with `--domain-pack` or `LSDF_DOMAIN_PACKS`.
 
@@ -35,8 +37,10 @@ Domain packs are composable rule fragments, not standalone profiles. Add them to
 ## Scenario Recipes
 
 Each recipe starts from a committed profile or a base profile plus domain pack.
-When a domain pack is listed, use the base profile's EVAL row: packs change
-rules, actions, and surfaces, not detector-family recall.
+When a domain pack is listed, use the base profile's EVAL row as a baseline.
+Packs change rules, actions, and surfaces, so they can change the reported
+containment recall even when detector families stay the same. Evaluate the
+combined policy with `eval --domain-pack` and representative fixtures.
 
 | Scenario | Start with | EVAL row to verify | Why |
 |---|---|---|---|
@@ -53,27 +57,29 @@ Copy-paste starting points:
 docker compose run --rm cli init --upstream lmstudio --profile default --output .lsdf.env --force
 docker compose run --rm cli policy-validate --profile default
 docker compose run --rm cli eval-report --profile default --threat-dataset evals/piece_b_replay.json --format markdown
+docker compose --env-file .lsdf.env up -d gateway
 
 # Outbound identity redaction for a local or provider-backed agent.
 docker compose run --rm cli init --upstream lmstudio --profile balanced --output .lsdf.env --force
 docker compose run --rm cli policy-validate --profile balanced
 docker compose run --rm cli eval-report --profile balanced --threat-dataset evals/piece_b_replay.json --format markdown
+docker compose --env-file .lsdf.env up -d gateway
 
 # Broad PII support chatbot or multilingual gateway.
-docker compose --profile optional run --rm optional-cli doctor --profile broad-pii-ml
+docker compose --profile optional run --rm optional-cli doctor --profile broad-pii-ml --format json
 docker compose --profile optional run --rm optional-cli eval-report --profile broad-pii-ml --format markdown
-LSDF_UPSTREAM_BASE_URL=http://host.docker.internal:8000 \
-  docker compose --profile optional up gateway-ml
+docker compose run --rm cli init --upstream vllm --profile broad-pii-ml --output .lsdf.env --force
+docker compose --env-file .lsdf.env --profile optional up gateway-ml
 
 # Healthcare intake or clinical RAG pilot.
 docker compose --profile optional run --rm optional-cli policy-validate --profile broad-pii --domain-pack healthcare
-docker compose --profile optional run --rm optional-cli eval evals/medical_phi_replay.json --profile broad-pii --format markdown
+docker compose --profile optional run --rm optional-cli eval evals/medical_phi_replay.json --profile broad-pii --domain-pack healthcare --format markdown
 docker compose --profile optional run --rm optional-cli protection-report --profile broad-pii --domain-pack healthcare --format markdown
 
 # Financial account-support workflow.
 docker compose run --rm cli policy-validate --profile balanced --domain-pack financial
 docker compose run --rm cli protection-report --profile balanced --domain-pack financial --format markdown
-docker compose run --rm cli eval-report --profile balanced --threat-dataset evals/piece_b_replay.json --format markdown
+docker compose run --rm cli eval evals/piece_b_replay.json --profile balanced --domain-pack financial --format markdown
 ```
 
 ## Operator-Supplied Benchmark and Healthcare Promise
@@ -96,27 +102,35 @@ The `healthcare` profile's five-corpus promise stays intact. A bundled-only heal
 ## Monitor-First Rollout
 
 ```bash
-docker compose run --rm cli init --upstream demo --profile monitor --output .lsdf.env --force
-docker compose --env-file .lsdf.env up gateway
+docker compose run --rm cli init --upstream demo --profile monitor \
+  --audit-jsonl-path /workspace/.lsdf/audit.jsonl \
+  --metrics-jsonl-path /workspace/.lsdf/metrics.jsonl \
+  --output .lsdf.env --force
+docker compose up -d demo-upstream
+docker compose --env-file .lsdf.env up -d gateway
+# Send representative chat traffic before reading telemetry.
 docker compose run --rm cli audit-summary .lsdf/audit.jsonl
+docker compose run --rm cli metrics-summary .lsdf/metrics.jsonl --format markdown
 docker compose run --rm cli simulate-policy evals/basic.json --profile default --format markdown
 ```
 
-Start with `monitor` when a team needs evidence before enforcement. Review audit summaries and policy simulation output, then move to `default` or `strict`.
+Start with `monitor` when a team needs evidence before enforcement. Ordinary matched traffic is observed without sanitization or blocking in this mode. Review audit summaries and policy simulation output, then change the selected profile and recreate the gateway to enforce it. Keep upstream, telemetry, and management settings when updating the configuration; see the [Operational Rollout Guide](operational-rollout-guide.md).
 
 ## Optional ML Privacy Rollout
 
 Use `broad-pii-ml` when you want the optional OpenAI privacy-filter integration on top of the local broad-PII stack. All LSDF-authored adapters remain Apache-2.0 source. Upstream detector packages and model weights retain their own licenses and are explicitly optional; see [Third-Party Notices](../THIRD_PARTY_NOTICES.md) for the exact reference models and upstream projects.
 
+Prepare both model caches using [Optional ML installation](installation.md#optional-ml) before these checks. GLiNER is required for this profile; privacy-filter is configured as optional.
+
 ```bash
 docker compose --profile optional build gateway-ml
 docker compose run --rm cli policy-validate --profile broad-pii-ml
-docker compose --profile optional run --rm optional-cli doctor --profile broad-pii-ml
-LSDF_UPSTREAM_BASE_URL=http://host.docker.internal:8000 \
-  docker compose --profile optional up gateway-ml
+docker compose --profile optional run --rm optional-cli doctor --profile broad-pii-ml --format json
+docker compose run --rm cli init --upstream vllm --profile broad-pii-ml --output .lsdf.env --force
+docker compose --env-file .lsdf.env --profile optional up gateway-ml
 ```
 
-Start with representative fixtures and audit review before enforcing new traffic classes. The optional ML path is stronger for general PII plus secrets, but it also adds model-cache and dependency considerations. Use `doctor --profile broad-pii-ml` as a model-cache readiness check; it safely reports unavailable until the privacy-filter model is cached.
+Start with representative fixtures and audit review before enforcing new traffic classes. The recorded combined ML results require the detector families used in that measurement. A successful doctor exit does not prove privacy-filter loaded: `broad-pii-ml` may continue with the broad-pii stack when that optional family is unavailable. Inspect the JSON detector-family list for both `gliner` and `openai_privacy_filter`, then validate coverage and latency on representative traffic. `policy-validate` does not load model weights. Run one gateway at a time because the services share host loopback port 8080, and check shell `LSDF_PROFILE` or `LSDF_POLICY` overrides before changing profiles.
 
 ## Output Redaction
 

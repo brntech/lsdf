@@ -1,0 +1,42 @@
+name: lsdf-release
+
+services:
+  gateway:
+    image: "${LSDF_IMAGE:-ghcr.io/brntech/lsdf:v0.3.1}"
+    platform: linux/amd64
+    ports:
+      - "127.0.0.1:${LSDF_PORT:-8080}:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - runtime-data:/workspace/.lsdf
+      - model-cache:/opt/lsdf-cache/huggingface
+    environment:
+      LSDF_PROFILE: "${LSDF_PROFILE:-default}"
+      LSDF_POLICY: "${LSDF_POLICY:-}"
+      LSDF_UPSTREAM_BASE_URL: "${LSDF_UPSTREAM_BASE_URL:?Set LSDF_UPSTREAM_BASE_URL in .lsdf.env}"
+      LSDF_UPSTREAM_API_KEY: "${LSDF_UPSTREAM_API_KEY:-}"
+      LSDF_STREAM_HOLDBACK_CHARS: "${LSDF_STREAM_HOLDBACK_CHARS:-512}"
+      LSDF_AUDIT_JSONL_PATH: "${LSDF_AUDIT_JSONL_PATH:-}"
+      LSDF_AUDIT_ROTATE_BYTES: "${LSDF_AUDIT_ROTATE_BYTES:-}"
+      LSDF_AUDIT_ROTATE_BACKUPS: "${LSDF_AUDIT_ROTATE_BACKUPS:-3}"
+      LSDF_METRICS_ENABLED: "${LSDF_METRICS_ENABLED:-false}"
+      LSDF_METRICS_JSONL_PATH: "${LSDF_METRICS_JSONL_PATH:-}"
+      LSDF_HEALTH_UPSTREAM_TIMEOUT_MS: "${LSDF_HEALTH_UPSTREAM_TIMEOUT_MS:-1000}"
+      LSDF_TOKENIZATION_MODE: "${LSDF_TOKENIZATION_MODE:-irreversible}"
+      LSDF_VAULT_PATH: "${LSDF_VAULT_PATH:-}"
+      LSDF_VAULT_KEY: "${LSDF_VAULT_KEY:-}"
+      LSDF_REQUIRE_POLICY_SIGNATURE: "${LSDF_REQUIRE_POLICY_SIGNATURE:-false}"
+      LSDF_POLICY_PUBLIC_KEY: "${LSDF_POLICY_PUBLIC_KEY:-}"
+      LSDF_DOMAIN_PACKS: "${LSDF_DOMAIN_PACKS:-}"
+      LSDF_MANAGEMENT_ENABLED: "${LSDF_MANAGEMENT_ENABLED:-true}"
+      LSDF_MANAGEMENT_TOKEN: "${LSDF_MANAGEMENT_TOKEN:-}"
+      HF_HOME: /opt/lsdf-cache/huggingface
+      LSDF_GLINER_LOCAL_FILES_ONLY: "${LSDF_GLINER_LOCAL_FILES_ONLY:-true}"
+      LSDF_OPENAI_PRIVACY_FILTER_MODEL: "${LSDF_OPENAI_PRIVACY_FILTER_MODEL:-openai/privacy-filter}"
+      LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY: "${LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY:-true}"
+      LSDF_OPENAI_PRIVACY_FILTER_SCORE_THRESHOLD: "${LSDF_OPENAI_PRIVACY_FILTER_SCORE_THRESHOLD:-0.85}"
+
+volumes:
+  runtime-data:
+  model-cache:

@@ -2,6 +2,10 @@
 
 ## 0.3.1 (2026-09-08)
 
+- Added an installation guide covering prerequisites, source checkout/ZIP setup, prebuilt deployment, optional model preparation, and troubleshooting.
+- Added `compose.release.yaml` and `release.env.example` for versioned or digest-pinned deployment from the single canonical `ghcr.io/brntech/lsdf` package, with standard and optional tags.
+- Supplied gateway configurations bind to localhost by default and document the separate management and client-authentication boundaries.
+- Compose forwards custom-policy and optional-model settings explicitly; vault examples pass required key variables into CLI containers.
 - Evaluation reports describe the selected profiles without implying that optional ML profiles were tested.
 
 - Demo readiness waits for healthy upstream status. The local benchmark converter now reports malformed source data safely, records its exact sampling method, and reports language shortfalls without weakening containment expectations.

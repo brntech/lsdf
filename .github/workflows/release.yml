@@ -38,17 +38,19 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push runtime image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          target: runtime
-          push: true
-          tags: ${{ steps.tags.outputs.runtime }}
       - name: Build and push optional runtime image
         uses: docker/build-push-action@v6
         with:
           context: .
           target: runtime-optional
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.tags.outputs.optional }}
+      - name: Build and push runtime image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runtime
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.tags.outputs.runtime }}

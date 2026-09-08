@@ -1,20 +1,22 @@
 # Container Workflow
 
-Date: 2026-04-28
+This guide uses the source checkout for development, verification, evaluations, demos, and artifact capture. Complete [Installation](installation.md) first, including the Docker prerequisites and downloading or cloning the repository. Run every command below from the repository root containing `docker-compose.yml`.
 
-LSDF development, verification, evals, artifact capture, and gateway smoke work should run through Docker Compose. Do not install Python packages, optional detector dependencies, or model tooling into the desktop host environment.
+`docker-compose.yml` builds local images such as `lsdf:dev` and `lsdf:optional` and mounts the checkout into the development services. The published `ghcr.io/brntech/lsdf` images run the standalone gateway; use `compose.release.yaml` and the prebuilt-image instructions in [Installation](installation.md) for that path. Pulling a runtime image does not provide the source checkout or these demo and evaluation commands.
 
 ## No Host Installs
 
 - Do not run package installation, Poetry installs, or optional detector setup from the desktop environment.
-- Host Python may be used only for incidental file editing by automation when the sandbox shell is broken; LSDF execution and verification should use Docker.
+- Run LSDF, Python utility commands, and verification inside the provided containers.
 - Docker images, containers, and named volumes are the dependency boundary. Optional detector caches live in Docker volumes.
 - Generated host-side Python caches such as `__pycache__/` are disposable and should not be committed.
+
+Examples using `NAME=value` before a command use POSIX shell syntax. On Windows, use the env-file setup in [Installation](installation.md). Compose's `--env-file` supplies values for the Compose configuration; it does not automatically forward every variable to every container. Use `docker compose run -e NAME ...` to forward a specific shell variable to a one-off CLI container.
 
 ## Base Dependency-Light Workflow
 
 ```bash
-docker compose build
+docker compose build cli test
 docker compose run --rm test
 docker compose run --rm cli doctor
 docker compose run --rm cli demo
@@ -22,10 +24,9 @@ docker compose run --rm cli policy-validate policies/default.yaml
 docker compose run --rm cli explain examples/quickstart/request_block.json
 docker compose run --rm cli eval evals/basic.json
 docker compose run --rm cli compare-detectors evals/safety_matrix.json --format markdown
-docker compose run --rm cli optional-detector-artifacts --output-dir docs/artifacts/optional-detectors/2026-04-28
+docker compose run --rm cli optional-detector-artifacts --output-dir .lsdf/optional-detector-artifacts/default
 docker compose run --rm cli sanitize-observability examples/observability.json
 docker compose run --rm cli audit-summary examples/quickstart/audit.jsonl
-docker compose run --rm cli metrics-summary .lsdf/metrics.jsonl --format markdown
 docker compose run --rm cli benchmark examples/openai_request.json --iterations 50 --format markdown
 docker compose run --rm cli protection-report --format markdown
 docker compose run --rm cli simulate-policy evals/basic.json --format markdown
@@ -35,36 +36,37 @@ docker compose run --rm cli demo-script --format markdown
 docker compose run --rm cli policy explain policies/default.yaml --format markdown
 ```
 
-Regenerate bundled evaluation fixtures through the Python utility service:
+Generate evaluation fixtures through the Python utility service. The ignored output directory remains available in the checkout after the container exits:
 
 ```bash
-docker compose run --rm python -m lsdf.eval_matrix --battery all --output-dir /tmp/lsdf-evals
+docker compose run --rm python -m lsdf.eval_matrix --battery all --output-dir .lsdf/generated-evals
 docker compose run --rm python -m unittest discover -s tests -v
 ```
 
 ## Gateway Workflow
 
-Run the canned demo upstream when you want a deterministic quickstart:
+Run the self-contained demo when you want a deterministic quickstart. It starts its own upstream and gateway, runs the checks, then stops them:
 
 ```bash
 docker compose --profile demo up --build --abort-on-container-exit --exit-code-from demo-runner demo-runner
-docker compose run --rm cli init --upstream demo --audit-jsonl-path /workspace/.lsdf/audit.jsonl --metrics-jsonl-path /workspace/.lsdf/metrics.jsonl --output .lsdf.env --force
-docker compose up demo-upstream
+docker compose --profile demo down
 ```
 
-Then run the gateway with the generated env file:
+To keep the demo upstream and gateway running for your own client, generate an env file and start the two services in the background:
 
 ```bash
+docker compose run --rm cli init --upstream demo --audit-jsonl-path /workspace/.lsdf/audit.jsonl --metrics-jsonl-path /workspace/.lsdf/metrics.jsonl --output .lsdf.env
+docker compose --env-file .lsdf.env up --build -d demo-upstream gateway
+```
+
+Provider presets are available for LiteLLM Proxy and OpenRouter. Choose one upstream; for example:
+
+```bash
+docker compose run --rm cli init --upstream litellm --output .lsdf.env
 docker compose --env-file .lsdf.env up gateway
 ```
 
-Provider presets are available for LiteLLM Proxy and OpenRouter:
-
-```bash
-docker compose run --rm cli init --upstream litellm --output .lsdf.env --force
-docker compose run --rm cli init --upstream openrouter --output .lsdf.env --force
-docker compose --env-file .lsdf.env up gateway
-```
+Substitute `--upstream openrouter` for OpenRouter and supply its upstream API key as described in [Installation](installation.md). If `.lsdf.env` already exists, edit it or deliberately use `--force` to replace it. Start the actual model or provider proxy before starting LSDF; the preset only configures its address.
 
 ```bash
 LSDF_UPSTREAM_BASE_URL=http://host.docker.internal:8000 \
@@ -109,8 +111,10 @@ Then check:
 curl http://localhost:8080/lsdf/health
 curl http://localhost:8080/lsdf/metrics
 docker compose run --rm cli metrics-summary .lsdf/metrics.jsonl --format markdown
-docker compose run --rm cli quickstart-report --gateway-base-url http://host.docker.internal:8080 --audit-jsonl-path .lsdf/audit.jsonl --metrics-jsonl-path .lsdf/metrics.jsonl --format markdown
+docker compose run --rm cli quickstart-report --gateway-base-url http://gateway:8080 --audit-jsonl-path .lsdf/audit.jsonl --metrics-jsonl-path .lsdf/metrics.jsonl --format markdown
 ```
+
+The CLI container reaches `gateway` by its Compose service name. Clients running on the host use `http://localhost:8080/v1`. For host model networking, including native Linux requirements, see [Installation](installation.md).
 
 Set `LSDF_MANAGEMENT_TOKEN` to require a bearer token or `X-LSDF-Management-Token` on `/lsdf/health` and `/lsdf/metrics`. Set `LSDF_MANAGEMENT_ENABLED=false` to disable `/lsdf/*` while keeping `/v1/chat/completions` active.
 
@@ -127,7 +131,7 @@ Vault maintenance stays Docker-only:
 ```bash
 docker compose run --rm cli vault check --vault-path .lsdf/vault.sqlite
 docker compose run --rm cli vault backup --vault-path .lsdf/vault.sqlite --output .lsdf/vault.backup.sqlite
-docker compose run --rm cli vault rotate-key --vault-path .lsdf/vault.sqlite --old-key-env LSDF_OLD_VAULT_KEY --new-key-env LSDF_NEW_VAULT_KEY --output .lsdf/vault.rotated.sqlite
+docker compose run --rm -e LSDF_OLD_VAULT_KEY -e LSDF_NEW_VAULT_KEY cli vault rotate-key --vault-path .lsdf/vault.sqlite --old-key-env LSDF_OLD_VAULT_KEY --new-key-env LSDF_NEW_VAULT_KEY --output .lsdf/vault.rotated.sqlite
 ```
 
 Upstream connection/open/read failures are normalized by the gateway. Before streaming starts, LSDF returns HTTP 502 JSON with `type: upstream_transport_error`. After streaming starts, LSDF flushes safe held state first and then emits a terminal SSE upstream transport error unless the held state itself blocks.
@@ -151,28 +155,31 @@ docker compose run --rm cli proof-bundle --output .lsdf/proof --format markdown
 
 ## Optional Detectors
 
-Optional detector dependencies stay in the `optional` Compose profile and Docker-managed volumes:
+Optional detector dependencies stay in the `optional` Compose profile and Docker-managed volumes. Build the optional CLI before using it, then follow [Optional ML](installation.md#optional-ml) to prepare both GLiNER and privacy-filter model caches. An image build installs dependencies; it does not supply those weights.
 
 ```bash
-docker compose --profile optional build gateway-ml optional-test
+docker compose --profile optional build gateway-ml optional-cli optional-test
 docker compose run --rm cli policy-validate --profile broad-pii-ml
-docker compose --profile optional run --rm optional-cli doctor --profile broad-pii-ml
+```
+
+After preparing the caches:
+
+```bash
+docker compose --profile optional run --rm optional-cli doctor --profile broad-pii-ml --format json
 LSDF_UPSTREAM_BASE_URL=http://host.docker.internal:8000 \
-  docker compose --profile optional up gateway-ml
-docker compose --profile optional build optional-test
+  docker compose --profile optional up -d gateway-ml
 docker compose --profile optional run --rm optional-test
-docker compose --profile optional run --rm optional-cli optional-detector-artifacts --output-dir docs/artifacts/optional-detectors/optional-run
+docker compose --profile optional run --rm optional-cli optional-detector-artifacts --output-dir .lsdf/optional-detector-artifacts/optional-run
 ```
 
 The optional privacy-filter path defaults to local-files-only model loading. Use the `lsdf-hf-cache` Docker volume for Hugging Face cache state instead of a desktop Python cache.
 
-`gateway-ml` defaults to `LSDF_PROFILE=broad-pii-ml`, which layers OpenAI privacy-filter with LSDF regex, entropy, and lightweight medical-pattern detectors. It binds the same host port as `gateway`, so run one gateway service at a time unless you intentionally remap ports.
+`gateway-ml` defaults to `LSDF_PROFILE=broad-pii-ml`, which adds contextual-broad, GLiNER, and optional OpenAI privacy-filter detection to the dependency-light stack. It binds the same host port as `gateway`, so stop the existing gateway before starting it unless you intentionally remap ports. The prebuilt optional runtime image instead starts with `default`; selecting an ML profile is explicit.
 
-When the privacy-filter model is not cached, `docker compose --profile optional run --rm optional-cli doctor --profile broad-pii-ml` reports a safe detector-unavailable diagnostic. To intentionally prepare the Docker cache, run the same command with `LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY=false` where model download is allowed.
+GLiNER is required by `broad-pii-ml`, so its unavailable model prevents that profile from starting. Privacy-filter is configured as optional and can be skipped when unavailable; a successful doctor result alone does not prove it loaded. Check the reported detector families and use the explicit cache preparation and verification steps in [Optional ML](installation.md#optional-ml).
 
 For release validation with a prepared cache, require the real privacy-filter smoke:
 
 ```bash
-LSDF_REQUIRE_OPENAI_PRIVACY_FILTER=1 \
-  docker compose --profile optional run --rm optional-test
+docker compose --profile optional run --rm -e LSDF_REQUIRE_OPENAI_PRIVACY_FILTER=1 optional-test
 ```

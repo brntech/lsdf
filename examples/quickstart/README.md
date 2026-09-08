@@ -11,11 +11,25 @@ All sensitive-looking strings in this directory are synthetic LSDF fixtures. The
 - `observability.json`: trace/log-style payload sanitized through `logs.traces`.
 - `audit.jsonl`: raw-value-safe example audit line for `lsdf audit-summary`.
 
-Run them through Docker Compose, for example:
+Complete [Installation](../../docs/installation.md) first, including Docker setup and downloading or cloning the source. Run the commands below from the repository root containing `docker-compose.yml`, not from this examples directory.
+
+These examples use the source checkout and its local development image. The prebuilt runtime image runs the standalone gateway; use `compose.release.yaml` and the installation guide for that path.
+
+Build the development image, then run the examples through Docker Compose:
 
 ```bash
+docker compose build cli
 docker compose run --rm cli demo
 docker compose run --rm cli explain examples/quickstart/request_block.json
 docker compose run --rm cli sanitize-observability examples/quickstart/observability.json
 docker compose run --rm cli audit-summary examples/quickstart/audit.jsonl
 ```
+
+For the full HTTP and streaming demonstration, including its own upstream and gateway:
+
+```bash
+docker compose --profile demo up --build --abort-on-container-exit --exit-code-from demo-runner demo-runner
+docker compose --profile demo down
+```
+
+The runner reports safe aggregate results and exits. See [Container Workflow](../../docs/container-workflow.md#gateway-workflow) to keep a demo gateway running for your own client.

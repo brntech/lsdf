@@ -1,8 +1,10 @@
 # Provider Playbook
 
-Date: 2026-04-29
+Updated: 2026-09-08
 
 LSDF is provider-agnostic on the client side: applications point OpenAI-compatible clients at `http://localhost:8080/v1`, while LSDF forwards to the configured upstream.
+
+Complete [Installation](installation.md) first. The commands below run from a source checkout. Start the real upstream separately and choose a model ID it serves; `init` only writes LSDF configuration. The gateway currently implements `POST /v1/chat/completions`, including streaming, rather than the full OpenAI API.
 
 ## Presets
 
@@ -17,6 +19,8 @@ LSDF is provider-agnostic on the client side: applications point OpenAI-compatib
 
 ## Commands
 
+Choose one preset below. `--force` replaces an existing `.lsdf.env`; omit it when creating a new file or retain your existing settings when changing providers.
+
 ```bash
 docker compose run --rm cli init --upstream demo --output .lsdf.env --force
 docker compose run --rm cli init --upstream vllm --output .lsdf.env --force
@@ -27,19 +31,27 @@ docker compose run --rm cli init --upstream custom --upstream-base-url https://p
 docker compose --env-file .lsdf.env up gateway
 ```
 
+For `demo`, also start the upstream with `docker compose up -d demo-upstream` before starting `gateway`. The other presets require a separately running upstream. Host-based providers must listen on an address reachable from Docker; a host-only loopback listener may not be reachable from a Linux container. The source Compose services include the Linux `host-gateway` mapping. Use a service name and its container port instead when the upstream shares LSDF's Compose network.
+
+Supply `LSDF_UPSTREAM_API_KEY` through your shell or an uncommitted env file when the provider requires authentication. A client's bearer token is not forwarded upstream; LSDF uses the configured upstream key. `LSDF_MANAGEMENT_TOKEN` only protects management endpoints, not client chat requests. Shared deployments need separate ingress authentication and TLS.
+
+An upstream URL may be its service root or a prefix ending in `/v1`; LSDF avoids duplicating `/v1` when forwarding. For example, the OpenRouter preset forwards chat to `/api/v1/chat/completions`.
+
+Gateway policy precedence is explicit `--policy`, `LSDF_POLICY`, explicit `--profile`, `LSDF_PROFILE`, then `default`. Domain packs apply when selecting a profile, not an explicit policy file. Host shell variables override values supplied by Compose's `--env-file`; check existing `LSDF_POLICY` and `LSDF_PROFILE` settings when changing profiles. Other CLI commands should select their profile explicitly.
+
 ## Optional ML Gateway
 
-The dependency-light `gateway` is the default. For OpenAI privacy-filter plus LSDF entropy/regex protection, run the optional ML gateway:
+The dependency-light `gateway` is the default. First follow [Optional ML installation](installation.md#optional-ml) to prepare both GLiNER and privacy-filter in the shared cache and verify the active detector families. Then run the optional gateway:
 
 ```bash
 docker compose --profile optional build gateway-ml
 docker compose run --rm cli policy-validate --profile broad-pii-ml
-docker compose --profile optional run --rm optional-cli doctor --profile broad-pii-ml
-LSDF_UPSTREAM_BASE_URL=http://host.docker.internal:8000 \
-  docker compose --profile optional up gateway-ml
+docker compose --profile optional run --rm optional-cli doctor --profile broad-pii-ml --format json
+docker compose run --rm cli init --upstream vllm --profile broad-pii-ml --output .lsdf.env --force
+docker compose --env-file .lsdf.env --profile optional up gateway-ml
 ```
 
-`gateway-ml` and `gateway` both bind `localhost:8080`; run one at a time or remap ports. Application clients still use `http://localhost:8080/v1`. The optional privacy-filter model must be present in the Docker cache, or the gateway will fail closed with a detector-unavailable diagnostic.
+`gateway-ml` and `gateway` both publish host loopback port 8080; run one at a time or remap ports. Application clients on the host still use `http://localhost:8080/v1`. Missing required GLiNER prevents startup. Privacy-filter is optional in `broad-pii-ml`: when it cannot load, the gateway can continue with the local broad-pii detector stack. A successful doctor exit alone does not prove privacy-filter loaded; check that its JSON detector-family list includes both `gliner` and `openai_privacy_filter`.
 
 ## OpenRouter
 
@@ -55,7 +67,7 @@ Application clients still call LSDF:
 http://localhost:8080/v1
 ```
 
-OpenRouter supports optional app-attribution headers. Configure those in the application or upstream gateway layer if needed; LSDF does not rewrite provider attribution headers in this pass.
+LSDF does not forward arbitrary client headers, including OpenRouter app-attribution headers. If attribution is required, add it in an upstream proxy that sends requests to OpenRouter. Setting it only on the client that calls LSDF has no effect.
 
 ## LiteLLM Proxy
 
