@@ -13,6 +13,7 @@ Complete [Installation](installation.md) first. The commands below run from a so
 | `demo` | `http://demo-upstream:8091` | Deterministic quickstart and proof video capture. |
 | `vllm` | `http://host.docker.internal:8000` | Local vLLM or another OpenAI-compatible server on the host. |
 | `lmstudio` | `http://host.docker.internal:1234` | Native LM Studio OpenAI-compatible server. |
+| `ollama` | `http://host.docker.internal:11434/v1` | Local Ollama OpenAI-compatible endpoint. |
 | `litellm` | `http://host.docker.internal:4000` | LSDF in front of LiteLLM Proxy. |
 | `openrouter` | `https://openrouter.ai/api/v1` | LSDF in front of OpenRouter. |
 | `custom` | user supplied | Any OpenAI-compatible provider or gateway. |
@@ -25,6 +26,7 @@ Choose one preset below. `--force` replaces an existing `.lsdf.env`; omit it whe
 docker compose run --rm cli init --upstream demo --output .lsdf.env --force
 docker compose run --rm cli init --upstream vllm --output .lsdf.env --force
 docker compose run --rm cli init --upstream lmstudio --output .lsdf.env --force
+docker compose run --rm cli init --upstream ollama --output .lsdf.env --force
 docker compose run --rm cli init --upstream litellm --output .lsdf.env --force
 docker compose run --rm cli init --upstream openrouter --output .lsdf.env --force
 docker compose run --rm cli init --upstream custom --upstream-base-url https://provider.example/v1 --output .lsdf.env --force
@@ -33,7 +35,7 @@ docker compose --env-file .lsdf.env up gateway
 
 For `demo`, also start the upstream with `docker compose up -d demo-upstream` before starting `gateway`. The other presets require a separately running upstream. Host-based providers must listen on an address reachable from Docker; a host-only loopback listener may not be reachable from a Linux container. The source Compose services include the Linux `host-gateway` mapping. Use a service name and its container port instead when the upstream shares LSDF's Compose network.
 
-Supply `LSDF_UPSTREAM_API_KEY` through your shell or an uncommitted env file when the provider requires authentication. A client's bearer token is not forwarded upstream; LSDF uses the configured upstream key. `LSDF_MANAGEMENT_TOKEN` only protects management endpoints, not client chat requests. Shared deployments need separate ingress authentication and TLS.
+Supply `LSDF_UPSTREAM_API_KEY` through your shell or an uncommitted env file when the provider requires authentication. A client's bearer token is not forwarded upstream; LSDF uses the configured upstream key. `LSDF_MANAGEMENT_TOKEN` protects management endpoints and `LSDF_CLIENT_TOKEN` independently protects client chat requests. Shared deployments need separate ingress authentication and TLS.
 
 An upstream URL may be its service root or a prefix ending in `/v1`; LSDF avoids duplicating `/v1` when forwarding. For example, the OpenRouter preset forwards chat to `/api/v1/chat/completions`.
 

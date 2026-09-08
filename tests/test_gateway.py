@@ -10,10 +10,12 @@ from unittest.mock import patch
 
 from lsdf import Firewall, load_policy
 from lsdf.audit import JsonlAuditSink
+from lsdf.eval_matrix import ENTITY_SAMPLES
 from lsdf.gateway import (
     GatewayConfig,
     LSDFGatewayHandler,
     GatewayConfigError,
+    _check_upstream_health,
     forward_upstream,
     forward_upstream_stream,
     handle_chat_completion,
@@ -65,6 +67,73 @@ class SseHelperTests(unittest.TestCase):
         self.assertIn("event: completion.chunk\n", raw)
         self.assertIn("data: first line\n", raw)
         self.assertIn("data: second line\n", raw)
+
+
+class GatewayHealthHelperTests(unittest.TestCase):
+    class _Response:
+        def __init__(self, status):
+            self.status = status
+            self.closed = False
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, _exc_type, _exc, _traceback):
+            self.close()
+
+        def close(self):
+            self.closed = True
+
+    def setUp(self):
+        marker = ENTITY_SAMPLES["API_KEY"][0]
+        self.marker = marker
+        self.url = f"https://health-user:{marker}@example.test/v1?api_key={marker}#fixture"
+
+    def test_success_health_result_omits_credentialed_url(self):
+        response = self._Response(200)
+        with patch("lsdf.gateway.urllib.request.urlopen", return_value=response) as urlopen:
+            result = _check_upstream_health(self.url, 100)
+
+        self.assertEqual(result, {"status": "ok", "http_status": 200})
+        self.assertEqual(urlopen.call_args.args[0].full_url, self.url)
+        self.assertTrue(response.closed)
+        serialized = json.dumps(result)
+        self.assertNotIn(self.url, serialized)
+        self.assertNotIn(self.marker, serialized)
+
+    def test_http_error_closes_body_and_omits_credentialed_url(self):
+        response = self._Response(429)
+        error = urllib.error.HTTPError(self.url, 429, "synthetic response", {}, response)
+        with patch("lsdf.gateway.urllib.request.urlopen", side_effect=error):
+            result = _check_upstream_health(self.url, 100)
+
+        self.assertEqual(
+            result,
+            {
+                "status": "warning",
+                "http_status": 429,
+                "message": "reachable with non-2xx response",
+            },
+        )
+        self.assertTrue(response.closed)
+        serialized = json.dumps(result)
+        self.assertNotIn(self.url, serialized)
+        self.assertNotIn(self.marker, serialized)
+
+    def test_transport_error_is_static_and_omits_credentialed_url(self):
+        with patch(
+            "lsdf.gateway.urllib.request.urlopen",
+            side_effect=urllib.error.URLError("synthetic transport detail"),
+        ):
+            result = _check_upstream_health(self.url, 100)
+
+        self.assertEqual(
+            result,
+            {"status": "error", "error_type": "upstream_transport_error"},
+        )
+        serialized = json.dumps(result)
+        self.assertNotIn(self.url, serialized)
+        self.assertNotIn(self.marker, serialized)
 
 
 class GatewayTests(unittest.TestCase):

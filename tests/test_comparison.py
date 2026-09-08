@@ -7,6 +7,7 @@ from pathlib import Path
 
 from lsdf.cli import main
 from lsdf.comparison import compare_detector_sets, default_detector_sets, parse_detector_set
+from lsdf.eval_matrix import build_coding_matrix
 from lsdf.policy import load_policy
 from lsdf.reporting import format_detector_comparison_markdown
 from lsdf.scanners.presidio import PresidioDetector
@@ -62,6 +63,31 @@ class DetectorComparisonTests(unittest.TestCase):
                 )
                 self.assertEqual(len(report["detector_sets"]), 3)
                 self.assertEqual({result["status"] for result in report["detector_sets"]}, {"ok"})
+
+    def test_comparison_preserves_coding_metrics_and_markdown_labels(self):
+        dataset_path = Path("evals/coding_matrix.json")
+        report = compare_detector_sets(
+            policy=load_policy("policies/default.yaml"),
+            dataset=build_coding_matrix(),
+            dataset_path=dataset_path,
+            detector_sets=[parse_detector_set("default=regex,entropy,medical-regex,contextual-anchored")],
+        )
+
+        result = report["detector_sets"][0]
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["evaluation_errors"], 0)
+        self.assertEqual(result["misses"], 0)
+        self.assertEqual(result["unwanted_mutations"], 0)
+        self.assertGreaterEqual(result["json_text_mutations"], 1)
+        markdown = format_detector_comparison_markdown(report)
+        for label in (
+            "Eval Errors",
+            "Misses",
+            "Known-Gap Misses",
+            "Unwanted Mutations",
+            "Unwanted Blocks",
+        ):
+            self.assertIn(label, markdown)
 
     def test_unavailable_optional_detector_set_is_reported_not_raised(self):
         dataset_path = Path("evals/basic.json")

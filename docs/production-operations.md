@@ -6,11 +6,11 @@ Provider rollout material covers LiteLLM Proxy, OpenRouter, LM Studio, local vLL
 
 Start with [Installation](installation.md) for prerequisites and the published-image path. Commands below use a source checkout unless stated otherwise. Start the upstream separately, with an address reachable from Docker, and supply its credentials through `LSDF_UPSTREAM_API_KEY` when required.
 
-LSDF now exposes raw-value-safe operational surfaces while keeping OpenAI-compatible `/v1/*` behavior unchanged.
+LSDF now exposes raw-value-safe operational surfaces while keeping OpenAI-compatible `/v1/*` behavior unchanged unless client authentication or configured request limits are enabled.
 
 ## Standalone Runtime Image
 
-The lightweight `runtime` target starts the gateway on port 8080. It includes LSDF source, policies, required synthetic policy-validation fixtures, and three first-party proof matrices. It does not include development test code, external benchmark corpora, model weights, or heavy detector dependencies. The existing `base` and `optional-detectors` targets support repository development and evaluation.
+The lightweight `runtime` target starts the gateway on port 8080. It includes LSDF source, policies, required synthetic policy-validation fixtures, and four first-party evaluation matrices; the coding battery is an explicit characterization command and is not added to the default protection report. It does not include development test code, external benchmark corpora, model weights, or heavy detector dependencies. The existing `base` and `optional-detectors` targets support repository development and evaluation.
 
 Build and run from a source checkout without mounting that checkout into the gateway:
 
@@ -21,7 +21,7 @@ LSDF_UPSTREAM_BASE_URL=http://host.docker.internal:8000 \
 
 Point clients on the host at `http://localhost:8080/v1`. This local recipe binds the host port to loopback. The service forwards the same gateway settings as the development gateway. Its named volume persists `/workspace/.lsdf` for configured audit, metrics, proof, and encrypted vault files; use paths inside that directory. Custom policy files need an explicit read-only mount and policy argument. For a real upstream, supply `LSDF_UPSTREAM_API_KEY` through the environment when required.
 
-For shared access, place the gateway behind ingress authentication, TLS, and network access controls. LSDF does not authenticate client chat requests. `LSDF_MANAGEMENT_TOKEN` protects only `/lsdf/*`; the upstream API key authenticates LSDF to the provider and does not protect LSDF's client endpoint.
+For shared access, place the gateway behind ingress authentication, TLS, and network access controls. Set `LSDF_CLIENT_TOKEN` for direct client authentication on `/v1/chat/completions`; set `LSDF_MANAGEMENT_TOKEN` independently for `/lsdf/*`. The upstream API key authenticates LSDF to the provider and does not protect either caller surface.
 
 The image accepts CLI arguments, for example `docker compose --profile runtime run --rm runtime doctor --profile default`. Proof commands work in the runtime; place their output under `.lsdf/` to persist it in this recipe's named volume. Full benchmark evaluation and the live demo runner use the development Compose services and source checkout. A standalone Python wheel is not the supported distribution path: policy assets currently depend on the container's repository layout.
 
@@ -72,13 +72,14 @@ curl http://localhost:8080/lsdf/health
 curl http://localhost:8080/lsdf/metrics
 curl "http://localhost:8080/lsdf/metrics?format=json"
 docker compose run --rm cli metrics-summary .lsdf/metrics.jsonl --format markdown
-docker compose run --rm cli smoke --gateway-base-url http://gateway:8080
-docker compose run --rm cli quickstart-report --gateway-base-url http://gateway:8080 --audit-jsonl-path .lsdf/audit.jsonl --metrics-jsonl-path .lsdf/metrics.jsonl --format markdown
+export LSDF_MANAGEMENT_TOKEN=local-management-token
+docker compose --env-file .lsdf.env run --rm -e LSDF_MANAGEMENT_TOKEN="$LSDF_MANAGEMENT_TOKEN" cli smoke --gateway-base-url http://gateway:8080
+docker compose --env-file .lsdf.env run --rm -e LSDF_MANAGEMENT_TOKEN="$LSDF_MANAGEMENT_TOKEN" cli quickstart-report --gateway-base-url http://gateway:8080 --audit-jsonl-path .lsdf/audit.jsonl --metrics-jsonl-path .lsdf/metrics.jsonl --format markdown
 ```
 
 Metrics contain counts, durations, surfaces, entities, actions, detector families, stream states, status/error types, and no payload text.
 
-Management endpoints are enabled by default for local compatibility. In shared environments, set `LSDF_MANAGEMENT_TOKEN` so `/lsdf/health` and `/lsdf/metrics` require `Authorization: Bearer <token>` or `X-LSDF-Management-Token`. Set `LSDF_MANAGEMENT_ENABLED=false` to disable `/lsdf/*` entirely; `/v1/*` remains unchanged.
+Management endpoints are enabled by default for local compatibility. In shared environments, set `LSDF_MANAGEMENT_TOKEN` so `/lsdf/health` and `/lsdf/metrics` require `Authorization: Bearer <token>` or `X-LSDF-Management-Token`. Set `LSDF_CLIENT_TOKEN` separately so `/v1/chat/completions` requires `Authorization: Bearer <token>` or `X-LSDF-Client-Token`. Set `LSDF_MANAGEMENT_ENABLED=false` to disable `/lsdf/*` entirely; client authentication and limits still apply to `/v1`.
 
 For token-protected endpoints, use authenticated requests, for example:
 
@@ -87,7 +88,7 @@ curl -H "X-LSDF-Management-Token: $LSDF_MANAGEMENT_TOKEN" http://localhost:8080/
 curl -H "X-LSDF-Management-Token: $LSDF_MANAGEMENT_TOKEN" http://localhost:8080/lsdf/metrics
 ```
 
-The built-in `smoke` and `quickstart-report` commands do not send management tokens; their endpoint checks apply to the unprotected local setup above. A disabled management endpoint returns 404 even through a reverse proxy. Health HTTP 200 alone also does not establish upstream readiness: inspect the response's `status` and `upstream` fields and validate a real chat request.
+The built-in `smoke` and `quickstart-report` commands pass `LSDF_MANAGEMENT_TOKEN` to loopback and recognized local Compose gateway names, and withhold it for other hostnames. A disabled management endpoint returns 404 even through a reverse proxy. Health HTTP 200 alone does not establish upstream readiness or client protection: inspect the response's `status`, `upstream`, `client`, and `limits` fields, then validate a real authenticated chat request. These reports mark client protection as unverified because they do not send `/v1` traffic.
 
 ## Inspection failures
 
@@ -95,7 +96,9 @@ A policy `on_fail: exception` halts request preflight with HTTP 403 or response 
 
 If output inspection fails after SSE headers were sent, LSDF emits one terminal error event, withholds pending content, and does not send a successful `[DONE]`. Previously delivered text cannot be withdrawn. Upstream transport failures remain a separate 502 or terminal SSE `upstream_transport_error`.
 
-Use an ASCII management token. Malformed non-ASCII credentials are rejected with 401; management credentials do not authenticate chat-completion clients.
+Use printable ASCII management and client tokens. Malformed credentials are rejected with 401; the two token types are independent.
+
+The request and stream settings bound request headers/body, concurrency admission, upstream/body reads, and stream duration. A healthy stream also ends at `LSDF_MAX_STREAM_SECONDS`; any pending holdback is discarded and LSDF emits a terminal `stream_timeout` event without a successful `[DONE]`. Increase that setting for longer coding responses only after measuring the deployment. The initial upstream connection and response-header path uses the HTTP client's socket timeout; these settings do not certify global CPU, memory, or sustained-load behavior.
 
 ## Audit Operations
 

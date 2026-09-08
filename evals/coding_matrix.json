@@ -1,0 +1,871 @@
+{
+  "name": "coding_matrix",
+  "version": "0.2",
+  "description": "Small coding-focused containment battery covering assignments, diffs, hard identifiers, escaped JSON, tool-argument preservation, and explicit base64/URL carrier characterization gaps.",
+  "cases": [
+    {
+      "id": "coding-assignment-openai-api-key-000",
+      "category": "coding-threat-assignment",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "OPENAI_API_KEY = \"api_fixture0000000001\""
+          }
+        ]
+      },
+      "sensitive_values": [
+        "api_fixture0000000001"
+      ],
+      "expected_absent": [
+        "api_fixture0000000001"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.api_key"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ]
+    },
+    {
+      "id": "coding-assignment-redis-value-001",
+      "category": "coding-threat-assignment",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "redis_value = \"R3d1s_Pr0d_2024!Secure\""
+          }
+        ]
+      },
+      "sensitive_values": [
+        "R3d1s_Pr0d_2024!Secure"
+      ],
+      "expected_absent": [
+        "R3d1s_Pr0d_2024!Secure"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "OTHER_SECRET"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "entropy.secret"
+      ],
+      "expected_detector_families": [
+        "entropy"
+      ]
+    },
+    {
+      "id": "coding-assignment-provider-token-002",
+      "category": "coding-threat-assignment",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "provider_token = \"sk_fixture0000000002\""
+          }
+        ]
+      },
+      "sensitive_values": [
+        "sk_fixture0000000002"
+      ],
+      "expected_absent": [
+        "sk_fixture0000000002"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.api_key"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ]
+    },
+    {
+      "id": "coding-diff-other-secret-003",
+      "category": "coding-threat-diff",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "diff --git a/config/settings.py b/config/settings.py\n@@ -1,1 +1,1 @@\n- placeholder = None\n+ value = \"VaultSync_2026!Key\""
+          }
+        ]
+      },
+      "sensitive_values": [
+        "VaultSync_2026!Key"
+      ],
+      "expected_absent": [
+        "VaultSync_2026!Key"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "OTHER_SECRET"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "entropy.secret"
+      ],
+      "expected_detector_families": [
+        "entropy"
+      ]
+    },
+    {
+      "id": "coding-diff-us-ssn-004",
+      "category": "coding-threat-diff",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "diff --git a/fixtures/intake.json b/fixtures/intake.json\n@@ -1,1 +1,1 @@\n- placeholder = None\n+ value = \"987-65-4321\""
+          }
+        ]
+      },
+      "sensitive_values": [
+        "987-65-4321"
+      ],
+      "expected_absent": [
+        "987-65-4321"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "US_SSN"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.ssn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ]
+    },
+    {
+      "id": "coding-diff-credit-card-005",
+      "category": "coding-threat-diff",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "diff --git a/fixtures/payment.json b/fixtures/payment.json\n@@ -1,1 +1,1 @@\n- placeholder = None\n+ value = \"4242 4242 4242 4242\""
+          }
+        ]
+      },
+      "sensitive_values": [
+        "4242 4242 4242 4242"
+      ],
+      "expected_absent": [
+        "4242 4242 4242 4242"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "CREDIT_CARD"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.credit_card_luhn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ]
+    },
+    {
+      "id": "coding-hard-id-mrn-006",
+      "category": "coding-threat-hard-id",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "record_id: \"MRN: LSDF-FIXTURE-00001\""
+          }
+        ]
+      },
+      "sensitive_values": [
+        "MRN: LSDF-FIXTURE-00001"
+      ],
+      "expected_absent": [
+        "MRN: LSDF-FIXTURE-00001"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MRN"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.mrn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ]
+    },
+    {
+      "id": "coding-hard-id-iban-007",
+      "category": "coding-threat-hard-id",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "transfer_iban: \"GB82WEST12345698765432\""
+          }
+        ]
+      },
+      "sensitive_values": [
+        "GB82WEST12345698765432"
+      ],
+      "expected_absent": [
+        "GB82WEST12345698765432"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "IBAN"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.iban"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ]
+    },
+    {
+      "id": "coding-hard-id-us-ssn-008",
+      "category": "coding-threat-hard-id",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "subject_ssn: \"111-22-3333\""
+          }
+        ]
+      },
+      "sensitive_values": [
+        "111-22-3333"
+      ],
+      "expected_absent": [
+        "111-22-3333"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "US_SSN"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.ssn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ]
+    },
+    {
+      "id": "coding-escaped-json-api-key-009",
+      "category": "coding-threat-escaped-json",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "const requestBody = \"{\\\"credential\\\":\\\"api_LSDF_FIXTURE_EVAL_000003\\\",\\\"kind\\\":\\\"fixture\\\"}\";"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "api_LSDF_FIXTURE_EVAL_000003"
+      ],
+      "expected_absent": [
+        "api_LSDF_FIXTURE_EVAL_000003"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.api_key"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ]
+    },
+    {
+      "id": "coding-escaped-json-api-key-010",
+      "category": "coding-threat-escaped-json",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "const requestBody = \"{\\\"credential\\\":\\\"token-fixture0000000004\\\",\\\"kind\\\":\\\"fixture\\\"}\";"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "token-fixture0000000004"
+      ],
+      "expected_absent": [
+        "token-fixture0000000004"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.api_key"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ]
+    },
+    {
+      "id": "coding-escaped-json-credit-card-011",
+      "category": "coding-threat-escaped-json",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "const requestBody = \"{\\\"credential\\\":\\\"5555 5555 5555 4444\\\",\\\"kind\\\":\\\"fixture\\\"}\";"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "5555 5555 5555 4444"
+      ],
+      "expected_absent": [
+        "5555 5555 5555 4444"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "CREDIT_CARD"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.credit_card_luhn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ]
+    },
+    {
+      "id": "coding-escaped-json-mrn-012",
+      "category": "coding-threat-escaped-json",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "const requestBody = \"{\\\"credential\\\":\\\"MRN: B77889\\\",\\\"kind\\\":\\\"fixture\\\"}\";"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "MRN: B77889"
+      ],
+      "expected_absent": [
+        "MRN: B77889"
+      ],
+      "expected_blocked": false,
+      "expected_entities": [
+        "MRN"
+      ],
+      "expected_surfaces": [
+        "input.messages"
+      ],
+      "expected_actions": [
+        "tokenize"
+      ],
+      "expected_detector_ids": [
+        "regex.mrn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ]
+    },
+    {
+      "id": "coding-benign-013",
+      "category": "coding-benign-placeholder",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "const token = process.env.API_TOKEN; const base_url = process.env.BASE_URL;"
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "coding-benign-014",
+      "category": "coding-benign-placeholder",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "headers = {'Authorization': f'Bearer {TOKEN_PLACEHOLDER}'}"
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "coding-benign-015",
+      "category": "coding-benign-placeholder",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "api_key = os.environ['OPENAI_API_KEY']; base_url = os.environ['BASE_URL']"
+          }
+        ]
+      },
+      "expected_blocked": false,
+      "expected_no_findings": true,
+      "expected_no_decisions": true,
+      "expected_unchanged": true
+    },
+    {
+      "id": "coding-observe-email-016",
+      "category": "coding-default-observe",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Owner: jane.patient@example.com"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "jane.patient@example.com"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true,
+      "expected_entities": [
+        "EMAIL"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.email"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ]
+    },
+    {
+      "id": "coding-observe-phone-017",
+      "category": "coding-default-observe",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Owner: (555) 010-2020"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "(555) 010-2020"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true,
+      "expected_entities": [
+        "PHONE"
+      ],
+      "expected_actions": [
+        "redact"
+      ],
+      "expected_detector_ids": [
+        "regex.phone"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ]
+    },
+    {
+      "id": "coding-observe-person-018",
+      "category": "coding-benign-name",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Owner: Lisa Nakamura"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "Lisa Nakamura"
+      ],
+      "expected_blocked": false,
+      "expected_unchanged": true
+    },
+    {
+      "id": "coding-tool-json-api-key-019",
+      "category": "coding-transformed-tool-json",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "save_fixture",
+                    "arguments": "{\"credential\": \"token-fixture0000000004\", \"keep\": \"unchanged\", \"count\": 3}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "token-fixture0000000004"
+      ],
+      "expected_absent": [
+        "token-fixture0000000004"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "API_KEY"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.api_key"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ],
+      "expected_json_semantics": [
+        {
+          "pointer": [
+            "choices",
+            0,
+            "message",
+            "tool_calls",
+            0,
+            "function",
+            "arguments"
+          ],
+          "values": {
+            "keep": "unchanged",
+            "count": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "coding-tool-json-credit-card-020",
+      "category": "coding-transformed-tool-json",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "save_fixture",
+                    "arguments": "{\"credential\": \"4111 1111 1111 1111\", \"keep\": \"unchanged\", \"count\": 7}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "4111 1111 1111 1111"
+      ],
+      "expected_absent": [
+        "4111 1111 1111 1111"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "CREDIT_CARD"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "regex.credit_card_luhn"
+      ],
+      "expected_detector_families": [
+        "regex"
+      ],
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ],
+      "expected_json_semantics": [
+        {
+          "pointer": [
+            "choices",
+            0,
+            "message",
+            "tool_calls",
+            0,
+            "function",
+            "arguments"
+          ],
+          "values": {
+            "keep": "unchanged",
+            "count": 7
+          }
+        }
+      ]
+    },
+    {
+      "id": "coding-tool-json-other-secret-021",
+      "category": "coding-transformed-tool-json",
+      "surface": "output.tool_calls.arguments",
+      "payload": {
+        "choices": [
+          {
+            "message": {
+              "tool_calls": [
+                {
+                  "function": {
+                    "name": "save_fixture",
+                    "arguments": "{\"credential\": \"N0deCache_77!Rotate\", \"keep\": \"unchanged\", \"count\": 11}"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "sensitive_values": [
+        "N0deCache_77!Rotate"
+      ],
+      "expected_absent": [
+        "N0deCache_77!Rotate"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "OTHER_SECRET"
+      ],
+      "expected_surfaces": [
+        "output.tool_calls.arguments"
+      ],
+      "expected_actions": [
+        "block"
+      ],
+      "expected_detector_ids": [
+        "entropy.secret"
+      ],
+      "expected_detector_families": [
+        "entropy"
+      ],
+      "expected_valid_json_pointers": [
+        [
+          "choices",
+          0,
+          "message",
+          "tool_calls",
+          0,
+          "function",
+          "arguments"
+        ]
+      ],
+      "expected_json_semantics": [
+        {
+          "pointer": [
+            "choices",
+            0,
+            "message",
+            "tool_calls",
+            0,
+            "function",
+            "arguments"
+          ],
+          "values": {
+            "keep": "unchanged",
+            "count": 11
+          }
+        }
+      ]
+    },
+    {
+      "id": "coding-base64-containment-022",
+      "category": "coding-encoding-containment",
+      "surface": "input.messages",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "encoded=YXBpX2ZpeHR1cmUwMDAwMDAwMDAx"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "YXBpX2ZpeHR1cmUwMDAwMDAwMDAx"
+      ],
+      "expected_absent": [
+        "YXBpX2ZpeHR1cmUwMDAwMDAwMDAx"
+      ],
+      "expected_blocked": true,
+      "expected_entities": [
+        "OTHER_SECRET"
+      ]
+    },
+    {
+      "id": "coding-gap-base64-whitespace-023",
+      "category": "coding-characterization-gap-base64",
+      "surface": "input.messages",
+      "known_gap": true,
+      "characterization_gap": "base64_decoding_not_supported",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Base64 text: YXBpX2 ZpeHR1 cmUwMD AwMDAw MDAx"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "YXBpX2 ZpeHR1 cmUwMD AwMDAw MDAx"
+      ],
+      "expected_absent": [
+        "YXBpX2 ZpeHR1 cmUwMD AwMDAw MDAx"
+      ],
+      "expected_blocked": true
+    },
+    {
+      "id": "coding-gap-url-024",
+      "category": "coding-characterization-gap-url",
+      "surface": "input.messages",
+      "known_gap": true,
+      "characterization_gap": "url_target_not_decoded",
+      "payload": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "https://example.org/import?data=%61%70%69%5F%66%69%78%74%75%72%65%30%30%30%30%30%30%30%30%30%31"
+          }
+        ]
+      },
+      "sensitive_values": [
+        "%61%70%69%5F%66%69%78%74%75%72%65%30%30%30%30%30%30%30%30%30%31"
+      ],
+      "expected_absent": [
+        "%61%70%69%5F%66%69%78%74%75%72%65%30%30%30%30%30%30%30%30%30%31"
+      ],
+      "expected_blocked": true
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import json
 import os
 import sqlite3
 import threading
+import time
 import unittest
 import urllib.error
 import urllib.request
@@ -16,7 +17,7 @@ from unittest.mock import patch
 from lsdf import Firewall, load_policy
 from lsdf.cli import main
 from lsdf.demo_runner import run_demo
-from lsdf.gateway import GatewayConfig, LSDFGatewayHandler
+from lsdf.gateway import GatewayConfig, GatewayConfigError, LSDFGatewayHandler
 from lsdf.metrics import MetricsRecorder
 from lsdf.security_ops import (
     generate_policy_keypair,
@@ -24,6 +25,14 @@ from lsdf.security_ops import (
     verify_policy_signature,
 )
 from lsdf.vault import EncryptedSqliteTokenVault, generate_vault_key
+from lsdf.ux import (
+    _SMOKE_MAX_RESPONSE_BYTES,
+    _read_bounded_response,
+    _safe_health_summary,
+    format_quickstart_report_markdown,
+    format_quickstart_report_text,
+    quickstart_report,
+)
 
 
 class ManagementEndpointTests(unittest.TestCase):
@@ -36,6 +45,13 @@ class ManagementEndpointTests(unittest.TestCase):
                 policy_profile="default",
                 upstream_base_url=_server_url(upstream),
                 management_token="secret-token",
+                client_token="client-token",
+                max_request_bytes=1234,
+                max_concurrent_requests=3,
+                client_timeout_seconds=2.5,
+                upstream_timeout_seconds=7.5,
+                max_stream_seconds=11.0,
+                stream_holdback_chars=17,
             )
             gateway_firewall = Firewall(load_policy("policies/default.yaml"))
             gateway_metrics = MetricsRecorder(enabled=True)
@@ -58,6 +74,20 @@ class ManagementEndpointTests(unittest.TestCase):
 
         self.assertEqual(missing.exception.code, 401)
         self.assertTrue(health["management"]["auth_required"])
+        self.assertTrue(health["client"]["auth_required"])
+        self.assertEqual(
+            health["limits"],
+            {
+                "max_request_bytes": 1234,
+                "max_concurrent_requests": 3,
+                "client_timeout_seconds": 2.5,
+                "upstream_timeout_seconds": 7.5,
+                "max_stream_seconds": 11.0,
+                "stream_holdback_chars": 17,
+            },
+        )
+        self.assertNotIn("secret-token", json.dumps(health))
+        self.assertNotIn("client-token", json.dumps(health))
 
     def test_management_can_be_disabled_without_affecting_chat_proxy(self):
         upstream = _start_server(_safe_upstream_handler())
@@ -108,6 +138,160 @@ class FirstRunCliTests(unittest.TestCase):
         finally:
             gateway.shutdown()
             gateway.server_close()
+
+    def test_doctor_config_errors_are_static_and_safe(self):
+        raw = "LSDF_CONFIG_SECRET_000000"
+        with patch.dict(os.environ, {"LSDF_MAX_REQUEST_BYTES": raw}, clear=True):
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["doctor", "--format", "json"])
+        output = stdout.getvalue()
+        self.assertEqual(status, 1)
+        self.assertIn("gateway_config_error", output)
+        self.assertNotIn(raw, output)
+
+        secret_error = type(f"GatewayConfigError_{raw}", (GatewayConfigError,), {})
+        with patch("lsdf.ux.resolve_gateway_config", side_effect=secret_error(raw)):
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(["doctor", "--format", "json"])
+        output = stdout.getvalue()
+        self.assertEqual(status, 1)
+        self.assertIn("gateway_config_error", output)
+        self.assertNotIn(raw, output)
+
+    def test_health_projection_ignores_huge_integer_limits(self):
+        report = _safe_health_summary(
+            {"status": "ok", "limits": {"max_request_bytes": 10**400}}
+        )
+        self.assertEqual(report, {"status": "ok"})
+
+    def test_quickstart_surfaces_withheld_management_token(self):
+        raw = "LSDF_REMOTE_MANAGEMENT_SECRET"
+        seen_tokens = []
+
+        def fake_fetch(url, *, management_token):
+            seen_tokens.append(management_token)
+            if "/metrics" in url:
+                return 200, {"counters": {}, "durations": {}}, 2
+            return 200, {"status": "ok", "limits": {"max_request_bytes": 1}}, 2
+
+        with patch("lsdf.ux._fetch_management_json", side_effect=fake_fetch):
+            report = quickstart_report(
+                gateway_base_url="http://remote.example:8080",
+                management_token=raw,
+            )
+
+        self.assertEqual(seen_tokens, [None, None])
+        text = format_quickstart_report_text(report)
+        markdown = format_quickstart_report_markdown(report)
+        for output in (text, markdown):
+            self.assertIn("management_auth", output)
+            self.assertIn("withheld", output)
+            self.assertNotIn(raw, output)
+
+    def test_doctor_upstream_probe_does_not_follow_redirects(self):
+        final_hit = threading.Event()
+
+        class RedirectHandler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                if self.path == "/redirect":
+                    self.send_response(302)
+                    self.send_header("Location", "/final")
+                    self.end_headers()
+                    return
+                if self.path == "/final":
+                    final_hit.set()
+                    self.send_response(200)
+                    self.end_headers()
+
+            def log_message(self, format, *args):
+                return
+
+        server = _start_server(RedirectHandler)
+        try:
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                status = main(
+                    [
+                        "doctor",
+                        "--upstream-base-url",
+                        f"{_server_url(server)}/redirect",
+                        "--format",
+                        "json",
+                    ]
+                )
+        finally:
+            server.shutdown()
+            server.server_close()
+
+        report = json.loads(stdout.getvalue())
+        upstream = next(check for check in report["checks"] if check["name"] == "upstream")
+        self.assertEqual(status, 0)
+        self.assertEqual(upstream["status"], "warning")
+        self.assertEqual(upstream["http_status"], 302)
+        self.assertFalse(final_hit.is_set())
+
+    def test_management_response_reader_caps_body(self):
+        class EndlessReader:
+            def read1(self, size):
+                return b"x" * size
+
+            def read(self, size):
+                raise AssertionError("read1 must be preferred")
+
+        with self.assertRaises(ValueError):
+            _read_bounded_response(EndlessReader())
+        self.assertGreater(_SMOKE_MAX_RESPONSE_BYTES, 0)
+
+    def test_management_response_reader_deadline_covers_read1_trickle(self):
+        class TrickleReader:
+            def read1(self, size):
+                time.sleep(0.01)
+                return b"x"
+
+        started = time.monotonic()
+        with patch("lsdf.ux._SMOKE_TIMEOUT_SECONDS", 0.03):
+            with self.assertRaises(TimeoutError):
+                _read_bounded_response(TrickleReader())
+        self.assertLess(time.monotonic() - started, 0.5)
+
+    def test_smoke_uses_management_token_and_keeps_protection_unverified(self):
+        gateway = _start_server(_authenticated_management_handler())
+        url = _server_url(gateway)
+        try:
+            stdout = io.StringIO()
+            with patch.dict(os.environ, {"LSDF_MANAGEMENT_TOKEN": "management-only"}), redirect_stdout(stdout):
+                status = main(["smoke", "--gateway-base-url", url, "--format", "json"])
+        finally:
+            gateway.shutdown()
+            gateway.server_close()
+
+        report = json.loads(stdout.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(report["checks"][0]["summary"]["limits"]["max_request_bytes"], 1234)
+        protection = next(check for check in report["checks"] if check["name"] == "protection")
+        self.assertEqual(protection["status"], "unverified")
+        self.assertNotIn("management-only", stdout.getvalue())
+
+    def test_smoke_rejects_credentialed_or_query_urls_without_echoing_them(self):
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            status = main(
+                [
+                    "smoke",
+                    "--gateway-base-url",
+                    "https://user:secret@example.com/private?token=hidden#fragment",
+                    "--format",
+                    "json",
+                ]
+            )
+        output = stdout.getvalue()
+        report = json.loads(output)
+        self.assertEqual(status, 1)
+        self.assertEqual(report["gateway_base_url"], "https://example.com")
+        self.assertNotIn("secret", output)
+        self.assertNotIn("hidden", output)
 
     def test_quickstart_report_summarizes_gateway_audit_and_metrics(self):
         gateway = _start_server(_management_handler())
@@ -167,6 +351,7 @@ class FirstRunCliTests(unittest.TestCase):
         with TemporaryDirectory() as tmpdir:
             openrouter_env = Path(tmpdir, "openrouter.env")
             litellm_env = Path(tmpdir, "litellm.env")
+            ollama_env = Path(tmpdir, "ollama.env")
             stdout = io.StringIO()
             with redirect_stdout(stdout):
                 openrouter_status = main(
@@ -181,18 +366,30 @@ class FirstRunCliTests(unittest.TestCase):
                 litellm_status = main(
                     ["init", "--upstream", "litellm", "--output", str(litellm_env)]
                 )
+                ollama_status = main(
+                    ["init", "--upstream", "ollama", "--output", str(ollama_env)]
+                )
             script_stdout = io.StringIO()
             with redirect_stdout(script_stdout):
                 script_status = main(["demo-script", "--format", "markdown"])
             openrouter_content = openrouter_env.read_text(encoding="utf-8")
             litellm_content = litellm_env.read_text(encoding="utf-8")
+            ollama_content = ollama_env.read_text(encoding="utf-8")
 
         self.assertEqual(openrouter_status, 0)
         self.assertEqual(overwrite_status, 2)
         self.assertEqual(litellm_status, 0)
+        self.assertEqual(ollama_status, 0)
         self.assertEqual(script_status, 0)
         self.assertIn("LSDF_UPSTREAM_BASE_URL=https://openrouter.ai/api/v1", openrouter_content)
         self.assertIn("LSDF_UPSTREAM_BASE_URL=http://host.docker.internal:4000", litellm_content)
+        self.assertIn("LSDF_UPSTREAM_BASE_URL=http://host.docker.internal:11434/v1", ollama_content)
+        self.assertIn("LSDF_CLIENT_TOKEN=", ollama_content)
+        self.assertIn("LSDF_MAX_REQUEST_BYTES=8388608", ollama_content)
+        self.assertIn("LSDF_MAX_CONCURRENT_REQUESTS=8", ollama_content)
+        self.assertIn("LSDF_CLIENT_TIMEOUT_SECONDS=15.0", ollama_content)
+        self.assertIn("LSDF_UPSTREAM_TIMEOUT_SECONDS=120.0", ollama_content)
+        self.assertIn("LSDF_MAX_STREAM_SECONDS=300.0", ollama_content)
         self.assertIn("# LSDF_UPSTREAM_API_KEY=${LSDF_UPSTREAM_API_KEY}", openrouter_content)
         self.assertNotIn("sk-", openrouter_content)
         self.assertIn("already exists", stderr.getvalue())
@@ -439,6 +636,20 @@ class ProofBundleTests(unittest.TestCase):
 
         compose = yaml.safe_load(Path("docker-compose.yml").read_text(encoding="utf-8"))
         dockerfile = Path("Dockerfile").read_text(encoding="utf-8")
+        base_env = compose["x-lsdf-base"]["environment"]
+        for name in (
+            "LSDF_UPSTREAM_BASE_URL",
+            "LSDF_MANAGEMENT_ENABLED",
+            "LSDF_MANAGEMENT_TOKEN",
+            "LSDF_CLIENT_TOKEN",
+            "LSDF_MAX_REQUEST_BYTES",
+            "LSDF_MAX_CONCURRENT_REQUESTS",
+            "LSDF_CLIENT_TIMEOUT_SECONDS",
+            "LSDF_UPSTREAM_TIMEOUT_SECONDS",
+            "LSDF_MAX_STREAM_SECONDS",
+            "LSDF_STREAM_HOLDBACK_CHARS",
+        ):
+            self.assertIn(name, base_env)
         gateway = compose["services"]["gateway"]
         gateway_ml = compose["services"]["gateway-ml"]
         optional_test = compose["services"]["optional-test"]
@@ -452,6 +663,16 @@ class ProofBundleTests(unittest.TestCase):
             gateway_ml["environment"]["LSDF_OPENAI_PRIVACY_FILTER_MODEL"],
             "${LSDF_OPENAI_PRIVACY_FILTER_MODEL:-openai/privacy-filter}",
         )
+        for service in (gateway, gateway_ml):
+            for name in (
+                "LSDF_CLIENT_TOKEN",
+                "LSDF_MAX_REQUEST_BYTES",
+                "LSDF_MAX_CONCURRENT_REQUESTS",
+                "LSDF_CLIENT_TIMEOUT_SECONDS",
+                "LSDF_UPSTREAM_TIMEOUT_SECONDS",
+                "LSDF_MAX_STREAM_SECONDS",
+            ):
+                self.assertIn(name, service["environment"])
         self.assertTrue(
             any("lsdf-hf-cache:/opt/lsdf-cache/huggingface" in volume for volume in gateway_ml["volumes"])
         )
@@ -466,6 +687,16 @@ class ProofBundleTests(unittest.TestCase):
             optional_test["environment"]["LSDF_REQUIRE_OPENAI_PRIVACY_FILTER"],
             "${LSDF_REQUIRE_OPENAI_PRIVACY_FILTER:-}",
         )
+        release = yaml.safe_load(Path("compose.release.yaml").read_text(encoding="utf-8"))
+        for name in (
+            "LSDF_CLIENT_TOKEN",
+            "LSDF_MAX_REQUEST_BYTES",
+            "LSDF_MAX_CONCURRENT_REQUESTS",
+            "LSDF_CLIENT_TIMEOUT_SECONDS",
+            "LSDF_UPSTREAM_TIMEOUT_SECONDS",
+            "LSDF_MAX_STREAM_SECONDS",
+        ):
+            self.assertIn(name, release["services"]["gateway"]["environment"])
 
     def test_measured_protection_and_detector_contract_docs_are_safe_and_specific(self):
         measured = Path("docs/measured-protection.md").read_text(encoding="utf-8")
@@ -620,9 +851,36 @@ def _management_handler():
             self.send_header("content-type", "application/json")
             self.end_headers()
             if self.path.startswith("/lsdf/metrics"):
-                self.wfile.write(b"lsdf_gateway_requests_total 1\n")
+                self.wfile.write(b'{"counters":{"gateway_requests_total":1},"durations":{}}')
             else:
                 self.wfile.write(b'{"status":"ok"}')
+
+        def log_message(self, format, *args):
+            return
+
+    return Handler
+
+
+def _authenticated_management_handler():
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.headers.get("authorization") != "Bearer management-only":
+                self.send_response(401)
+                self.end_headers()
+                return
+            self.send_response(200)
+            self.send_header("content-type", "application/json")
+            self.end_headers()
+            if self.path.startswith("/lsdf/metrics"):
+                self.wfile.write(b'{"counters":{"gateway_requests_total":1},"durations":{}}')
+            else:
+                self.wfile.write(
+                    b'{"status":"ok","upstream":{"status":"ok"},'
+                    b'"management":{"auth_required":true},"client":{"auth_required":true},'
+                    b'"limits":{"max_request_bytes":1234,"max_concurrent_requests":3,'
+                    b'"client_timeout_seconds":2.5,"upstream_timeout_seconds":7.5,'
+                    b'"max_stream_seconds":11.0,"stream_holdback_chars":17}}'
+                )
 
         def log_message(self, format, *args):
             return

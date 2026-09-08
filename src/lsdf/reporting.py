@@ -17,7 +17,14 @@ def format_eval_report_markdown(report: dict[str, Any]) -> str:
             f"- Cases: {report.get('case_count', 0)}",
             f"- Passed: {report.get('passed', 0)}",
             f"- Failed: {report.get('failed', 0)}",
+            f"- Evaluation errors: {report.get('evaluation_errors', 0)}",
             f"- Blocked: {report.get('blocked', 0)}",
+            f"- Supported-case misses: {report.get('misses', 0)}",
+            f"- Known-gap misses: {report.get('known_gap_misses', 0)}",
+            f"- Mutated cases: {report.get('mutated_cases', 0)}",
+            f"- Unwanted mutations: {report.get('unwanted_mutations', 0)}",
+            f"- JSON text mutations: {report.get('json_text_mutations', 0)}",
+            f"- Unwanted blocks: {report.get('unwanted_blocks', 0)}",
             f"- Known gaps: {report.get('known_gap_cases', 0)}",
             f"- Known-gap after-leak cases: {report.get('known_gap_leaked_after', 0)}",
             f"- Known-gap would-fail cases: {report.get('known_gap_would_fail', 0)}",
@@ -46,8 +53,8 @@ def format_detector_comparison_markdown(report: dict[str, Any]) -> str:
             f"- Mode: {report.get('mode', 'unknown')}",
             f"- Cases: {report.get('case_count', 0)}",
             "",
-            "| Set | Status | Families | Passed | Failed | Blocked | Known-Gap Leaks | Known-Gap Would-Fail | After-Leak Cases | After-Leak Values | Audit Violations |",
-            "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+            "| Set | Status | Families | Passed | Failed | Eval Errors | Blocked | Misses | Known-Gap Misses | Unwanted Mutations | Unwanted Blocks | Known-Gap Leaks | Known-Gap Would-Fail | After-Leak Cases | After-Leak Values | Audit Violations |",
+            "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
         ]
     )
     for result in report.get("detector_sets", []):
@@ -58,7 +65,12 @@ def format_detector_comparison_markdown(report: dict[str, Any]) -> str:
             f"{_cell(', '.join(result.get('families', [])))} | "
             f"{result.get('passed', 0)} | "
             f"{result.get('failed', 0)} | "
+            f"{result.get('evaluation_errors', 0)} | "
             f"{result.get('blocked', 0)} | "
+            f"{result.get('misses', 0)} | "
+            f"{result.get('known_gap_misses', 0)} | "
+            f"{result.get('unwanted_mutations', 0)} | "
+            f"{result.get('unwanted_blocks', 0)} | "
             f"{result.get('known_gap_leaked_after', 0)} | "
             f"{result.get('known_gap_would_fail', 0)} | "
             f"{result.get('cases_with_sensitive_values_after', 0)} | "

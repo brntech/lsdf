@@ -8,15 +8,15 @@ Background article: [The Safety Map](https://www.linkedin.com/pulse/safety-map-w
 
 ## Start Here
 
-Install [Docker with Compose](https://docs.docker.com/compose/install/) and Git, and start Docker with Linux containers. Get the release source and enter its directory:
+Install [Docker with Compose](https://docs.docker.com/compose/install/) and Git, and start Docker with Linux containers. Get the current source checkout and enter its directory:
 
 ```bash
-git clone --branch v0.3.2 --depth 1 https://github.com/brntech/lsdf.git
+git clone --depth 1 https://github.com/brntech/lsdf.git
 cd lsdf
 docker compose version
 ```
 
-You can also extract `lsdf-0.3.2-source.zip` from the [release downloads](https://github.com/brntech/lsdf/releases/tag/v0.3.2) and open its folder. These commands build images locally; no separate image pull is needed. The first build needs internet access and may take several minutes. For a prebuilt gateway without a source checkout, use the [installation guide](docs/installation.md#prebuilt-release-image).
+You can also extract `lsdf-0.3.2-source.zip` from the [release downloads](https://github.com/brntech/lsdf/releases/tag/v0.3.2) and open its folder. This released v0.3.2 source snapshot does not include the current client-token and request-limit controls. These commands build images locally; no separate image pull is needed. The first build needs internet access and may take several minutes. For a prebuilt gateway without a source checkout, use the [installation guide](docs/installation.md#prebuilt-release-image).
 
 Try the self-contained demo; no model server or provider key is required:
 
@@ -41,7 +41,7 @@ from openai import OpenAI
 client = OpenAI(base_url="http://localhost:8080/v1", api_key="local-dev-key")
 ```
 
-Use `--upstream vllm`, `litellm`, or `openrouter` for those providers; `custom` also requires `--upstream-base-url`. Edit `.lsdf.env` for your endpoint and provider key before starting. LSDF forwards `/v1/chat/completions`; the placeholder client key above is not upstream authentication or gateway access control.
+Use `--upstream vllm`, `litellm`, `ollama`, or `openrouter` for those providers; `custom` also requires `--upstream-base-url`. Edit `.lsdf.env` for your endpoint and provider key before starting. LSDF forwards `/v1/chat/completions`. Set `LSDF_CLIENT_TOKEN` when the gateway should require a caller token; this is independent from `LSDF_MANAGEMENT_TOKEN`, which protects `/lsdf/*` only. When client authentication is configured, set the SDK `api_key` to the same `LSDF_CLIENT_TOKEN` value. The placeholder client key above is not an upstream credential.
 
 The [installation guide](docs/installation.md) covers a first chat request, supported image/platform choices, host networking, PowerShell settings, optional models, stopping, and upgrades. Choose a starting policy from the [policy cookbook](docs/policy-cookbook.md).
 
@@ -59,7 +59,7 @@ Most privacy tools inspect only prompt and response text. LSDF treats the whole 
 
 LSDF is local-first, dependency-light by default, and designed to make privacy behavior measurable. It also includes OpenRouter and LiteLLM presets, provider playbooks, demo-media assets, policy explanation, sample proof artifacts, and release-ready operational guidance.
 
-For the standalone gateway image in v0.3.2, with required policy fixtures and first-party proof matrices, see [Production Operations](docs/production-operations.md#standalone-runtime-image). Both runtime variants start with the dependency-light `default` profile; ML profiles require explicit selection and a prepared cache. The lightweight runtime leaves out heavy detector dependencies, model weights, and external benchmark corpora; the development Compose services support full evaluations and demos.
+For the standalone gateway image in v0.3.2, with required policy fixtures and first-party proof matrices, see [Production Operations](docs/production-operations.md#standalone-runtime-image). Both runtime variants start with the dependency-light `default` profile; ML profiles require explicit selection and a prepared cache. The lightweight runtime leaves out heavy detector dependencies, model weights, and external benchmark corpora; the development Compose services support full evaluations and demos. The client-token and request-limit controls and the fourth coding matrix described below require an image built from the current source until a release containing them is published; the v0.3.2 runtime retains its historical three matrices.
 
 ## Open Source and Optional Integrations
 
@@ -69,7 +69,7 @@ LSDF's core and all LSDF-authored detector adapters are available under [Apache-
 
 LSDF work is container-only. Do not install LSDF dependencies, optional detector packages, or model tooling into the desktop host Python environment.
 
-The demo starts the upstream and gateway, then proves request blocking, response redaction, streaming redaction, streamed tool-call blocking, trace sanitation, health, metrics, audit summary, and metrics summary without printing raw sensitive values.
+The demo starts the upstream and gateway, then proves request blocking, response redaction, streaming redaction, streamed tool-call blocking, trace sanitation, health, metrics, audit summary, and metrics summary without printing raw sensitive values. It does not prove caller authentication; use the explicit local client-token check below for that.
 
 Generate a shareable proof bundle:
 
@@ -116,14 +116,37 @@ In another terminal:
 docker compose --env-file .lsdf.env up gateway
 ```
 
-Then point OpenAI-compatible clients at `http://localhost:8080/v1`. The demo upstream intentionally leaks sensitive data so you can see LSDF block unsafe requests, redact unsafe responses, sanitize streaming chunks, block unsafe tool-call arguments, and write raw-value-safe audit events.
+Then point OpenAI-compatible clients at `http://localhost:8080/v1`. The demo upstream intentionally leaks sensitive data so you can see LSDF block unsafe requests, redact unsafe responses, sanitize streaming chunks, block unsafe tool-call arguments, and write raw-value-safe audit events. The demo profile leaves client authentication disabled for compatibility.
 
 After the gateway is running:
 
 ```bash
-docker compose run --rm cli quickstart-report --gateway-base-url http://gateway:8080 --audit-jsonl-path .lsdf/audit.jsonl --metrics-jsonl-path .lsdf/metrics.jsonl --format markdown
-docker compose run --rm cli smoke --gateway-base-url http://gateway:8080
+docker compose --env-file .lsdf.env run --rm cli quickstart-report --gateway-base-url http://gateway:8080 --audit-jsonl-path .lsdf/audit.jsonl --metrics-jsonl-path .lsdf/metrics.jsonl --format markdown
+docker compose --env-file .lsdf.env run --rm cli smoke --gateway-base-url http://gateway:8080
 ```
+
+`smoke` and `quickstart-report` check management reachability; `doctor` reports the configuration visible to its own CLI process and does not attest the running gateway. Numeric configured/returned limits are included in JSON output (`--format json`); text and Markdown formats show check status. All three commands mark client protection as unverified because they do not send a protected `/v1` request. Health and metrics counters are operational evidence only.
+
+To verify caller protection, use the current source checkout with the dependency-free demo upstream. The published v0.3.2 image predates this control, so this recipe is deliberately source-built and cannot incur provider charges:
+
+```bash
+export LSDF_CLIENT_TOKEN=lsdf-demo-client-token
+export LSDF_MANAGEMENT_TOKEN=lsdf-demo-management-token
+mkdir -p .lsdf
+cat > .lsdf/auth-demo.env <<EOF
+LSDF_PROFILE=default
+LSDF_UPSTREAM_BASE_URL=http://demo-upstream:8091
+LSDF_CLIENT_TOKEN=$LSDF_CLIENT_TOKEN
+LSDF_MANAGEMENT_TOKEN=$LSDF_MANAGEMENT_TOKEN
+EOF
+docker compose --env-file .lsdf/auth-demo.env up --build -d demo-upstream gateway
+docker compose --env-file .lsdf/auth-demo.env run --rm -e LSDF_MANAGEMENT_TOKEN="$LSDF_MANAGEMENT_TOKEN" cli smoke --gateway-base-url http://gateway:8080 --format json
+curl -i http://localhost:8080/v1/chat/completions -H 'content-type: application/json' -d '{"model":"lsdf-demo","messages":[{"role":"user","content":"hello"}]}'
+curl -i http://localhost:8080/v1/chat/completions -H "Authorization: Bearer $LSDF_CLIENT_TOKEN" -H 'content-type: application/json' -d '{"model":"lsdf-demo","messages":[{"role":"user","content":"hello"}]}'
+curl -i http://localhost:8080/v1/chat/completions -H "Authorization: Bearer $LSDF_CLIENT_TOKEN" -H 'content-type: application/json' -d @examples/quickstart/request_block.json
+```
+
+The first request should be `401`, the authenticated demo request should be `200` with the synthetic MRN redacted, and the blocking fixture should be `403`. This starts only `demo-upstream` and LSDF; it uses no provider credentials. Keep the check local and inspect only raw-value-safe audit or metrics summaries.
 
 ## Research and Publications
 
@@ -218,10 +241,16 @@ Run against a local OpenAI-compatible endpoint:
 
 ```bash
 LSDF_PROFILE=default \
-LSDF_STREAM_HOLDBACK_CHARS=512 \
 LSDF_AUDIT_JSONL_PATH=/workspace/.lsdf/audit.jsonl \
 LSDF_METRICS_ENABLED=true \
 LSDF_METRICS_JSONL_PATH=/workspace/.lsdf/metrics.jsonl \
+LSDF_CLIENT_TOKEN=local-client-token \
+LSDF_MAX_REQUEST_BYTES=8388608 \
+LSDF_MAX_CONCURRENT_REQUESTS=8 \
+LSDF_CLIENT_TIMEOUT_SECONDS=15 \
+LSDF_UPSTREAM_TIMEOUT_SECONDS=120 \
+LSDF_MAX_STREAM_SECONDS=300 \
+LSDF_STREAM_HOLDBACK_CHARS=512 \
 LSDF_UPSTREAM_BASE_URL=http://host.docker.internal:8000 \
   docker compose up gateway
 ```
@@ -237,6 +266,9 @@ LSDF_UPSTREAM_BASE_URL=http://host.docker.internal:8000
 
 # LM Studio from the LSDF container
 LSDF_UPSTREAM_BASE_URL=http://host.docker.internal:1234
+
+# Ollama's OpenAI-compatible endpoint from the LSDF container
+LSDF_UPSTREAM_BASE_URL=http://host.docker.internal:11434/v1
 
 # Generic OpenAI-compatible provider
 LSDF_UPSTREAM_BASE_URL=https://provider.example
@@ -273,7 +305,7 @@ curl http://localhost:8080/lsdf/metrics
 curl "http://localhost:8080/lsdf/metrics?format=json"
 ```
 
-For shared environments, set `LSDF_MANAGEMENT_TOKEN` so `/lsdf/health` and `/lsdf/metrics` require a bearer token or `X-LSDF-Management-Token`. Set `LSDF_MANAGEMENT_ENABLED=false` to disable `/lsdf/*` entirely while leaving `/v1/*` unchanged.
+For shared environments, set `LSDF_MANAGEMENT_TOKEN` so `/lsdf/health` and `/lsdf/metrics` require a bearer token or `X-LSDF-Management-Token`. Set `LSDF_CLIENT_TOKEN` independently to require a bearer token or `X-LSDF-Client-Token` on `/v1/chat/completions`. Health reports both authentication requirements and the running request/stream limits without exposing token values. Set `LSDF_MANAGEMENT_ENABLED=false` to disable `/lsdf/*` entirely while leaving the data-plane route available; client authentication and limits still apply to `/v1`.
 
 ## Provider Playbooks
 
@@ -281,6 +313,7 @@ Use presets to generate gateway env files:
 
 ```bash
 docker compose run --rm cli init --upstream litellm --output .lsdf.env --force
+docker compose run --rm cli init --upstream ollama --output .lsdf.env --force
 docker compose run --rm cli init --upstream openrouter --output .lsdf.env --force
 docker compose --env-file .lsdf.env up gateway
 ```
@@ -351,6 +384,7 @@ LSDF includes a safe eval harness and proof report:
 
 ```bash
 docker compose run --rm cli eval evals/safety_matrix.json --format markdown
+docker compose run --rm cli eval evals/coding_matrix.json --format markdown
 docker compose run --rm cli compare-detectors evals/safety_matrix.json --format markdown
 docker compose run --rm cli protection-report --format markdown
 docker compose run --rm cli eval-report --profile default --profile balanced --format markdown > .lsdf/eval-current.md
@@ -360,6 +394,8 @@ docker compose run --rm cli proof-bundle --output .lsdf/proof --format markdown
 `EVAL.md` records per-detector-family threat findings versus benign findings, plus latency, for the dependency-light and optional ML profiles. Its dated snapshot includes historical external benchmark rows and aggregates. Current default regeneration uses four bundled threat corpora; external benchmark results require an explicitly supplied, appropriately licensed local dataset.
 
 Reports redact raw sensitive values by default, preserve known-gap counts, and include detector provenance. The dependency-light default uses regex, entropy, medical-pattern, and contextual-anchored detectors. Presidio and OpenAI privacy-filter adapters are optional and remain outside the default runtime path.
+
+The coding battery is a small synthetic characterization set for assignments, diffs, hard identifiers, escaped JSON, and tool arguments. It reports ordinary misses, unwanted mutations, JSON text mutations, and two declared decoding gaps separately; it is not a broad coding accuracy claim.
 
 LSDF is not a compliance certification, SIEM, endpoint monitor, jailbreak product, or promise of perfect detection. It is a practical runtime firewall and proof system for sensitive-data exposure in LLM apps.
 

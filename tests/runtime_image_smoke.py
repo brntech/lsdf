@@ -22,7 +22,12 @@ class RuntimeImageSmokeTests(unittest.TestCase):
     def test_runtime_contains_only_expected_evaluation_assets(self):
         self.assertEqual(
             {path.name for path in Path("evals").iterdir()},
-            {"safety_matrix.json", "utility_matrix.json", "observability_matrix.json"},
+            {
+                "safety_matrix.json",
+                "utility_matrix.json",
+                "observability_matrix.json",
+                "coding_matrix.json",
+            },
         )
         self.assertTrue(Path("tests/foundation/fixtures").is_dir())
         self.assertFalse(list(Path("tests").rglob("*.py")))

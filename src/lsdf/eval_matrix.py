@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 from copy import deepcopy
 from pathlib import Path
@@ -11,6 +12,7 @@ BATTERY_FILENAMES = {
     "matrix": "safety_matrix.json",
     "utility": "utility_matrix.json",
     "observability": "observability_matrix.json",
+    "coding": "coding_matrix.json",
 }
 
 SURFACES = [
@@ -191,11 +193,26 @@ def build_observability_matrix() -> dict[str, Any]:
     )
 
 
+def build_coding_matrix() -> dict[str, Any]:
+    """Build the compact coding and structured-payload containment battery."""
+
+    return _dataset(
+        name="coding_matrix",
+        description=(
+            "Small coding-focused containment battery covering assignments, diffs, "
+            "hard identifiers, escaped JSON, tool-argument preservation, and "
+            "explicit base64/URL carrier characterization gaps."
+        ),
+        cases=_build_coding_cases(),
+    )
+
+
 def build_eval_batteries(battery: str = "all") -> dict[str, dict[str, Any]]:
     builders = {
         "matrix": build_safety_matrix,
         "utility": build_utility_matrix,
         "observability": build_observability_matrix,
+        "coding": build_coding_matrix,
     }
     if battery == "all":
         return {name: builder() for name, builder in builders.items()}
@@ -380,6 +397,266 @@ def _build_observability_cases() -> list[dict[str, Any]]:
     return cases
 
 
+def _build_coding_cases() -> list[dict[str, Any]]:
+    cases: list[dict[str, Any]] = []
+
+    assignments = [
+        ("API_KEY", "api_fixture0000000001", "OPENAI_API_KEY"),
+        ("OTHER_SECRET", "R3d1s_Pr0d_2024!Secure", "redis_value"),
+        ("API_KEY", "sk_fixture0000000002", "provider_token"),
+    ]
+    for entity, value, label in assignments:
+        cases.append(
+            _coding_text_case(
+                category="coding-threat-assignment",
+                slug=f"assignment-{_slug(label)}",
+                entity=entity,
+                value=value,
+                text=f"{label} = {json.dumps(value)}",
+                idx=len(cases),
+            )
+        )
+
+    diffs = [
+        ("OTHER_SECRET", "VaultSync_2026!Key", "config/settings.py"),
+        ("US_SSN", "987-65-4321", "fixtures/intake.json"),
+        ("CREDIT_CARD", "4242 4242 4242 4242", "fixtures/payment.json"),
+    ]
+    for entity, value, path in diffs:
+        cases.append(
+            _coding_text_case(
+                category="coding-threat-diff",
+                slug=f"diff-{_slug(entity)}",
+                entity=entity,
+                value=value,
+                text=(
+                    f"diff --git a/{path} b/{path}\n"
+                    f"@@ -1,1 +1,1 @@\n"
+                    f"- placeholder = None\n"
+                    f"+ value = {json.dumps(value)}"
+                ),
+                idx=len(cases),
+            )
+        )
+
+    hard_ids = [
+        ("MRN", "MRN: LSDF-FIXTURE-00001", "record_id"),
+        ("IBAN", "GB82WEST12345698765432", "transfer_iban"),
+        ("US_SSN", "111-22-3333", "subject_ssn"),
+    ]
+    for entity, value, label in hard_ids:
+        cases.append(
+            _coding_text_case(
+                category="coding-threat-hard-id",
+                slug=f"hard-id-{_slug(entity)}",
+                entity=entity,
+                value=value,
+                text=f"{label}: {json.dumps(value)}",
+                idx=len(cases),
+            )
+        )
+
+    escaped_json = [
+        ("API_KEY", "api_LSDF_FIXTURE_EVAL_000003"),
+        ("API_KEY", "token-fixture0000000004"),
+        ("CREDIT_CARD", "5555 5555 5555 4444"),
+        ("MRN", "MRN: B77889"),
+    ]
+    for entity, value in escaped_json:
+        encoded = json.dumps({"credential": value, "kind": "fixture"}, separators=(",", ":"))
+        escaped = encoded.replace('"', '\\"')
+        cases.append(
+            _coding_text_case(
+                category="coding-threat-escaped-json",
+                slug=f"escaped-json-{_slug(entity)}",
+                entity=entity,
+                value=value,
+                text=f'const requestBody = "{escaped}";',
+                idx=len(cases),
+            )
+        )
+
+    benign_code = [
+        "const token = process.env.API_TOKEN; const base_url = process.env.BASE_URL;",
+        "headers = {'Authorization': f'Bearer {TOKEN_PLACEHOLDER}'}",
+        "api_key = os.environ['OPENAI_API_KEY']; base_url = os.environ['BASE_URL']",
+    ]
+    for text in benign_code:
+        cases.append(
+            _coding_benign_case(
+                category="coding-benign-placeholder",
+                text=text,
+                idx=len(cases),
+            )
+        )
+
+    observed = [
+        ("EMAIL", "jane.patient@example.com"),
+        ("PHONE", "(555) 010-2020"),
+        ("PERSON", "Lisa Nakamura"),
+    ]
+    for entity, value in observed:
+        case = {
+            "id": f"coding-observe-{_slug(entity)}-{len(cases):03d}",
+            "category": "coding-benign-name" if entity == "PERSON" else "coding-default-observe",
+            "surface": "input.messages",
+            "payload": {"messages": [{"role": "user", "content": f"Owner: {value}"}]},
+            "sensitive_values": [value],
+            "expected_blocked": False,
+            "expected_unchanged": True,
+        }
+        if entity in DETECTOR_EXPECTATIONS:
+            detector_id, detector_family = DETECTOR_EXPECTATIONS[entity]
+            case.update(
+                {
+                    "expected_entities": [entity],
+                    "expected_actions": ["redact"],
+                    "expected_detector_ids": [detector_id],
+                    "expected_detector_families": [detector_family],
+                }
+            )
+        cases.append(case)
+
+    for entity, value, keep_values in (
+        ("API_KEY", "token-fixture0000000004", {"keep": "unchanged", "count": 3}),
+        ("CREDIT_CARD", "4111 1111 1111 1111", {"keep": "unchanged", "count": 7}),
+        ("OTHER_SECRET", "N0deCache_77!Rotate", {"keep": "unchanged", "count": 11}),
+    ):
+        detector_id, detector_family = DETECTOR_EXPECTATIONS[entity]
+        pointer = _tool_arguments_pointer()
+        payload = _tool_json_payload(value, keep_values)
+        cases.append(
+            {
+                "id": f"coding-tool-json-{_slug(entity)}-{len(cases):03d}",
+                "category": "coding-transformed-tool-json",
+                "surface": "output.tool_calls.arguments",
+                "payload": payload,
+                "sensitive_values": [value],
+                "expected_absent": [value],
+                "expected_blocked": True,
+                "expected_entities": [entity],
+                "expected_surfaces": ["output.tool_calls.arguments"],
+                "expected_actions": ["block"],
+                "expected_detector_ids": [detector_id],
+                "expected_detector_families": [detector_family],
+                "expected_valid_json_pointers": [pointer],
+                "expected_json_semantics": [{"pointer": pointer, "values": keep_values}],
+            }
+        )
+
+    encoded = base64.b64encode(ENTITY_SAMPLES["API_KEY"][0].encode()).decode()
+    cases.append(
+        {
+            "id": f"coding-base64-containment-{len(cases):03d}",
+            "category": "coding-encoding-containment",
+            "surface": "input.messages",
+            "payload": {"messages": [{"role": "user", "content": f"encoded={encoded}"}]},
+            "sensitive_values": [encoded],
+            "expected_absent": [encoded],
+            "expected_blocked": True,
+            "expected_entities": ["OTHER_SECRET"],
+        }
+    )
+    wrapped = " ".join(encoded[index : index + 6] for index in range(0, len(encoded), 6))
+    cases.append(
+        {
+            "id": f"coding-gap-base64-whitespace-{len(cases):03d}",
+            "category": "coding-characterization-gap-base64",
+            "surface": "input.messages",
+            "known_gap": True,
+            "characterization_gap": "base64_decoding_not_supported",
+            "payload": {
+                "messages": [{"role": "user", "content": f"Base64 text: {wrapped}"}]
+            },
+            "sensitive_values": [wrapped],
+            "expected_absent": [wrapped],
+            "expected_blocked": True,
+        }
+    )
+    encoded_url_value = "".join(f"%{byte:02X}" for byte in ENTITY_SAMPLES["API_KEY"][0].encode())
+    cases.append(
+        {
+            "id": f"coding-gap-url-{len(cases):03d}",
+            "category": "coding-characterization-gap-url",
+            "surface": "input.messages",
+            "known_gap": True,
+            "characterization_gap": "url_target_not_decoded",
+            "payload": {
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": f"https://example.org/import?data={encoded_url_value}",
+                    }
+                ]
+            },
+            "sensitive_values": [encoded_url_value],
+            "expected_absent": [encoded_url_value],
+            "expected_blocked": True,
+        }
+    )
+    return cases
+
+
+def _coding_text_case(
+    *,
+    category: str,
+    slug: str,
+    entity: str,
+    value: str,
+    text: str,
+    idx: int,
+) -> dict[str, Any]:
+    detector_id, detector_family = DETECTOR_EXPECTATIONS[entity]
+    action = _expected_action(entity, "input.messages")
+    return {
+        "id": f"coding-{slug}-{idx:03d}",
+        "category": category,
+        "surface": "input.messages",
+        "payload": {"messages": [{"role": "user", "content": text}]},
+        "sensitive_values": [value],
+        "expected_absent": [value],
+        "expected_blocked": action == "block",
+        "expected_entities": [entity],
+        "expected_surfaces": ["input.messages"],
+        "expected_actions": [action],
+        "expected_detector_ids": [detector_id],
+        "expected_detector_families": [detector_family],
+    }
+
+
+def _coding_benign_case(*, category: str, text: str, idx: int) -> dict[str, Any]:
+    return {
+        "id": f"coding-benign-{idx:03d}",
+        "category": category,
+        "surface": "input.messages",
+        "payload": {"messages": [{"role": "user", "content": text}]},
+        "expected_blocked": False,
+        "expected_no_findings": True,
+        "expected_no_decisions": True,
+        "expected_unchanged": True,
+    }
+
+
+def _tool_json_payload(value: str, keep_values: dict[str, Any]) -> dict[str, Any]:
+    arguments = {"credential": value, **keep_values}
+    return {
+        "choices": [
+            {
+                "message": {
+                    "tool_calls": [
+                        {
+                            "function": {
+                                "name": "save_fixture",
+                                "arguments": json.dumps(arguments),
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+
+
 def _covered_case(prefix: str, entity: str, surface: str, value: str, idx: int) -> dict[str, Any]:
     text = _text_for_entity(entity, value, idx)
     action = _expected_action(entity, surface)
@@ -558,7 +835,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m lsdf.eval_matrix")
     parser.add_argument(
         "--battery",
-        choices=("matrix", "utility", "observability", "all"),
+        choices=("matrix", "utility", "observability", "coding", "all"),
         default="matrix",
     )
     parser.add_argument("--output", type=Path, default=None)

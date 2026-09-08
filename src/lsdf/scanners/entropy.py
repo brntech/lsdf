@@ -32,6 +32,75 @@ CREDENTIAL_SPECIALS = set("!@$%^&*+=")
 # prose, not credentials. Real credentials almost always carry a digit or one
 # of CREDENTIAL_SPECIALS — neither of which appears in these compounds.
 _ALPHA_HYPHEN_COMPOUND_RE = re.compile(r"^[A-Za-z]+(-[A-Za-z]+)+$")
+_MODEL_IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9]+(?:[.:-][A-Za-z0-9]+)+$")
+_MODEL_ID_PROSE_RE = re.compile(
+    r"\b(?:exact\s+)?model\s+(?:(?:id|identifier)\s+is|named)\s*$",
+    re.IGNORECASE,
+)
+_CODE_REFERENCE_RE = re.compile(
+    r"^(?:file_path|source_path|path|filename):(?:line|line_number)"
+    r"(?:,(?:column|column_number))?$"
+)
+_CODE_FILE_REFERENCE_RE = re.compile(
+    r"^(?:[A-Za-z0-9_.-]+/)*[A-Za-z0-9_.-]+"
+    r"\.(?:c|cc|cpp|css|go|h|html|java|js|jsx|py|rb|rs|scss|svelte|ts|tsx|vue)"
+    r":\d+(?::\d+)?$"
+)
+_CAMEL_CASE_IDENTIFIER_RE = re.compile(r"^[a-z][A-Za-z]+$")
+_CAMEL_CASE_PREFIXES = {
+    "build",
+    "close",
+    "create",
+    "delete",
+    "fetch",
+    "find",
+    "get",
+    "handle",
+    "is",
+    "list",
+    "load",
+    "make",
+    "open",
+    "parse",
+    "read",
+    "render",
+    "resolve",
+    "set",
+    "update",
+    "use",
+    "write",
+}
+_SOURCE_GLOB_RE = re.compile(r"^(?:[A-Za-z0-9_.?*{}-]+/)+[A-Za-z0-9_.?*{}-]+$")
+_SOURCE_GLOB_SUFFIXES = (
+    ".c",
+    ".cc",
+    ".cpp",
+    ".css",
+    ".go",
+    ".h",
+    ".html",
+    ".java",
+    ".js",
+    ".jsx",
+    ".py",
+    ".rb",
+    ".rs",
+    ".scss",
+    ".svelte",
+    ".ts",
+    ".tsx",
+    ".vue",
+)
+_MODEL_SECRET_MARKERS = {
+    "api",
+    "auth",
+    "credential",
+    "key",
+    "pass",
+    "password",
+    "secret",
+    "token",
+}
 
 # Operators can add additional explicit deny substrings via env var (e.g. an
 # internal product name that happens to score above the entropy bar). Match is
@@ -58,8 +127,20 @@ class EntropySecretScanner:
         findings: list[Finding] = []
         deny_substrings = _entropy_deny_substrings()
         for match in TOKEN_RE.finditer(surface.value):
-            token = match.group(0).strip("`.,;:")
-            if not token or _looks_like_url_or_path(token) or _looks_like_placeholder(token):
+            raw_token = match.group(0)
+            token = raw_token.strip("`.,;:")
+            if (
+                not token
+                or _looks_like_url_or_path(token)
+                or _looks_like_placeholder(token)
+                or _looks_like_code_reference(token, raw_token)
+                or _looks_like_source_glob(token)
+                or _looks_like_code_identifier(token, raw_token, surface.value, match.start(), match.end())
+            ):
+                continue
+            if surface.routing_metadata and _looks_like_safe_model_identifier(token):
+                continue
+            if _looks_like_model_id_prose(token, surface.value, match.start()):
                 continue
             if _is_alpha_hyphen_compound(token):
                 continue
@@ -115,11 +196,114 @@ def _looks_like_placeholder(token: str) -> bool:
     return bool(re.fullmatch(r"[A-Z][A-Z0-9_]{5,}", token))
 
 
+def _has_code_secret_marker(token: str) -> bool:
+    lowered = token.lower()
+    return any(
+        marker in lowered
+        for marker in ("api", "auth", "credential", "key", "pass", "password", "secret", "token")
+    )
+
+
+def _looks_like_code_reference(token: str, raw_token: str) -> bool:
+    """Skip only backtick-delimited source references, never credential labels."""
+    if not (raw_token.startswith("`") and raw_token.endswith("`")):
+        return False
+    if not (_CODE_REFERENCE_RE.fullmatch(token) or _CODE_FILE_REFERENCE_RE.fullmatch(token)):
+        return False
+    return True
+
+
+def _looks_like_source_glob(token: str) -> bool:
+    """Recognize conventional wildcard source paths in prompt/tool prose."""
+    if not ("/" in token and ("*" in token or "?" in token)):
+        return False
+    if not _SOURCE_GLOB_RE.fullmatch(token):
+        return False
+    if not token.lower().endswith(_SOURCE_GLOB_SUFFIXES):
+        return False
+    return not _has_code_secret_marker(token)
+
+
+def _looks_like_code_identifier(
+    token: str,
+    raw_token: str,
+    source: str,
+    start: int,
+    end: int,
+) -> bool:
+    """Skip a long camelCase identifier only when it is visibly code-shaped."""
+    if not _CAMEL_CASE_IDENTIFIER_RE.fullmatch(token) or len(token) < 16:
+        return False
+    if _has_code_secret_marker(token):
+        return False
+    segments = re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?=[A-Z]|$)", token)
+    if len(segments) < 3 or segments[0].lower() not in _CAMEL_CASE_PREFIXES:
+        return False
+    if any(len(segment) < 2 or len(segment) > 24 for segment in segments):
+        return False
+    if raw_token.startswith("`") and raw_token.endswith("`"):
+        return True
+    before = source[start - 1 : start]
+    after = source[end : end + 1]
+    if before in {".", "("} or after in {".", "("}:
+        return True
+    context_before = source[max(0, start - 64) : start]
+    return bool(
+        re.search(
+            r"\brename\s+[A-Za-z_][A-Za-z0-9_]*\s*->\s*$",
+            context_before,
+            flags=re.IGNORECASE,
+        )
+    )
+
+
 def _is_alpha_hyphen_compound(token: str) -> bool:
     """Hyphenated all-letter compounds (no digits, no specials) are nearly
     always technical prose, not credentials. The entropy fallback otherwise
     flags `OpenAI-compatible`, `local-model-network`, etc."""
     return bool(_ALPHA_HYPHEN_COMPOUND_RE.fullmatch(token))
+
+
+def _looks_like_safe_model_identifier(token: str) -> bool:
+    """Recognize only provider-style routing IDs in explicitly marked fields.
+
+    This is deliberately narrower than a generic allow-list: underscores are
+    rejected, credential marker components are rejected, and a separator is
+    required.  An API-shaped value in `model` therefore remains visible to the
+    regex credential recognizers and is still enforced by policy.
+    """
+
+    if len(token) < 3 or len(token) > 128 or "_" in token:
+        return False
+    if not _MODEL_IDENTIFIER_RE.fullmatch(token):
+        return False
+    raw_components = [component for component in re.split(r"[.:-]+", token) if component]
+    components = {component.lower() for component in raw_components}
+    if len(raw_components) < 2 or not any(char.isdigit() for char in token):
+        return False
+    if any(
+        any(marker in component for marker in _MODEL_SECRET_MARKERS)
+        for component in components
+    ):
+        return False
+    # Provider model IDs normally have short, low-entropy family/version
+    # components (qwen2.5-coder:0.5b, gpt-4o). This keeps arbitrary segmented
+    # high-entropy values in the normal credential heuristic.
+    if raw_components[0] != raw_components[0].lower():
+        return False
+    if any(len(component) > 32 for component in raw_components):
+        return False
+    if any(len(component) >= 8 and _shannon_entropy(component) >= 3.0 for component in raw_components):
+        return False
+    return True
+
+
+def _looks_like_model_id_prose(token: str, source: str, start: int) -> bool:
+    """Skip a safe model ID only after an explicit model-ID declaration."""
+    if not _looks_like_safe_model_identifier(token):
+        return False
+    context_before = source[max(0, start - 48) : start]
+    return bool(_MODEL_ID_PROSE_RE.search(context_before))
 
 
 def _matches_deny_substring(token: str, deny_substrings: tuple[str, ...]) -> bool:

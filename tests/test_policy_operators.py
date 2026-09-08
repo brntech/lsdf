@@ -413,13 +413,12 @@ class EvaluateErrorIsolationTests(unittest.TestCase):
         )
         self.assertIsNotNone(failed_case)
         self.assertFalse(failed_case["passed"])
-        self.assertTrue(
-            any(
-                f.get("kind") == "inspection_error"
-                for f in failed_case["failures"]
-            ),
-            f"expected inspection_error failure entry, got {failed_case['failures']}",
-        )
+        self.assertEqual(failed_case["failures"], ["inspection_error: invalid_payload_or_transform"])
+        self.assertEqual(failed_case["error_category"], "invalid_payload_or_transform")
+        self.assertEqual(report["evaluation_errors"], 1)
+        self.assertEqual(report["evaluation_error_categories"], {"invalid_payload_or_transform": 1})
+        self.assertTrue(next(r for r in report["results"] if r["id"] == "case-clean")["passed"])
+        self.assertNotIn(env_var, str(report))
 
 
 if __name__ == "__main__":

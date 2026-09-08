@@ -16,7 +16,7 @@ COPY src/ src/
 COPY policies/ policies/
 # Policy validation requires the first-party foundation fixtures.
 COPY tests/foundation/fixtures/ tests/foundation/fixtures/
-COPY evals/safety_matrix.json evals/utility_matrix.json evals/observability_matrix.json evals/
+COPY evals/safety_matrix.json evals/utility_matrix.json evals/observability_matrix.json evals/coding_matrix.json evals/
 
 RUN pip install --no-cache-dir -e .
 

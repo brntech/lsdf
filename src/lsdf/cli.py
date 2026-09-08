@@ -161,7 +161,7 @@ def main(argv: list[str] | None = None) -> int:
     init_parser = subparsers.add_parser("init")
     init_parser.add_argument(
         "--upstream",
-        choices=("demo", "vllm", "lmstudio", "litellm", "openrouter", "custom"),
+        choices=("demo", "vllm", "lmstudio", "ollama", "litellm", "openrouter", "custom"),
         required=True,
     )
     init_parser.add_argument("--upstream-base-url", default=None)
@@ -800,7 +800,11 @@ def main(argv: list[str] | None = None) -> int:
         if not gateway_base_url:
             print("--gateway-base-url is required", file=sys.stderr)
             return 2
-        report = smoke_report(gateway_base_url=gateway_base_url, audit_jsonl_path=args.audit_jsonl_path)
+        report = smoke_report(
+            gateway_base_url=gateway_base_url,
+            audit_jsonl_path=args.audit_jsonl_path,
+            management_token=os.environ.get("LSDF_MANAGEMENT_TOKEN") or None,
+        )
         if args.format == "json":
             print(json.dumps(report, indent=2))
         else:
@@ -812,6 +816,7 @@ def main(argv: list[str] | None = None) -> int:
             gateway_base_url=args.gateway_base_url,
             audit_jsonl_path=args.audit_jsonl_path,
             metrics_jsonl_path=args.metrics_jsonl_path,
+            management_token=os.environ.get("LSDF_MANAGEMENT_TOKEN") or None,
         )
         if args.format == "json":
             print(json.dumps(report, indent=2))

@@ -86,9 +86,9 @@ Keep the private signing key with the signer; it is not a deployment mount. The 
 
 ## Management Endpoints
 
-`/lsdf/health` and `/lsdf/metrics` expose raw-value-safe operational status. They should be bound only on trusted networks or protected by a reverse proxy. For the stdlib gateway, set `LSDF_MANAGEMENT_TOKEN` for bearer/header token checks, or set `LSDF_MANAGEMENT_ENABLED=false` to disable `/lsdf/*` without changing OpenAI-compatible `/v1/*` behavior.
+`/lsdf/health` and `/lsdf/metrics` expose raw-value-safe operational status. They should be bound only on trusted networks or protected by a reverse proxy. For the stdlib gateway, set `LSDF_MANAGEMENT_TOKEN` for bearer/header token checks, or set `LSDF_MANAGEMENT_ENABLED=false` to disable `/lsdf/*`. The health payload reports management/client auth requirements and configured request/stream limits without token values.
 
-LSDF does not authenticate clients calling `/v1/chat/completions`. Management authentication protects only `/lsdf/*`; an upstream API key authenticates LSDF to the provider, not clients to LSDF. Keep the gateway on a trusted network or place client authentication and TLS at a reverse proxy before allowing untrusted callers.
+Set `LSDF_CLIENT_TOKEN` independently to require bearer/header authentication on `/v1/chat/completions`. Management authentication protects only `/lsdf/*`; an upstream API key authenticates LSDF to the provider, not clients to LSDF. Keep the gateway on a trusted network or place client authentication and TLS at a reverse proxy before allowing untrusted callers. The CLI smoke and quickstart checks do not prove data-plane protection and withhold management credentials from non-local/custom gateway names.
 
 ## Proof Bundle
 

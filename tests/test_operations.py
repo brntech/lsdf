@@ -86,7 +86,13 @@ class MetricsAndHealthTests(unittest.TestCase):
                 self.send_response(200)
                 self.send_header("content-type", "application/json")
                 self.end_headers()
-                self.wfile.write(b'{"status":"ok"}' if self.path.startswith("/lsdf/health") else b"metric 1\n")
+                if self.path == "/lsdf/health":
+                    payload = {"status": "ok"}
+                elif self.path == "/lsdf/metrics?format=json":
+                    payload = {"counters": {"gateway_requests_total": 1}, "durations": {}}
+                else:
+                    payload = {}
+                self.wfile.write(json.dumps(payload).encode("utf-8"))
 
             def log_message(self, format, *args):
                 return
@@ -101,7 +107,12 @@ class MetricsAndHealthTests(unittest.TestCase):
             server.server_close()
 
         self.assertEqual(status, 0)
-        self.assertEqual(json.loads(stdout.getvalue())["status"], "ok")
+        report = json.loads(stdout.getvalue())
+        self.assertEqual(report["status"], "ok")
+        metrics = next(check for check in report["checks"] if check["name"] == "metrics")
+        self.assertEqual(metrics["summary"]["counter_count"], 1)
+        protection = next(check for check in report["checks"] if check["name"] == "protection")
+        self.assertEqual(protection["status"], "unverified")
 
 
 class VaultTests(unittest.TestCase):

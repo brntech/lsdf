@@ -16,15 +16,15 @@ LSDF is the gateway, not a model server. The source demo includes a synthetic up
 
 ## Source checkout
 
-Install Git, then run:
+Install Git, then check out the current source:
 
 ```bash
-git clone --branch v0.3.2 --depth 1 https://github.com/brntech/lsdf.git
+git clone --depth 1 https://github.com/brntech/lsdf.git
 cd lsdf
 docker compose build cli
 ```
 
-Alternatively, download `lsdf-0.3.2-source.zip` from the [v0.3.2 release](https://github.com/brntech/lsdf/releases/tag/v0.3.2), extract it, and open a terminal inside `lsdf-0.3.2`, where `docker-compose.yml` lives. Run `docker compose build cli` there. The tag checkout is detached; contributors should create a branch before editing.
+Alternatively, download `lsdf-0.3.2-source.zip` from the [v0.3.2 release](https://github.com/brntech/lsdf/releases/tag/v0.3.2), extract it, and open a terminal inside `lsdf-0.3.2`, where `docker-compose.yml` lives. This released v0.3.2 source snapshot does not include the current client-token and request-limit controls; use the current source checkout above for those settings. Run `docker compose build cli` there.
 
 The default `docker-compose.yml` builds `lsdf:dev` from source. You do not need to pull a GHCR image for these commands. Run source commands from this directory; a downloaded container image alone does not provide the demo files, evaluation corpora, or Compose configuration.
 
@@ -44,7 +44,7 @@ docker compose run --rm cli init --upstream lmstudio --output .lsdf.env
 docker compose --env-file .lsdf.env up --build -d gateway
 ```
 
-Use `vllm`, `litellm`, or `openrouter` instead of `lmstudio` as appropriate. For `custom`, also supply `--upstream-base-url`. Edit `.lsdf.env` before starting if your endpoint, profile, or credentials differ. `init` refuses to overwrite an existing file; use `--force` only when replacing it intentionally. See [provider setup](provider-playbook.md).
+Use `vllm`, `litellm`, `ollama`, or `openrouter` instead of `lmstudio` as appropriate. Ollama's OpenAI-compatible endpoint is `http://host.docker.internal:11434/v1` from the gateway container. For `custom`, also supply `--upstream-base-url`. Edit `.lsdf.env` before starting if your endpoint, profile, or credentials differ. `init` refuses to overwrite an existing file; use `--force` only when replacing it intentionally. See [provider setup](provider-playbook.md).
 
 ## Prebuilt release image
 
@@ -61,7 +61,7 @@ docker compose --env-file .lsdf.env -f compose.release.yaml up -d
 docker compose --env-file .lsdf.env -f compose.release.yaml logs --tail 50 gateway
 ```
 
-`pull` downloads the selected image; this configuration has no source build or checkout mount. `doctor` checks policy/detector setup; without `--upstream-base-url` it does not check your upstream. Use the live request below to confirm routing.
+`pull` downloads the selected image; this configuration has no source build or checkout mount. `doctor` checks policy/detector setup, configured client/management auth, and configured limits; its separate reachability row is only checked when an upstream URL is supplied. Its protection row remains unverified because doctor does not send a protected `/v1` request. The v0.3.2 image predates the client-token and request-limit controls; use a current source-built image or a later release before relying on those settings. Use the live request below to confirm routing.
 
 The release configuration stores generated files in a named volume at `/workspace/.lsdf`. For example:
 
@@ -87,7 +87,7 @@ Both published variants belong to the single `ghcr.io/brntech/lsdf` package and 
 
 ## Check the connection
 
-Clients use `http://localhost:8080/v1`. Check local management health with `curl http://localhost:8080/lsdf/health` (PowerShell users can use `curl.exe`). A health response is not an accuracy test.
+Clients use `http://localhost:8080/v1`. Check local management health with `curl http://localhost:8080/lsdf/health` (PowerShell users can use `curl.exe`). A health response is not an accuracy test or proof that client authentication is working.
 
 For a real chat request, save this as `request.json`, replacing `YOUR_MODEL_ID` with a model served by your upstream:
 
@@ -99,9 +99,11 @@ For a real chat request, save this as `request.json`, replacing `YOUR_MODEL_ID` 
 curl -H "Content-Type: application/json" --data-binary "@request.json" http://localhost:8080/v1/chat/completions
 ```
 
-A successful upstream completion verifies the route. LSDF obtains provider credentials from its configured `LSDF_UPSTREAM_API_KEY`; it does not use a client's placeholder API key as upstream authentication. The Python client example in the README assumes the OpenAI SDK is already installed in your application's environment.
+A successful upstream completion verifies the route. If `LSDF_CLIENT_TOKEN` is configured, add `-H "Authorization: Bearer $LSDF_CLIENT_TOKEN"` to the request. LSDF obtains provider credentials from its configured `LSDF_UPSTREAM_API_KEY`; it does not use a client's placeholder API key as upstream authentication. The Python client example in the README assumes the OpenAI SDK is already installed in your application's environment.
 
-The supplied configurations bind port 8080 to `127.0.0.1`. For a shared deployment, configure a reverse proxy with client authentication and TLS. `LSDF_MANAGEMENT_TOKEN` protects only `/lsdf/*`; it does not authenticate `/v1/chat/completions`. If you set it, include the token in management requests. If management is disabled, those endpoints return 404.
+The supplied configurations bind port 8080 to `127.0.0.1`. For a shared deployment, configure a reverse proxy with client authentication and TLS. `LSDF_MANAGEMENT_TOKEN` protects only `/lsdf/*`; `LSDF_CLIENT_TOKEN` independently authenticates `/v1/chat/completions`. If you set the management token, include it in management requests. The built-in `smoke` and `quickstart-report` commands pass `LSDF_MANAGEMENT_TOKEN` only to loopback and recognized local Compose gateway names; they withhold it for other hostnames and report management authentication as unverified. If management is disabled, those endpoints return 404.
+
+To prove local client protection, send one request without the client token, one with the configured token, and one authenticated request using a synthetic blocking fixture. Expect `401`, an upstream response, and `403` respectively. Health, metrics, and quickstart counters do not substitute for these data-plane checks.
 
 ## Host networking and shell settings
 
@@ -109,7 +111,7 @@ Inside a container, `localhost` means that container. Use `host.docker.internal`
 
 On native Linux, the host model server must listen on an address reachable from the Docker bridge; a service bound only to host `127.0.0.1` is generally unreachable from containers. Restrict its access with the host firewall. Docker Desktop networking differs, so verify your actual endpoint with a chat request. [Docker documents host-gateway networking](https://docs.docker.com/reference/cli/docker/container/run/#add-host).
 
-Examples such as `NAME=value docker compose ...` use Bash syntax. On PowerShell, use `$env:NAME = "value"` first, or put settings in `.lsdf.env` and supply `--env-file .lsdf.env` on every relevant Compose command. A Compose env file supplies interpolation values; it does not automatically pass every variable into containers. For one-off CLI commands that need keys, explicitly use `run -e VARIABLE_NAME`. See [vault operations](production-operations.md#encrypted-token-vault).
+Examples such as `NAME=value docker compose ...` use Bash syntax. On PowerShell, use `$env:NAME = "value"` first, or put settings in `.lsdf.env` and supply `--env-file .lsdf.env` on every relevant Compose command. A Compose env file supplies interpolation values; it does not automatically pass every variable into containers. For one-off CLI commands that need keys, export the value and explicitly pass it with `run -e VARIABLE_NAME="$VARIABLE_NAME"`; when the gateway was started with an env file, use the same `--env-file` on the CLI command, for example, `docker compose --env-file .lsdf.env run --rm -e LSDF_MANAGEMENT_TOKEN="$LSDF_MANAGEMENT_TOKEN" cli smoke --gateway-base-url http://gateway:8080`. See [vault operations](production-operations.md#encrypted-token-vault).
 
 On native Linux, source-mounted commands run as container root by default and can create root-owned host files. For commands such as `init`, use your host UID/GID in Bash:
 

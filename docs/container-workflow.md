@@ -116,7 +116,7 @@ docker compose run --rm cli quickstart-report --gateway-base-url http://gateway:
 
 The CLI container reaches `gateway` by its Compose service name. Clients running on the host use `http://localhost:8080/v1`. For host model networking, including native Linux requirements, see [Installation](installation.md).
 
-Set `LSDF_MANAGEMENT_TOKEN` to require a bearer token or `X-LSDF-Management-Token` on `/lsdf/health` and `/lsdf/metrics`. Set `LSDF_MANAGEMENT_ENABLED=false` to disable `/lsdf/*` while keeping `/v1/chat/completions` active.
+Set `LSDF_MANAGEMENT_TOKEN` to require a bearer token or `X-LSDF-Management-Token` on `/lsdf/health` and `/lsdf/metrics`. Set `LSDF_CLIENT_TOKEN` independently for `/v1/chat/completions`; the health payload reports both auth requirements and configured limits without token values. Set `LSDF_MANAGEMENT_ENABLED=false` to disable `/lsdf/*` while keeping `/v1/chat/completions` active. The smoke and quickstart reports leave client protection unverified because they do not send a protected data-plane request.
 
 Use encrypted reversible tokenization only when a vault key and path are configured:
 

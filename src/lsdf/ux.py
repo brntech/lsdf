@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import math
+import os
 import time
 import urllib.error
 import urllib.parse
@@ -11,6 +13,15 @@ from typing import Any
 
 from .detectors import DetectorUnavailableError, OPTIONAL_DETECTOR_FAMILIES
 from .engine import Firewall, InspectionResult
+from .gateway import (
+    DEFAULT_CLIENT_TIMEOUT_SECONDS,
+    DEFAULT_MAX_CONCURRENT_REQUESTS,
+    DEFAULT_MAX_REQUEST_BYTES,
+    DEFAULT_MAX_STREAM_SECONDS,
+    DEFAULT_UPSTREAM_TIMEOUT_SECONDS,
+    GatewayConfigError,
+    resolve_gateway_config,
+)
 from .metrics import (
     format_metrics_summary_markdown,
     format_metrics_summary_text,
@@ -32,8 +43,22 @@ UPSTREAM_PRESETS = {
     "vllm": "http://host.docker.internal:8000",
     "litellm": "http://host.docker.internal:4000",
     "lmstudio": "http://host.docker.internal:1234",
+    "ollama": "http://host.docker.internal:11434/v1",
     "openrouter": "https://openrouter.ai/api/v1",
 }
+
+_SMOKE_TIMEOUT_SECONDS = 5.0
+_SMOKE_MAX_RESPONSE_BYTES = 256 * 1024
+_SAFE_HEALTH_STATUSES = frozenset({"ok", "degraded", "warning", "error"})
+_SAFE_UPSTREAM_STATUSES = frozenset({"ok", "warning", "error"})
+_HEALTH_LIMIT_KEYS = (
+    "max_request_bytes",
+    "max_concurrent_requests",
+    "client_timeout_seconds",
+    "upstream_timeout_seconds",
+    "max_stream_seconds",
+    "stream_holdback_chars",
+)
 
 DEMO_SECRET = "api_LSDF_FIXTURE_TOKEN_000000"
 DEMO_MRN = "LSDF-FIXTURE-00001"
@@ -67,9 +92,10 @@ def doctor_report(
             }
         )
     except Exception as exc:
-        message = f"Policy load failed: {exc}"
+        del exc
+        message = "Policy load failed: policy_load_error"
         errors.append(message)
-        checks.append({"name": "policy", "status": "error", "message": str(exc)})
+        checks.append({"name": "policy", "status": "error", "message": "policy_load_error"})
 
     if policy is not None:
         try:
@@ -93,19 +119,35 @@ def doctor_report(
                     f"the Docker optional profile: {', '.join(optional_enabled)}"
                 )
         except DetectorUnavailableError as exc:
-            message = f"Detector unavailable: {exc}"
+            del exc
+            families = ",".join(sorted(policy.detectors.enabled_families))
+            message = f"Detector unavailable: detector_unavailable ({families})"
             errors.append(message)
-            checks.append({"name": "detectors", "status": "error", "message": str(exc)})
+            checks.append({"name": "detectors", "status": "error", "message": message})
         except Exception as exc:
-            message = f"Detector setup failed: {exc}"
+            del exc
+            message = "Detector setup failed: detector_setup_error"
             errors.append(message)
-            checks.append({"name": "detectors", "status": "error", "message": str(exc)})
+            checks.append({"name": "detectors", "status": "error", "message": "detector_setup_error"})
+
+    gateway_config_check = _gateway_configuration_check(upstream_base_url)
+    checks.append(gateway_config_check)
+    if gateway_config_check.get("status") == "error":
+        errors.append(str(gateway_config_check.get("message", "Gateway configuration failed.")))
 
     if upstream_base_url:
         checks.append(_check_upstream(upstream_base_url, errors, warnings))
     else:
         warnings.append("No upstream URL supplied; gateway reachability was not checked.")
         checks.append({"name": "upstream", "status": "warning", "message": "not checked"})
+
+    checks.append(
+        {
+            "name": "protection",
+            "status": "unverified",
+            "message": "No protected /v1 request was sent; doctor checks configuration and reachability only.",
+        }
+    )
 
     if audit_jsonl_path:
         checks.append(_check_audit_path(audit_jsonl_path, errors))
@@ -131,6 +173,14 @@ def format_doctor_text(report: dict[str, Any]) -> str:
     lines = [f"LSDF Doctor: {report['status']}"]
     for check in report.get("checks", []):
         detail = check.get("message") or check.get("profile") or check.get("url") or ""
+        if check.get("name") == "gateway_config" and check.get("status") == "ok":
+            management = check.get("management", {})
+            client = check.get("client", {})
+            detail = (
+                f"upstream={'configured' if check.get('upstream_configured') else 'not configured'}; "
+                f"management_auth={'required' if management.get('auth_required') else 'not required'}; "
+                f"client_auth={'required' if client.get('auth_required') else 'not required'}"
+            )
         suffix = f" - {detail}" if detail else ""
         lines.append(f"- {check.get('status', 'unknown').upper()} {check.get('name')}{suffix}")
     for warning in report.get("warnings", []):
@@ -167,6 +217,12 @@ def init_env_file(
         "LSDF_PROFILE": profile,
         "LSDF_UPSTREAM_BASE_URL": resolved_upstream,
         "LSDF_STREAM_HOLDBACK_CHARS": "512",
+        "LSDF_CLIENT_TOKEN": "",
+        "LSDF_MAX_REQUEST_BYTES": str(DEFAULT_MAX_REQUEST_BYTES),
+        "LSDF_MAX_CONCURRENT_REQUESTS": str(DEFAULT_MAX_CONCURRENT_REQUESTS),
+        "LSDF_CLIENT_TIMEOUT_SECONDS": str(DEFAULT_CLIENT_TIMEOUT_SECONDS),
+        "LSDF_UPSTREAM_TIMEOUT_SECONDS": str(DEFAULT_UPSTREAM_TIMEOUT_SECONDS),
+        "LSDF_MAX_STREAM_SECONDS": str(DEFAULT_MAX_STREAM_SECONDS),
     }
     packs = [pack for pack in (domain_packs or []) if pack]
     if packs:
@@ -192,6 +248,14 @@ def init_env_file(
                 "# LSDF_UPSTREAM_API_KEY=${LSDF_UPSTREAM_API_KEY}",
             ]
         )
+    lines.extend(
+        [
+            "",
+            "# Client and management authentication are independent. Supply tokens",
+            "# through a shell, secret manager, or uncommitted env file when needed.",
+            "# LSDF_MANAGEMENT_TOKEN=${LSDF_MANAGEMENT_TOKEN}",
+        ]
+    )
     content = "\n".join(lines) + "\n"
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(content, encoding="utf-8")
@@ -546,42 +610,266 @@ def format_metrics_summary(summary: dict[str, Any], output_format: str) -> str:
     return format_metrics_summary_text(summary)
 
 
+_LOCAL_MANAGEMENT_HOSTS = frozenset(
+    {
+        "localhost",
+        "127.0.0.1",
+        "::1",
+        "host.docker.internal",
+        "gateway",
+        "gateway-ml",
+        "demo-gateway",
+        "runtime-gateway",
+        "runtime-smoke-gateway",
+        "litellm-demo-gateway",
+    }
+)
+
+
+class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        return None
+
+
+_NO_REDIRECT_OPENER = urllib.request.build_opener(_NoRedirectHandler)
+
+
+def _validated_http_base_url(raw_url: str) -> str:
+    if not isinstance(raw_url, str) or not raw_url or any(char in raw_url for char in "\r\n\t"):
+        raise ValueError("invalid HTTP URL")
+    parsed = urllib.parse.urlsplit(raw_url)
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("invalid HTTP URL")
+    try:
+        hostname = parsed.hostname
+        parsed.port
+    except ValueError as exc:
+        raise ValueError("invalid HTTP URL") from exc
+    if not hostname or parsed.username is not None or parsed.password is not None:
+        raise ValueError("invalid HTTP URL")
+    if parsed.query or parsed.fragment:
+        raise ValueError("invalid HTTP URL")
+    return urllib.parse.urlunsplit(
+        (parsed.scheme.lower(), parsed.netloc, parsed.path.rstrip("/"), "", "")
+    )
+
+
+def _safe_url_for_report(raw_url: str) -> str:
+    try:
+        parsed = urllib.parse.urlsplit(raw_url)
+        if parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname:
+            return "<invalid-url>"
+        port = parsed.port
+        hostname = parsed.hostname
+        if ":" in hostname and not hostname.startswith("["):
+            hostname = f"[{hostname}]"
+        netloc = hostname if port is None else f"{hostname}:{port}"
+        return f"{parsed.scheme.lower()}://{netloc}"
+    except (TypeError, ValueError):
+        return "<invalid-url>"
+
+
+def _is_printable_ascii_token(value: str) -> bool:
+    return value.isascii() and all(0x20 <= ord(char) < 0x7F for char in value)
+
+
+def _management_token_allowed(raw_url: str) -> bool:
+    try:
+        hostname = urllib.parse.urlsplit(raw_url).hostname
+    except ValueError:
+        return False
+    return bool(hostname and hostname.lower() in _LOCAL_MANAGEMENT_HOSTS)
+
+
+def _set_response_timeout(response: Any, timeout: float) -> None:
+    candidates = [
+        getattr(response, "_sock", None),
+        getattr(getattr(response, "fp", None), "raw", None),
+        getattr(getattr(getattr(response, "fp", None), "raw", None), "_sock", None),
+    ]
+    for candidate in candidates:
+        setter = getattr(candidate, "settimeout", None)
+        if callable(setter):
+            try:
+                setter(max(timeout, 0.001))
+            except OSError:
+                pass
+            return
+
+
+def _read_bounded_response(response: Any) -> bytes:
+    deadline = time.monotonic() + _SMOKE_TIMEOUT_SECONDS
+    chunks: list[bytes] = []
+    total = 0
+    while total <= _SMOKE_MAX_RESPONSE_BYTES:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError("management response deadline exceeded")
+        _set_response_timeout(response, remaining)
+        read_size = min(8192, _SMOKE_MAX_RESPONSE_BYTES + 1 - total)
+        reader = getattr(response, "read1", None)
+        chunk = reader(read_size) if callable(reader) else response.read(read_size)
+        if not chunk:
+            return b"".join(chunks)
+        if not isinstance(chunk, bytes):
+            raise ValueError("management response was not bytes")
+        chunks.append(chunk)
+        total += len(chunk)
+    raise ValueError("management response exceeded size limit")
+
+
+def _fetch_management_json(url: str, *, management_token: str | None) -> tuple[int, Any, int]:
+    headers = {"Accept": "application/json"}
+    if management_token:
+        headers["Authorization"] = f"Bearer {management_token}"
+    request = urllib.request.Request(url, headers=headers, method="GET")
+    with _NO_REDIRECT_OPENER.open(request, timeout=_SMOKE_TIMEOUT_SECONDS) as response:
+        body = _read_bounded_response(response)
+        try:
+            payload = json.loads(body.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError("management response was not JSON") from exc
+        return int(getattr(response, "status", 200)), payload, len(body)
+
+
+def _safe_health_summary(payload: Any) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        return {}
+    summary: dict[str, Any] = {}
+    status = payload.get("status")
+    if isinstance(status, str) and status in _SAFE_HEALTH_STATUSES:
+        summary["status"] = status
+    upstream = payload.get("upstream")
+    upstream_status = upstream.get("status") if isinstance(upstream, dict) else None
+    if isinstance(upstream_status, str) and upstream_status in _SAFE_UPSTREAM_STATUSES:
+        summary["upstream_status"] = upstream_status
+    for section in ("management", "client"):
+        value = payload.get(section)
+        if isinstance(value, dict) and isinstance(value.get("auth_required"), bool):
+            summary[section] = {"auth_required": value["auth_required"]}
+    limits = payload.get("limits")
+    if isinstance(limits, dict):
+        safe_limits: dict[str, int | float] = {}
+        for key in _HEALTH_LIMIT_KEYS:
+            value = limits.get(key)
+            if isinstance(value, bool):
+                continue
+            if isinstance(value, int):
+                if value < 0 or value > 10**15:
+                    continue
+            elif isinstance(value, float):
+                if not math.isfinite(value) or value < 0 or value > 10**15:
+                    continue
+            else:
+                continue
+            safe_limits[key] = value
+        if safe_limits:
+            summary["limits"] = safe_limits
+    return summary
+
+
+def _safe_metrics_summary(payload: Any) -> dict[str, int]:
+    if not isinstance(payload, dict):
+        return {}
+    counters = payload.get("counters")
+    durations = payload.get("durations")
+    summary: dict[str, int] = {}
+    if isinstance(counters, dict):
+        summary["counter_count"] = sum(
+            1 for value in counters.values() if isinstance(value, int) and not isinstance(value, bool)
+        )
+    if isinstance(durations, dict):
+        summary["duration_count"] = sum(1 for value in durations.values() if isinstance(value, dict))
+    return summary
+
+
 def smoke_report(
     *,
     gateway_base_url: str | None = None,
     upstream_base_url: str | None = None,
     audit_jsonl_path: Path | None = None,
+    management_token: str | None = None,
 ) -> dict[str, Any]:
     checks: list[dict[str, Any]] = []
     errors: list[str] = []
     base_url = gateway_base_url or upstream_base_url
     if not base_url:
         raise ValueError("--gateway-base-url is required")
-    base = base_url.rstrip("/")
-    for name, path in (("health", "/lsdf/health"), ("metrics", "/lsdf/metrics")):
+    display_url = _safe_url_for_report(base_url)
+    try:
+        base = _validated_http_base_url(base_url)
+    except ValueError:
+        return {
+            "status": "error",
+            "gateway_base_url": display_url,
+            "checks": [{"name": "gateway_url", "status": "error", "error_type": "ValueError"}],
+            "errors": ["gateway URL failed: ValueError"],
+        }
+    if management_token is not None and not _is_printable_ascii_token(management_token):
+        return {
+            "status": "error",
+            "gateway_base_url": display_url,
+            "checks": [{"name": "management_auth", "status": "error", "error_type": "ValueError"}],
+            "errors": ["management authentication failed: ValueError"],
+        }
+    effective_token = management_token if management_token and _management_token_allowed(base) else None
+    if management_token and effective_token is None:
+        checks.append(
+            {
+                "name": "management_auth",
+                "status": "unverified",
+                "message": "Management token was withheld for a non-local target.",
+            }
+        )
+    for name, path in (("health", "/lsdf/health"), ("metrics", "/lsdf/metrics?format=json")):
         try:
-            with urllib.request.urlopen(f"{base}{path}", timeout=5) as response:
-                body = response.read().decode("utf-8", errors="replace")
-                checks.append(
-                    {
-                        "name": name,
-                        "status": "ok",
-                        "http_status": response.status,
-                        "bytes": len(body.encode("utf-8")),
-                    }
-                )
-        except Exception as exc:
-            errors.append(f"{name} failed: {type(exc).__name__}")
-            checks.append({"name": name, "status": "error", "error_type": type(exc).__name__})
+            status_code, payload, body_size = _fetch_management_json(
+                f"{base}{path}", management_token=effective_token
+            )
+            check = {
+                "name": name,
+                "status": "ok",
+                "http_status": status_code,
+                "bytes": body_size,
+            }
+            safe_summary = (
+                _safe_health_summary(payload)
+                if name == "health"
+                else _safe_metrics_summary(payload)
+            )
+            if safe_summary:
+                check["summary"] = safe_summary
+            checks.append(check)
+        except urllib.error.HTTPError as exc:
+            try:
+                exc.close()
+            except Exception:
+                pass
+            error_type = "management_http_error"
+            errors.append(f"{name} failed: {error_type}")
+            check = {"name": name, "status": "error", "error_type": error_type}
+            if isinstance(exc.code, int):
+                check["http_status"] = exc.code
+            checks.append(check)
+        except Exception:
+            errors.append(f"{name} failed: management_transport_error")
+            checks.append({"name": name, "status": "error", "error_type": "management_transport_error"})
+    checks.append(
+        {
+            "name": "protection",
+            "status": "unverified",
+            "message": "No protected /v1 request was sent; management checks do not prove client authentication.",
+        }
+    )
     if audit_jsonl_path is not None:
         try:
             checks.append({"name": "audit_summary", "status": "ok", "summary": audit_summary(audit_jsonl_path)})
-        except Exception as exc:
-            errors.append(f"audit summary failed: {type(exc).__name__}")
-            checks.append({"name": "audit_summary", "status": "error", "error_type": type(exc).__name__})
+        except Exception:
+            errors.append("audit summary failed: audit_summary_error")
+            checks.append({"name": "audit_summary", "status": "error", "error_type": "audit_summary_error"})
     return {
         "status": "error" if errors else "ok",
-        "gateway_base_url": base,
+        "gateway_base_url": display_url,
         "checks": checks,
         "errors": errors,
     }
@@ -593,6 +881,8 @@ def format_smoke_text(report: dict[str, Any]) -> str:
         lines.append(f"- Gateway: {report['gateway_base_url']}")
     for check in report["checks"]:
         suffix = f" - {check.get('http_status')}" if "http_status" in check else ""
+        if check.get("message"):
+            suffix += f" - {check['message']}"
         lines.append(f"- {check['status'].upper()} {check['name']}{suffix}")
     for error in report.get("errors", []):
         lines.append(f"- ERROR {error}")
@@ -604,6 +894,7 @@ def quickstart_report(
     gateway_base_url: str,
     audit_jsonl_path: Path | None = None,
     metrics_jsonl_path: Path | None = None,
+    management_token: str | None = None,
 ) -> dict[str, Any]:
     checks: list[dict[str, Any]] = []
     errors: list[str] = []
@@ -611,21 +902,47 @@ def quickstart_report(
         smoke = smoke_report(
             gateway_base_url=gateway_base_url,
             audit_jsonl_path=audit_jsonl_path,
+            management_token=management_token,
         )
     except Exception as exc:
-        smoke = {"status": "error", "checks": [], "errors": [type(exc).__name__]}
+        smoke = {"status": "error", "checks": [], "errors": ["smoke_error"]}
     checks.append({"name": "gateway_smoke", "status": smoke["status"], "summary": smoke})
+    management_auth = next(
+        (check for check in smoke.get("checks", []) if check.get("name") == "management_auth"),
+        None,
+    )
+    if management_auth is not None:
+        checks.append(
+            {
+                "name": "management_auth",
+                "status": management_auth.get("status", "unverified"),
+                "message": management_auth.get(
+                    "message", "Management authentication was not verified."
+                ),
+            }
+        )
+    protection = next(
+        (check for check in smoke.get("checks", []) if check.get("name") == "protection"),
+        {"message": "No protected /v1 request was sent."},
+    )
+    checks.append(
+        {
+            "name": "protection",
+            "status": "unverified",
+            "message": protection.get("message", "No protected /v1 request was sent."),
+        }
+    )
     errors.extend(smoke.get("errors", []))
     if metrics_jsonl_path is not None:
         try:
             summary = metrics_summary(metrics_jsonl_path)
             checks.append({"name": "metrics_summary", "status": "ok", "summary": summary})
-        except Exception as exc:
-            errors.append(f"metrics summary failed: {type(exc).__name__}")
-            checks.append({"name": "metrics_summary", "status": "error", "error_type": type(exc).__name__})
+        except Exception:
+            errors.append("metrics summary failed: metrics_summary_error")
+            checks.append({"name": "metrics_summary", "status": "error", "error_type": "metrics_summary_error"})
     return {
         "status": "error" if errors else "ok",
-        "gateway_base_url": gateway_base_url.rstrip("/"),
+        "gateway_base_url": _safe_url_for_report(gateway_base_url),
         "checks": checks,
         "errors": errors,
     }
@@ -637,7 +954,8 @@ def format_quickstart_report_text(report: dict[str, Any]) -> str:
         f"- Gateway: {report['gateway_base_url']}",
     ]
     for check in report["checks"]:
-        lines.append(f"- {check['status'].upper()} {check['name']}")
+        suffix = f" - {check['message']}" if check.get("message") else ""
+        lines.append(f"- {check['status'].upper()} {check['name']}{suffix}")
     for error in report.get("errors", []):
         lines.append(f"- ERROR {error}")
     return "\n".join(lines) + "\n"
@@ -654,7 +972,10 @@ def format_quickstart_report_markdown(report: dict[str, Any]) -> str:
         "| --- | --- |",
     ]
     for check in report["checks"]:
-        lines.append(f"| {_cell(check['name'])} | {check['status']} |")
+        status = check["status"]
+        if check.get("message"):
+            status = f"{status}: {_cell(check['message'])}"
+        lines.append(f"| {_cell(check['name'])} | {status} |")
     if report.get("errors"):
         lines.extend(["", "## Errors", ""])
         for error in report["errors"]:
@@ -881,21 +1202,64 @@ def _load_policy_for_ux(
     return load_effective_policy(profile or "default", domain_packs=domain_packs)
 
 
+def _limits_from_gateway_config(config: Any) -> dict[str, int | float]:
+    return {
+        "max_request_bytes": config.max_request_bytes,
+        "max_concurrent_requests": config.max_concurrent_requests,
+        "client_timeout_seconds": config.client_timeout_seconds,
+        "upstream_timeout_seconds": config.upstream_timeout_seconds,
+        "max_stream_seconds": config.max_stream_seconds,
+        "stream_holdback_chars": config.stream_holdback_chars,
+    }
+
+
+def _gateway_configuration_check(upstream_base_url: str | None) -> dict[str, Any]:
+    configured_upstream = upstream_base_url or os.environ.get("LSDF_UPSTREAM_BASE_URL")
+    # resolve_gateway_config validates auth and limit environment values without
+    # opening a network connection. A synthetic URL keeps the check useful when
+    # doctor is run before an upstream has been configured.
+    validation_url = configured_upstream or "http://lsdf-doctor.invalid"
+    try:
+        config = resolve_gateway_config(
+            upstream_base_url=validation_url,
+            environ=dict(os.environ),
+        )
+    except GatewayConfigError as exc:
+        return {
+            "name": "gateway_config",
+            "status": "error",
+            "message": "Gateway configuration failed: gateway_config_error",
+        }
+    return {
+        "name": "gateway_config",
+        "status": "ok",
+        "upstream_configured": bool(configured_upstream),
+        "management": {
+            "enabled": config.management_enabled,
+            "auth_required": bool(config.management_token),
+        },
+        "client": {"auth_required": bool(config.client_token)},
+        "limits": _limits_from_gateway_config(config),
+    }
+
+
 def _check_upstream(
     upstream_base_url: str, errors: list[str], warnings: list[str]
 ) -> dict[str, Any]:
-    parsed = urllib.parse.urlparse(upstream_base_url)
-    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+    display_url = _safe_url_for_report(upstream_base_url)
+    try:
+        validated_url = _validated_http_base_url(upstream_base_url)
+    except ValueError:
         message = "Upstream URL must include http(s) scheme and host"
         errors.append(message)
-        return {"name": "upstream", "status": "error", "url": upstream_base_url, "message": message}
-    request = urllib.request.Request(upstream_base_url, method="GET")
+        return {"name": "upstream", "status": "error", "url": display_url, "message": message}
+    request = urllib.request.Request(validated_url, method="GET")
     try:
-        with urllib.request.urlopen(request, timeout=3) as response:
+        with _NO_REDIRECT_OPENER.open(request, timeout=3) as response:
             return {
                 "name": "upstream",
                 "status": "ok",
-                "url": upstream_base_url,
+                "url": display_url,
                 "http_status": response.status,
             }
     except urllib.error.HTTPError as exc:
@@ -905,14 +1269,14 @@ def _check_upstream(
         return {
             "name": "upstream",
             "status": "warning",
-            "url": upstream_base_url,
+            "url": display_url,
             "http_status": exc.code,
             "message": "reachable with non-2xx response",
         }
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
-        message = f"Upstream reachability failed: {type(exc).__name__}"
+        message = "Upstream reachability failed: upstream_transport_error"
         errors.append(message)
-        return {"name": "upstream", "status": "error", "url": upstream_base_url, "message": message}
+        return {"name": "upstream", "status": "error", "url": display_url, "message": message}
 
 
 def _check_audit_path(path: Path, errors: list[str], *, name: str = "audit_jsonl") -> dict[str, Any]:
@@ -921,7 +1285,7 @@ def _check_audit_path(path: Path, errors: list[str], *, name: str = "audit_jsonl
         with path.open("a", encoding="utf-8"):
             pass
     except Exception as exc:
-        message = f"Audit path is not writable: {type(exc).__name__}"
+        message = "Audit path is not writable: audit_path_error"
         errors.append(message)
         return {"name": name, "status": "error", "path": str(path), "message": message}
     return {"name": name, "status": "ok", "path": str(path)}

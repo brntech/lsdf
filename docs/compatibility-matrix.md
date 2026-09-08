@@ -15,6 +15,7 @@ Use Docker Compose for LSDF verification, for example `docker compose run --rm c
 | Observability traces/logs/spans | Supported | Shape-based `logs.traces` sanitizer. |
 | LM Studio | Supported by recipe | Use `http://host.docker.internal:1234`. |
 | local vLLM | Supported by recipe | Use `http://host.docker.internal:8000`. |
+| Ollama OpenAI-compatible endpoint | Supported by preset/recipe | Use `docker compose run --rm cli init --upstream ollama`; the source gateway uses `http://host.docker.internal:11434/v1`. |
 | LiteLLM Proxy | Supported by preset/recipe | Use `docker compose run --rm cli init --upstream litellm`; recommended topology is app -> LSDF -> LiteLLM. |
 | OpenRouter | Supported by preset/recipe | Use `docker compose run --rm cli init --upstream openrouter`; LSDF forwards to `https://openrouter.ai/api/v1`. |
 | LangChain/LlamaIndex/LiteLLM | Runnable shape proof | Dependency-free runner exercises equivalent OpenAI-compatible request shapes; SDK-native helpers are not shipped. |
@@ -22,7 +23,8 @@ Use Docker Compose for LSDF verification, for example `docker compose run --rm c
 | Reversible tokenization | Supported | Encrypted local SQLite vault. |
 | Vault backup/check/rotation | Supported | Consistent SQLite online backups, including WAL, to a new output file; external KMS is not implemented. |
 | Management endpoint auth | Supported | Optional `LSDF_MANAGEMENT_TOKEN`; `/v1/*` is unaffected. |
-| Client authentication | External control required | LSDF does not authenticate `/v1/chat/completions` callers. Use a trusted network or an authenticating reverse proxy; management tokens and upstream provider keys do not provide LSDF client authentication. |
+| Client authentication | Supported in current source/runtime | Set `LSDF_CLIENT_TOKEN` independently from `LSDF_MANAGEMENT_TOKEN`; the v0.3.2 published image predates this control, so use a current image before relying on it. |
+| Request and stream limits | Supported in current source/runtime | `LSDF_MAX_REQUEST_BYTES`, `LSDF_MAX_CONCURRENT_REQUESTS`, client/upstream timeouts, maximum stream duration, and stream holdback are reported by authenticated health; no sustained-load certification is implied. |
 | Policy signing | Supported | Ed25519 required for enforced custom policies; legacy hash sidecars are CLI migration artifacts only. |
 | Golden demo/proof bundle | Supported | Docker Compose demo profile plus `docker compose run --rm cli proof-bundle`. |
 | Optional ML gateway | Supported by optional profile | `gateway-ml` uses `broad-pii-ml`, OpenAI privacy-filter, entropy, and Docker-managed model cache. |

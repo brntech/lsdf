@@ -32,9 +32,11 @@ docker compose run --rm cli protection-report --profile default --format markdow
 
 ## 3. Harden Management
 
-Keep the gateway behind ingress authentication and TLS for shared access; the gateway does not authenticate client chat requests. Set `LSDF_MANAGEMENT_TOKEN` to protect `/lsdf/*`, or keep management enabled only behind a trusted reverse proxy. Setting `LSDF_MANAGEMENT_ENABLED=false` removes these endpoints entirely, including from the proxy. It does not protect `/v1/chat/completions`.
+Keep the gateway behind ingress authentication and TLS for shared access. Set `LSDF_CLIENT_TOKEN` for direct caller authentication on `/v1/chat/completions` and `LSDF_MANAGEMENT_TOKEN` independently to protect `/lsdf/*`. Setting `LSDF_MANAGEMENT_ENABLED=false` removes these endpoints entirely, including from the proxy; it does not disable client authentication or request limits.
 
-Use authenticated requests to check protected management endpoints. The built-in `smoke` and `quickstart-report` commands do not send management tokens; their management checks are intended for the unprotected local setup.
+Use authenticated requests to check protected management endpoints. Export the same private `LSDF_MANAGEMENT_TOKEN` used by the gateway, then pass it with `docker compose --env-file .lsdf.env run --rm -e LSDF_MANAGEMENT_TOKEN="$LSDF_MANAGEMENT_TOKEN" cli smoke --gateway-base-url http://gateway:8080` for local Compose names. The built-in smoke and quickstart commands withhold tokens for other hostnames and mark management authentication unverified. They always mark client protection unverified because they do not send `/v1` traffic.
+
+For a local protection check, exercise `/v1/chat/completions` once without `LSDF_CLIENT_TOKEN`, once with it, and once with a synthetic blocking fixture; expect `401`, an upstream response, and `403`. Use raw-value-safe audit and metrics summaries for the result.
 
 ## 4. Move To Enforcement
 

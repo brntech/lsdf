@@ -12,6 +12,11 @@ class Surface:
     pointer: tuple[str | int, ...]
     value: str
     json_pointer: tuple[str | int, ...] | None = None
+    # Routing fields such as a top-level OpenAI `model` identifier are still
+    # scanned by normal recognizers, but supplementary heuristics may use this
+    # narrow context marker to avoid treating a provider model name as a
+    # credential.  It is intentionally not inferred from arbitrary text.
+    routing_metadata: bool = False
 
 
 def extract_surfaces(
@@ -202,7 +207,22 @@ def _walk_unknown(
         return
     if isinstance(payload, dict):
         for key, value in payload.items():
-            _walk_unknown(value, (*pointer, key), surfaces, claimed, unknown_surface)
+            child_pointer = (*pointer, key)
+            chat_envelope = isinstance(payload, dict) and (
+                isinstance(payload.get("messages"), list)
+                or isinstance(payload.get("choices"), list)
+            )
+            if not pointer and chat_envelope and key == "model" and isinstance(value, str):
+                surfaces.append(
+                    Surface(
+                        name=unknown_surface,
+                        pointer=child_pointer,
+                        value=value,
+                        routing_metadata=True,
+                    )
+                )
+                continue
+            _walk_unknown(value, child_pointer, surfaces, claimed, unknown_surface)
     elif isinstance(payload, list):
         for idx, value in enumerate(payload):
             _walk_unknown(value, (*pointer, idx), surfaces, claimed, unknown_surface)
