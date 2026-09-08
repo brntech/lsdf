@@ -3,7 +3,8 @@ FROM python:3.11-slim AS runtime-base
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/workspace/src
+    PYTHONPATH=/workspace/src \
+    LSDF_PROFILE=default
 
 WORKDIR /workspace
 
@@ -29,8 +30,7 @@ CMD ["python3", "-m", "unittest", "discover", "-s", "tests", "-v"]
 FROM runtime-base AS runtime-optional
 
 ENV HF_HOME=/opt/lsdf-cache/huggingface \
-    LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY=true \
-    LSDF_PROFILE=broad-pii-ml
+    LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY=true
 
 RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch==2.11.0+cpu && \
     pip install --no-cache-dir presidio-analyzer==2.2.362 transformers==4.51.0 gliner==0.2.22 && \

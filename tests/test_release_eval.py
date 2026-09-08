@@ -13,6 +13,7 @@ import io
 import json
 import tempfile
 import unittest
+from contextlib import chdir
 from pathlib import Path
 from unittest import mock
 
@@ -809,6 +810,122 @@ class Ai4PrivacyLocalBuilderTests(unittest.TestCase):
                 self.assertEqual(case["expected_entities"], ["PERSON"])
                 self.assertEqual(case["known_gap_labels"], ["OWNED_UNMAPPED"])
                 self.assertEqual(case["sensitive_values"], ["Zenvora", "violet"])
+                self.assertEqual(case["expected_absent"], ["Zenvora", "violet"])
+
+    def test_unmapped_only_values_still_require_containment(self):
+        from scripts import build_ai4privacy_multilingual_corpus as builder
+
+        source = self._source_row()
+        source["privacy_mask"] = [{"label": "OWNED_UNMAPPED", "value": "violet"}]
+        case = builder.to_case(source, "English")
+        self.assertEqual(case["expected_entities"], [])
+        self.assertEqual(case["known_gap_labels"], ["OWNED_UNMAPPED"])
+        self.assertEqual(case["sensitive_values"], ["violet"])
+        self.assertEqual(case["expected_absent"], ["violet"])
+
+    def test_source_shape_errors_identify_location_without_echoing_input(self):
+        from scripts import build_ai4privacy_multilingual_corpus as builder
+
+        marker = "OWNED-MALFORMED-CANARY"
+        base = self._source_row()
+        examples = [
+            ([], "record"),
+            ({key: value for key, value in base.items() if key != "id"}, "id"),
+            (base | {"id": {"data": marker}}, "id"),
+            (base | {"source_text": None}, "source_text"),
+            ({key: value for key, value in base.items() if key != "privacy_mask"}, "privacy_mask"),
+            (base | {"privacy_mask": "[{'data': '" + marker}, "privacy_mask"),
+            (base | {"privacy_mask": "{'data': '" + marker + "'}"}, "privacy_mask"),
+            (base | {"privacy_mask": [marker]}, "privacy_mask[0]"),
+            (base | {"privacy_mask": [{"value": marker}]}, "privacy_mask[0].label"),
+            (base | {"privacy_mask": [{"label": " "}]}, "privacy_mask[0].label"),
+            (base | {"privacy_mask": [{"label": "EMAIL"}]}, "privacy_mask[0].value"),
+            (base | {"privacy_mask": [{"label": "EMAIL", "value": None}]}, "privacy_mask[0].value"),
+            (base | {"privacy_mask": [{"label": "EMAIL", "value": marker}]}, "privacy_mask[0].value"),
+        ]
+        for source, field in examples:
+            with self.subTest(field=field):
+                with self.assertRaises(ValueError) as raised:
+                    builder.to_case(source, "English", record=7)
+                message = str(raised.exception)
+                self.assertIn("English record 7", message)
+                self.assertIn("field " + field + ":", message)
+                self.assertNotIn(marker, message)
+
+    def test_malformed_json_in_scanned_window_fails_without_overwriting_output(self):
+        from scripts import build_ai4privacy_multilingual_corpus as builder
+
+        marker = "OWNED-JSON-CANARY"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            inputs = root / "supplied"
+            for language, relative_path in builder.LANGUAGES.items():
+                source = inputs / relative_path
+                source.parent.mkdir(parents=True, exist_ok=True)
+                content = json.dumps(self._source_row()) + "\n"
+                if language == "English":
+                    content += '{"private": "' + marker + '"\n'
+                source.write_text(content, encoding="utf-8")
+            output_root = root / ".lsdf" / "external-benchmarks"
+            output_root.mkdir(parents=True)
+            output = output_root / "ai4privacy_multilingual.json"
+            output.write_text("existing benchmark", encoding="utf-8")
+            stderr, stdout = io.StringIO(), io.StringIO()
+            with mock.patch.object(builder, "OUTPUT_ROOT", output_root), mock.patch("sys.stderr", stderr), mock.patch("sys.stdout", stdout):
+                with self.assertRaises(SystemExit) as raised:
+                    builder.main([
+                        "--input-dir", str(inputs), "--cases-per-language", "1", "--scan-budget", "2",
+                        "--source-license", "Apache-2.0", "--source-revision", "owned-mini-v1",
+                    ])
+            self.assertEqual(raised.exception.code, 2)
+            self.assertIn("English record 2 field json: invalid JSON", stderr.getvalue())
+            self.assertNotIn(marker, stderr.getvalue())
+            self.assertNotIn("Traceback", stderr.getvalue())
+            self.assertEqual(stdout.getvalue(), "")
+            self.assertEqual(output.read_text(encoding="utf-8"), "existing benchmark")
+
+    def test_undersampling_reports_zero_language_counts_without_echoing_values(self):
+        from scripts import build_ai4privacy_multilingual_corpus as builder
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            inputs = root / "supplied"
+            for language, relative_path in builder.LANGUAGES.items():
+                source = inputs / relative_path
+                source.parent.mkdir(parents=True, exist_ok=True)
+                row = self._source_row()
+                if language == "English":
+                    row["privacy_mask"] = []
+                source.write_text(json.dumps(row) + "\n", encoding="utf-8")
+            output_root = root / ".lsdf" / "external-benchmarks"
+            stderr = io.StringIO()
+            with mock.patch.object(builder, "OUTPUT_ROOT", output_root), mock.patch("sys.stderr", stderr), mock.patch("sys.stdout"):
+                builder.main([
+                    "--input-dir", str(inputs), "--cases-per-language", "2",
+                    "--source-license", "Apache-2.0", "--source-revision", "owned-mini-v1",
+                ])
+            payload = json.loads((output_root / "ai4privacy_multilingual.json").read_text(encoding="utf-8"))
+        self.assertEqual(set(payload["by_language_count"]), set(builder.LANGUAGES))
+        self.assertEqual(payload["by_language_count"]["English"], 0)
+        self.assertEqual(len(payload["cases"]), 5)
+        self.assertIn("English: produced 0 annotated cases; requested 2", stderr.getvalue())
+        self.assertEqual(stderr.getvalue().count("warning:"), 6)
+        self.assertNotIn("Zenvora", stderr.getvalue())
+        self.assertNotIn("violet", stderr.getvalue())
+
+    def test_output_boundary_does_not_follow_the_callers_working_directory(self):
+        from scripts import build_ai4privacy_multilingual_corpus as builder
+
+        with tempfile.TemporaryDirectory() as directory, chdir(directory):
+            stderr = io.StringIO()
+            with mock.patch("sys.stderr", stderr), self.assertRaises(SystemExit) as raised:
+                builder.main([
+                    "--input-dir", "not-read", "--output", ".lsdf/external-benchmarks/copy.json",
+                    "--source-license", "Apache-2.0", "--source-revision", "owned-mini-v1",
+                ])
+            self.assertEqual(raised.exception.code, 2)
+            self.assertIn("output must remain under .lsdf/external-benchmarks", stderr.getvalue())
+            self.assertFalse(Path(".lsdf").exists())
 
     def test_sampling_is_deterministic_and_obeys_local_scan_budget(self):
         from scripts import build_ai4privacy_multilingual_corpus as builder
@@ -847,6 +964,8 @@ class Ai4PrivacyLocalBuilderTests(unittest.TestCase):
         self.assertEqual(set(payload["by_language_count"]), set(builder.LANGUAGES))
         self.assertEqual(payload["source_license"], "Apache-2.0")
         self.assertEqual(payload["source_revision"], "owned-mini-v1")
+        self.assertEqual(payload["sampling"], "head-window shuffle")
+        self.assertIn("first scan_budget nonblank records per language", payload["description"])
         self.assertIn("grants no rights", payload["license_note"])
 
     def test_builder_requires_explicit_local_input(self):

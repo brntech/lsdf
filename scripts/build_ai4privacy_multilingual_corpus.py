@@ -15,7 +15,11 @@ directory and is excluded from Docker image builds.
         --input-dir .lsdf/licensed-source --cases-per-language 25 --seed 0 \
         --source-license YOUR_SOURCE_TERMS --source-revision YOUR_SOURCE_REVISION
 
-Sampling is deterministic for identical local input files and settings.
+Sampling shuffles the first scan_budget nonblank records of each language
+file, then takes up to cases-per-language records. It does not sample the
+whole file or stratify by entity, category, or document length. The same
+seed is reused per language, so equal window sizes share the positional
+permutation. Results are deterministic for identical local inputs/settings.
 Only the Python standard library is required inside the container.
 """
 
@@ -25,7 +29,7 @@ import argparse
 import ast
 import json
 import random
-from collections import defaultdict
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -36,7 +40,7 @@ from typing import Any
 _safe_python_literal_parser = ast.literal_eval
 
 
-OUTPUT_ROOT = Path(".lsdf/external-benchmarks")
+OUTPUT_ROOT = Path(__file__).resolve().parents[1] / ".lsdf" / "external-benchmarks"
 
 
 LANGUAGES = {
@@ -53,7 +57,10 @@ LANGUAGES = {
 # Labels not in this map remain visible via `sensitive_values` (so
 # containment is still measured) but are not asserted in
 # `expected_entities` — they represent known coverage gaps that the
-# corpus deliberately tests across multiple languages.
+# corpus deliberately tests across multiple languages. All values, including
+# unmapped labels, remain expected_absent: exact entity tagging and post-policy
+# containment are separate contracts. Blocking or whole-surface redaction can
+# contain an unmapped value without emitting that label.
 AI4PRIVACY_TO_LSDF = {
     "GIVENNAME1": "PERSON",
     "GIVENNAME2": "PERSON",
@@ -89,6 +96,46 @@ def _parse_python_literal(raw: Any) -> list[dict[str, Any]]:
     return _safe_python_literal_parser(raw)
 
 
+def _source_error(language: str, record: int, field: str, detail: str) -> ValueError:
+    # Never interpolate source ids, values, parser exceptions, or local paths.
+    safe_language = language if language in LANGUAGES else "unknown language"
+    return ValueError(f"{safe_language} record {record} field {field}: {detail}")
+
+
+def _validate_source_record(
+    example: Any, language: str, record: int,
+) -> tuple[str, list[dict[str, Any]]]:
+    if not isinstance(example, dict):
+        raise _source_error(language, record, "record", "expected an object")
+    identifier = example.get("id")
+    if not (
+        isinstance(identifier, str) and identifier.strip()
+        or isinstance(identifier, int) and not isinstance(identifier, bool)
+    ):
+        raise _source_error(language, record, "id", "expected a nonblank string or integer")
+    if not isinstance(example.get("source_text"), str):
+        raise _source_error(language, record, "source_text", "expected a string")
+    if "privacy_mask" not in example:
+        raise _source_error(language, record, "privacy_mask", "required field is missing")
+    try:
+        spans = _parse_python_literal(example["privacy_mask"])
+    except (ValueError, SyntaxError, TypeError, RecursionError):
+        raise _source_error(language, record, "privacy_mask", "expected a list or list literal") from None
+    if not isinstance(spans, list):
+        raise _source_error(language, record, "privacy_mask", "expected a list")
+    for index, span in enumerate(spans):
+        field = f"privacy_mask[{index}]"
+        if not isinstance(span, dict):
+            raise _source_error(language, record, field, "expected an object")
+        if not isinstance(span.get("label"), str) or not span["label"].strip():
+            raise _source_error(language, record, field + ".label", "expected a nonblank string")
+        if not isinstance(span.get("value"), str) or not span["value"].strip():
+            raise _source_error(language, record, field + ".value", "expected a nonblank string")
+        if span["value"] not in example["source_text"]:
+            raise _source_error(language, record, field + ".value", "annotation is absent from source_text")
+    return example["source_text"], spans
+
+
 def lsdf_entities(spans: list[dict[str, Any]]) -> list[str]:
     seen: list[str] = []
     for span in spans:
@@ -106,14 +153,14 @@ def categorize(entities: list[str]) -> str:
     return "other"
 
 
-def to_case(example: dict[str, Any], language: str) -> dict[str, Any] | None:
-    spans = _parse_python_literal(example["privacy_mask"])
+def to_case(
+    example: dict[str, Any], language: str, *, record: int = 1,
+) -> dict[str, Any] | None:
+    text, spans = _validate_source_record(example, language, record)
     if not spans:
+        # A valid unannotated record is not a threat case; count the shortfall.
         return None
-    text = example["source_text"]
-    sensitive_values = sorted(
-        {str(span["value"]) for span in spans if span.get("value") not in ("", None)}
-    )
+    sensitive_values = sorted({span["value"] for span in spans})
     ai4privacy_labels = sorted({span["label"] for span in spans})
     expected_entities = lsdf_entities(spans)
     category = categorize(expected_entities) if expected_entities else "other"
@@ -146,17 +193,29 @@ def to_case(example: dict[str, Any], language: str) -> dict[str, Any] | None:
 
 
 def sample_one_language(
-    data_file: Path, target: int, seed: int, scan_budget: int
+    data_file: Path, target: int, seed: int, scan_budget: int, *, language: str = "unknown",
 ) -> list[dict[str, Any]]:
-    """Sample the first scan_budget records from a supplied local JSONL file."""
+    """Validate and shuffle the first scan_budget nonblank local JSONL records."""
     pool: list[dict[str, Any]] = []
-    with data_file.open(encoding="utf-8") as source:
-        for line in source:
-            if not line.strip():
-                continue
-            if len(pool) >= scan_budget:
-                break
-            pool.append(json.loads(line))
+    record = 0
+    try:
+        with data_file.open(encoding="utf-8") as source:
+            for record, line in enumerate(source, start=1):
+                if not line.strip():
+                    continue
+                if len(pool) >= scan_budget:
+                    break
+                try:
+                    example = json.loads(line)
+                except (ValueError, RecursionError):
+                    raise _source_error(language, record, "json", "invalid JSON") from None
+                # Validate the whole scanned window, even records not selected later.
+                _validate_source_record(example, language, record)
+                pool.append(example)
+    except UnicodeError:
+        raise _source_error(language, record, "encoding", "expected UTF-8 source") from None
+    except OSError:
+        raise _source_error(language, record, "file", "cannot read local source") from None
     rng = random.Random(seed)
     rng.shuffle(pool)
     return pool[:target]
@@ -200,19 +259,30 @@ def main(argv: list[str] | None = None) -> None:
             parser.error(f"missing local source file for {language}")
 
     cases: list[dict[str, Any]] = []
-    by_language_count: dict[str, int] = defaultdict(int)
+    by_language_count = {language: 0 for language in LANGUAGES}
     for language, data_file in LANGUAGES.items():
-        sampled = sample_one_language(
-            args.input_dir / data_file,
-            target=args.cases_per_language,
-            seed=args.seed,
-            scan_budget=args.scan_budget,
-        )
-        for example in sampled:
-            case = to_case(example, language=language)
-            if case is not None:
-                cases.append(case)
-                by_language_count[language] += 1
+        try:
+            sampled = sample_one_language(
+                args.input_dir / data_file,
+                target=args.cases_per_language,
+                seed=args.seed,
+                scan_budget=args.scan_budget,
+                language=language,
+            )
+            for example in sampled:
+                case = to_case(example, language=language)
+                if case is not None:
+                    cases.append(case)
+                    by_language_count[language] += 1
+        except ValueError as exc:
+            parser.error(str(exc))
+        count = by_language_count[language]
+        if count < args.cases_per_language:
+            print(
+                f"warning: {language}: produced {count} annotated cases; "
+                f"requested {args.cases_per_language} from head-window shuffle",
+                file=sys.stderr,
+            )
 
     cases.sort(key=lambda c: (c["language"], c["category"], c["id"]))
 
@@ -226,8 +296,9 @@ def main(argv: list[str] | None = None) -> None:
         "description": (
             "Multilingual PII threat corpus complementing the "
             "English-only piece_b_replay / medical_phi_replay / "
-            "nemotron_pii corpora. Stratified sample drawn from the "
-            "ai4privacy OpenPII-220k subset across English, Dutch, "
+            "nemotron_pii corpora. Head-window shuffle of the first "
+            "scan_budget nonblank records per language, then up to "
+            "cases_per_language records selected, across English, Dutch, "
             "French, German, Italian, and Spanish. Entities not in "
             "LSDF's canonical vocabulary remain in `sensitive_values` "
             "for containment measurement and surface as "
@@ -240,6 +311,12 @@ def main(argv: list[str] | None = None) -> None:
             "revision are caller-supplied provenance, not verified permissions."
         ),
         "languages": sorted(LANGUAGES.keys()),
+        "sampling": "head-window shuffle",
+        "sampling_note": (
+            "The same seed is reused per language; equal-sized head windows "
+            "share positional permutations. Empty annotations are omitted "
+            "without refilling, so language counts can be below the target."
+        ),
         "scan_budget": args.scan_budget,
         "seed": args.seed,
         "cases_per_language": args.cases_per_language,

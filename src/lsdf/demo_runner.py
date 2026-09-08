@@ -79,12 +79,13 @@ def main(argv: list[str] | None = None) -> int:
 def _wait_for_gateway(base: str, checks: list[dict[str, Any]]) -> None:
     for _ in range(60):
         try:
-            _get_bytes(f"{base}/lsdf/health")
+            health = json.loads(_get_bytes(f"{base}/lsdf/health"))
+            if isinstance(health, dict) and health.get("status") == "ok":
+                checks.append({"name": "gateway_ready", "status": "ok"})
+                return
         except Exception:
-            time.sleep(0.25)
-            continue
-        checks.append({"name": "gateway_ready", "status": "ok"})
-        return
+            pass
+        time.sleep(0.25)
     checks.append({"name": "gateway_ready", "status": "error", "message": "not reachable"})
 
 

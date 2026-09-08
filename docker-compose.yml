@@ -222,7 +222,6 @@ services:
     entrypoint: ["python3", "/checks/runtime_image_smoke.py"]
     environment:
       LSDF_RUNTIME_OPTIONAL: "true"
-      LSDF_PROFILE: default
       HF_HUB_OFFLINE: "1"
     volumes:
       - ./tests/runtime_image_smoke.py:/checks/runtime_image_smoke.py:ro

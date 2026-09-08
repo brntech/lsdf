@@ -2,6 +2,11 @@
 
 ## 0.3.1 (unreleased)
 
+- Demo readiness waits for healthy upstream status. The local benchmark converter now reports malformed source data safely, records its exact sampling method, and reports language shortfalls without weakening containment expectations.
+
+- Both runtime images default to the dependency-light profile; ML profiles require explicit selection and a prepared cache. Image checks now exercise their own environment-selected profile and the optional worker's pipeline import.
+- Prerelease image tags no longer overwrite `latest`; invalid release tags are rejected. Optional runtime checks also run on pull requests.
+
 - Published image targets now start the gateway by default. Runtime images include source, policies, required synthetic foundation fixtures, and three first-party proof matrices; development/evaluation assets remain in separate build targets.
 - Existing detector adapters and security features remain Apache-2.0. Heavy detector dependencies remain optional and third-party software, models, and data retain their respective licenses.
 - Removed the bundled ai4privacy benchmark and replaced derived regression examples with independently authored fixtures. Licensed local benchmarks can be supplied explicitly; healthcare's benchmark promise is unchanged and missing promised data fails its gate.

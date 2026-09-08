@@ -56,3 +56,12 @@ jobs:
       - name: Tear down
         if: always()
         run: docker compose --profile runtime-smoke down
+
+  optional-runtime:
+    name: Optional runtime without downloaded detector weights
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build optional image and check its own default profile and worker
+        run: docker compose --profile optional-runtime-smoke run --build --rm optional-runtime-check

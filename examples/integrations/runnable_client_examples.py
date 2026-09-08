@@ -100,17 +100,19 @@ def _scenario_payload(name: str) -> dict[str, Any]:
 
 
 def _wait_for_gateway(base_url: str, attempts: int = 60, delay_seconds: float = 0.25) -> None:
-    """Block until the gateway answers /lsdf/health, so Compose-ordered runners do not race startup."""
+    """Wait for healthy gateway/upstream status before sending demo traffic."""
     root = base_url.rstrip("/")
     if root.endswith("/v1"):
         root = root[: -len("/v1")]
     for _ in range(attempts):
         try:
             with urllib.request.urlopen(f"{root}/lsdf/health", timeout=2) as response:
-                response.read()
-            return
+                health = json.loads(response.read())
+            if isinstance(health, dict) and health.get("status") == "ok":
+                return
         except Exception:
-            time.sleep(delay_seconds)
+            pass
+        time.sleep(delay_seconds)
 
 
 def _post(base_url: str, payload: dict[str, Any]) -> tuple[int, str]:

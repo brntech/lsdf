@@ -39,10 +39,22 @@ class RuntimeImageSmokeTests(unittest.TestCase):
             worker = os.environ["LSDF_OPENAI_PRIVACY_FILTER_PYTHON"]
             self.assertTrue(Path(worker).is_file())
             result = subprocess.run(
-                [worker, "-c", "import transformers; assert transformers.__version__ == '5.7.0'"],
+                [worker, "-c", "import transformers; from transformers import AutoModelForTokenClassification, AutoTokenizer, pipeline; assert transformers.__version__ == '5.7.0'; assert callable(pipeline)"],
                 capture_output=True, timeout=60,
             )
             self.assertEqual(result.returncode, 0, "optional worker startup")
+
+    def test_image_default_gateway_profile_works_without_model_cache(self):
+        from lsdf.engine import Firewall
+        from lsdf.gateway import resolve_gateway_config
+        from lsdf.policy import load_effective_policy
+
+        config = resolve_gateway_config(upstream_base_url="http://127.0.0.1:9")
+        self.assertEqual(config.policy_profile, "default")
+        firewall = Firewall(load_effective_policy(config.policy_profile))
+        self.assertIsNotNone(firewall)
+        report = json.loads(self.cli("doctor", "--profile", config.policy_profile, "--format", "json"))
+        self.assertEqual(report["status"], "ok")
 
     def test_doctor_and_all_builtin_policies_load(self):
         self.assertEqual(json.loads(self.cli("doctor", "--profile", "default", "--format", "json"))["status"], "ok")
