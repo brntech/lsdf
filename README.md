@@ -16,7 +16,7 @@ cd lsdf
 docker compose version
 ```
 
-You can also extract `lsdf-0.3.2-source.zip` from the [release downloads](https://github.com/brntech/lsdf/releases/tag/v0.3.2) and open its folder. This released v0.3.2 source snapshot does not include the current client-token and request-limit controls. These commands build images locally; no separate image pull is needed. The first build needs internet access and may take several minutes. For a prebuilt gateway without a source checkout, use the [installation guide](docs/installation.md#prebuilt-release-image).
+You can also extract `lsdf-0.3.2-source.zip` from the [release downloads](https://github.com/brntech/lsdf/releases/tag/v0.3.2) and open its folder. This released v0.3.2 source snapshot predates the current client-token, request-limit, response-metadata, and tool-argument key controls. These commands build images locally; no separate image pull is needed. The first build needs internet access and may take several minutes. For a prebuilt gateway without a source checkout, use the [installation guide](docs/installation.md#prebuilt-release-image).
 
 Try the self-contained demo; no model server or provider key is required:
 
@@ -53,13 +53,14 @@ Most privacy tools inspect only prompt and response text. LSDF treats the whole 
 - Responses are scanned before they reach the user.
 - Streaming content is held briefly, inspected, then released only after it passes the rolling risk window.
 - Streamed tool-call arguments are assembled and inspected before raw fragments can reach clients.
+- Current source inspects response metadata and parsed tool-argument keys. Enforcing findings withhold these fields instead of rewriting identifiers or argument names; see the [security model](docs/security-model.md#detector-posture).
 - Trace/log/span payloads can be sanitized outside the gateway.
 - Indirect prompt injection on retrieved RAG and tool-result surfaces is blocked under the `strict` profile.
 - Audit and reports are raw-value-safe by default.
 
 LSDF is local-first, dependency-light by default, and designed to make privacy behavior measurable. It also includes OpenRouter and LiteLLM presets, provider playbooks, demo-media assets, policy explanation, sample proof artifacts, and release-ready operational guidance.
 
-For the standalone gateway image in v0.3.2, with required policy fixtures and first-party proof matrices, see [Production Operations](docs/production-operations.md#standalone-runtime-image). Both runtime variants start with the dependency-light `default` profile; ML profiles require explicit selection and a prepared cache. The lightweight runtime leaves out heavy detector dependencies, model weights, and external benchmark corpora; the development Compose services support full evaluations and demos. The client-token and request-limit controls and the fourth coding matrix described below require an image built from the current source until a release containing them is published; the v0.3.2 runtime retains its historical three matrices.
+For the standalone gateway image in v0.3.2, with required policy fixtures and first-party proof matrices, see [Production Operations](docs/production-operations.md#standalone-runtime-image). Both runtime variants start with the dependency-light `default` profile; ML profiles require explicit selection and a prepared cache. The lightweight runtime leaves out heavy detector dependencies, model weights, and external benchmark corpora; the development Compose services support full evaluations and demos. The client-token, request-limit, response-metadata and tool-argument key controls, plus the fourth coding matrix described below, require an image built from the current source; the v0.3.2 runtime retains its historical three matrices.
 
 ## Open Source and Optional Integrations
 

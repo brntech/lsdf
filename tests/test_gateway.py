@@ -206,17 +206,18 @@ class GatewayTests(unittest.TestCase):
         self.assertEqual(headers["x-lsdf-blocked"], "true")
         self.assertEqual(json.loads(body)["error"]["type"], "sensitive_data_blocked")
 
-    def test_non_json_upstream_response_passes_through(self):
+    def test_non_json_upstream_response_is_withheld(self):
         status, response_headers, body, headers = handle_chat_completion(
             {"messages": [{"role": "user", "content": "hello"}]},
             self.firewall,
             lambda _payload: (200, {"content-type": "text/plain"}, b"plain text"),
         )
 
-        self.assertEqual(status, 200)
-        self.assertEqual(response_headers["content-type"], "text/plain")
-        self.assertEqual(body, b"plain text")
-        self.assertEqual(headers["x-lsdf-blocked"], "false")
+        self.assertEqual(status, 502)
+        self.assertEqual(response_headers["content-type"], "application/json")
+        self.assertEqual(json.loads(body)["error"]["type"], "invalid_upstream_response")
+        self.assertNotIn(b"plain text", body)
+        self.assertEqual(headers["x-lsdf-blocked"], "true")
         self.assertEqual(headers["x-lsdf-decision-count"], "0")
 
     def test_audit_sink_records_blocked_request_without_raw_values(self):
@@ -358,7 +359,7 @@ class GatewayTests(unittest.TestCase):
             "<CREDIT_CARD:TOKEN>",
         )
 
-    def test_response_unknown_fields_use_output_semantics(self):
+    def test_response_unknown_fields_are_inspected_and_blocked(self):
         upstream_payload = {
             "choices": [{"message": {"content": "ok"}}],
             "metadata": {"secret": "api_LSDF_FIXTURE_TOKEN_000000"},
@@ -371,11 +372,12 @@ class GatewayTests(unittest.TestCase):
         )
 
         response = json.loads(body)
-        self.assertEqual(status, 200)
-        self.assertEqual(headers["x-lsdf-blocked"], "false")
-        self.assertEqual(response["metadata"]["secret"], "<API_KEY:REDACTED>")
+        self.assertEqual(status, 502)
+        self.assertEqual(headers["x-lsdf-blocked"], "true")
+        self.assertEqual(response["error"]["type"], "sensitive_data_blocked")
+        self.assertNotIn("api_LSDF_FIXTURE_TOKEN_000000", body.decode("utf-8"))
 
-    def test_response_unknown_numeric_fields_use_output_semantics(self):
+    def test_response_unknown_numeric_fields_are_inspected_and_blocked(self):
         upstream_payload = {
             "choices": [{"message": {"content": "ok"}}],
             "metadata": {"card": 4111111111111111},
@@ -388,9 +390,9 @@ class GatewayTests(unittest.TestCase):
         )
 
         response = json.loads(body)
-        self.assertEqual(status, 200)
-        self.assertEqual(headers["x-lsdf-blocked"], "false")
-        self.assertEqual(response["metadata"]["card"], "<CREDIT_CARD:REDACTED>")
+        self.assertEqual(status, 502)
+        self.assertEqual(headers["x-lsdf-blocked"], "true")
+        self.assertEqual(response["error"]["type"], "sensitive_data_blocked")
 
     def test_non_streaming_upstream_transport_error_returns_502(self):
         def fail(_payload):
@@ -486,17 +488,19 @@ class StreamingGatewayTests(unittest.TestCase):
         self.assertEqual(response["error"]["type"], "sensitive_data_blocked")
         self.assertNotIn("api_LSDF_FIXTURE_TOKEN_000000", json.dumps(response))
 
-    def test_non_sse_non_json_stream_response_still_passes_through(self):
+    def test_non_sse_non_json_stream_response_is_withheld(self):
         status, response_headers, body, headers = handle_streaming_chat_completion(
             {"stream": True, "messages": [{"role": "user", "content": "hello"}]},
             self.firewall,
             lambda _payload: (200, {"content-type": "text/plain"}, [b"plain text"]),
         )
 
-        self.assertEqual(status, 200)
-        self.assertEqual(response_headers["content-type"], "text/plain")
-        self.assertEqual(headers["x-lsdf-blocked"], "false")
-        self.assertEqual(b"".join(body), b"plain text")
+        self.assertEqual(status, 502)
+        self.assertEqual(response_headers["content-type"], "application/json")
+        self.assertEqual(headers["x-lsdf-blocked"], "true")
+        response_bytes = b"".join(body)
+        self.assertEqual(json.loads(response_bytes)["error"]["type"], "invalid_upstream_response")
+        self.assertNotIn(b"plain text", response_bytes)
 
     def test_harmless_stream_preserves_sse_and_done(self):
         status, response_headers, body, headers = handle_streaming_chat_completion(
@@ -863,7 +867,7 @@ class StreamingGatewayTests(unittest.TestCase):
         self.assertEqual(audit_events[-1]["stage"], "stream_terminal")
         self.assertEqual(audit_events[-1]["stream_state"], "done")
         self.assertFalse(audit_events[-1]["blocked"])
-        self.assertEqual(audit_events[-1]["surfaces_inspected"], ["output.stream_chunk"])
+        self.assertEqual(audit_events[-1]["surfaces_inspected"], ["output.content", "output.stream_chunk"])
 
     def test_audit_sink_records_stream_terminal_block_without_raw_values(self):
         raw_secret = "api_LSDF_FIXTURE_TOKEN_000000"

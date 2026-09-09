@@ -9,10 +9,10 @@ Use Docker Compose for LSDF verification, for example `docker compose run --rm c
 | Standalone gateway image | Supported Docker path | `runtime` starts the gateway without a source mount; `runtime-optional` adds explicit heavy dependencies and requires model readiness checks. |
 | Release image architecture | `linux/amd64` | The released image builds and checks cover this platform only. Native ARM64 release images are unverified. This is a container-platform statement, not a host-OS support matrix. |
 | OpenAI-compatible chat completions | Supported | `/v1/chat/completions` proxy path. |
-| Non-streaming responses | Supported | Request preflight plus response inspection. Policy actions may change opaque response IDs and other metadata; see [metadata coverage](security-model.md). |
-| Streaming response metadata | Passthrough | Envelope metadata, tool names/IDs, and unrecognized extensions are outside content inspection; do not treat them as detector-cleared. See [streaming compatibility](streaming-compatibility.md#server-sent-events-node-deno-eventsource-api). |
+| Non-streaming responses | Supported in current source | Request preflight, content transforms, and metadata inspection without identity rewriting. Unsupported non-SSE response bodies are withheld with HTTP 502. See [metadata coverage](security-model.md). |
+| Streaming response metadata | Inspected in current source | JSON metadata and SSE envelope values are preflighted. Unsafe metadata withholds pending content. JSON IDs must remain stable; tool IDs/names must arrive as complete initial values. See [streaming compatibility](streaming-compatibility.md#server-sent-events-node-deno-eventsource-api). |
 | Streaming content/reasoning | Supported | Rolling holdback inspection; final deltas preserve text order, including a delta carrying its finish reason. SDK timing notes and per-chunk metric reference: `streaming-compatibility.md`. |
-| Streamed tool-call arguments | Supported | Arguments are assembled before release. |
+| Streamed tool-call arguments | Supported | Arguments are assembled before release. Current source scans parsed JSON keys and values; enforcing key findings withhold the payload without renaming keys. The v0.3.2 image predates key inspection and metadata enforcement. |
 | Observability traces/logs/spans | Supported | Shape-based `logs.traces` sanitizer. |
 | LM Studio | Supported by recipe | Use `http://host.docker.internal:1234`. |
 | local vLLM | Supported by recipe | Use `http://host.docker.internal:8000`. |

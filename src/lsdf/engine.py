@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import json
 from copy import deepcopy
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import dataclass, replace
+from typing import Any, Callable
 
 from .audit import build_audit_event
 from .detectors import DetectorProviders, DetectorRegistry, build_detector_registry
@@ -58,6 +58,40 @@ class Firewall:
         unknown_surface: str = "input.messages",
     ) -> InspectionResult:
         surfaces = extract_surfaces(payload, unknown_surface=unknown_surface)
+        return self._inspect_surfaces(payload, surfaces)
+
+    def inspect_surfaces(
+        self,
+        payload: Any,
+        surfaces: list[Surface],
+        *,
+        transform_filter: Callable[[PolicyDecision], bool] | None = None,
+        reject_filter: Callable[[PolicyDecision], bool] | None = None,
+    ) -> InspectionResult:
+        """Inspect an explicit surface set with optional transform controls.
+
+        Gateways use this for response envelopes: normal response content and
+        static metadata surfaces are scanned together, while transforms are
+        restricted to content and enforceable metadata findings are rejected.
+        The default filters retain :meth:`inspect` semantics for callers that
+        need the general firewall path.
+        """
+
+        return self._inspect_surfaces(
+            payload,
+            surfaces,
+            transform_filter=transform_filter,
+            reject_filter=reject_filter,
+        )
+
+    def _inspect_surfaces(
+        self,
+        payload: Any,
+        surfaces: list[Surface],
+        *,
+        transform_filter: Callable[[PolicyDecision], bool] | None = None,
+        reject_filter: Callable[[PolicyDecision], bool] | None = None,
+    ) -> InspectionResult:
         findings = self._scan_surfaces(surfaces)
         decisions = [self.policy.decide(finding) for finding in findings]
         decisions = [decision for decision in decisions if decision.action != "allow"]
@@ -67,12 +101,33 @@ class Firewall:
         _raise_for_exception_decisions(decisions)
 
         blocked = _decisions_blocked(self.policy.mode, decisions)
-        transformed = deepcopy(payload)
+        rejected = [
+            decision
+            for decision in decisions
+            if (
+                getattr(decision.finding, "argument_key_metadata", False)
+                or (reject_filter is not None and reject_filter(decision))
+            )
+            and _decision_applies(decision, self.policy.mode)
+        ]
+        if rejected:
+            blocked = True
+        # A rejected metadata decision must not leave a raw response sitting
+        # under ``transformed_payload`` for a caller that logs or serializes
+        # the result.  The gateway withholds the response entirely, so None is
+        # the safe representation for this internal result.
+        transformed = None if rejected else deepcopy(payload)
         applicable = [
             decision
             for decision in decisions
             if _decision_applies(decision, self.policy.mode)
+            and (transform_filter is None or transform_filter(decision))
         ]
+        # If metadata itself causes a response halt, avoid all transforms. In
+        # particular this prevents a content tokenization decision from
+        # creating a vault record for a response that will never be emitted.
+        if rejected:
+            applicable = []
         if applicable:
             transformed = apply_decisions(
                 transformed,
@@ -308,7 +363,17 @@ class Firewall:
     def _scan_surfaces(self, surfaces: list[Surface]) -> list[Finding]:
         findings: list[Finding] = []
         for surface in surfaces:
-            findings.extend(self.scanner.scan(surface))
+            scanned = self.scanner.scan(surface)
+            if surface.argument_key_metadata or surface.safe_json_pointer is not None:
+                scanned = [
+                    replace(
+                        finding,
+                        safe_json_pointer=surface.safe_json_pointer,
+                        argument_key_metadata=surface.argument_key_metadata,
+                    )
+                    for finding in scanned
+                ]
+            findings.extend(scanned)
         return findings
 
     def _vault_token_replacer(self, decision: PolicyDecision) -> str:

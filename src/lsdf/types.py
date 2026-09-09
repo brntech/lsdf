@@ -18,6 +18,11 @@ class Finding:
     detector_id: str = "unknown"
     detector_family: str = "unknown"
     metadata: dict[str, Any] | None = None
+    # Argument object member names use a static ordinal pointer in serialized
+    # output so raw member names never cross an audit/API boundary.  Internal
+    # transforms continue to use json_pointer.
+    safe_json_pointer: tuple[str | int, ...] | None = None
+    argument_key_metadata: bool = False
 
     def safe_dict(self) -> dict[str, Any]:
         data = {
@@ -32,8 +37,13 @@ class Finding:
             "metadata": _safe_metadata(self.metadata or {}),
             "value_preview": _preview(self.value),
         }
-        if self.json_pointer is not None:
-            data["json_pointer"] = list(self.json_pointer)
+        pointer = (
+            self.safe_json_pointer
+            if self.safe_json_pointer is not None
+            else self.json_pointer
+        )
+        if pointer is not None:
+            data["json_pointer"] = list(pointer)
         return data
 
 

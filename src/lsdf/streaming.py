@@ -5,14 +5,19 @@ import codecs
 import http.client
 import json
 from contextlib import nullcontext
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Callable, Iterable, Iterator, TYPE_CHECKING
 
 from .audit import build_audit_event
 from .engine import (
     Firewall, _decision_applies, _decisions_blocked, _raise_for_exception_decisions,
 )
-from .surfaces import Surface
+from .surfaces import (
+    Surface,
+    extract_response_metadata_surfaces,
+    is_valid_stream_tool_context,
+    response_content_pointers,
+)
 from .transforms import apply_decisions
 from .types import PolicyDecision, PolicyEnforcementError
 
@@ -34,6 +39,33 @@ class SseEvent:
     id: str | None = None
     retry: str | None = None
     comments: tuple[str, ...] = ()
+
+
+def _extract_sse_envelope_surfaces(event: SseEvent) -> list[Surface]:
+    """Represent SSE envelope fields with static metadata pointers."""
+
+    payload = {
+        "id": event.id,
+        "event": event.event,
+        "retry": event.retry,
+        "comments": list(event.comments),
+    }
+    surfaces = extract_response_metadata_surfaces(
+        payload,
+        unknown_surface="output.content",
+        pointer_prefix=("sse_metadata",),
+    )
+    # The common OpenAI event label is a protocol identifier.  Keep this
+    # narrow allow marker limited to the known label; arbitrary event names
+    # remain subject to normal detectors.
+    if event.event == "completion.chunk":
+        surfaces = [
+            replace(surface, routing_metadata=True)
+            if surface.value == event.event
+            else surface
+            for surface in surfaces
+        ]
+    return surfaces
 
 
 @dataclass(frozen=True)
@@ -373,12 +405,159 @@ class _StreamInspectionFailure(Exception):
         )
 
 
-def _inspect_stream_call(operation, *args):
+def _inspect_stream_call(operation, *args, **kwargs):
     # Keep detector/transform/vault OSError distinct from upstream transport failure.
     try:
-        return operation(*args)
+        return operation(*args, **kwargs)
     except Exception as exc:
         raise _StreamInspectionFailure(exc) from None
+
+
+def _inspect_stream_metadata(
+    firewall: Firewall,
+    event: SseEvent,
+    payload: Any | None = None,
+    *,
+    include_envelope: bool = True,
+    validated_tool_context: set[tuple[int, int]] | None = None,
+    metrics_recorder: "MetricsRecorder | None" = None,
+    telemetry: dict[str, Any] | None = None,
+) -> Any:
+    """Preflight SSE envelope and JSON metadata before any frame is emitted."""
+
+    surfaces = _extract_sse_envelope_surfaces(event) if include_envelope else []
+    if payload is not None:
+        surfaces.extend(
+            extract_response_metadata_surfaces(
+                payload,
+                unknown_surface="output.content",
+                excluded_pointers=response_content_pointers(payload, streaming=True),
+                validated_tool_context=validated_tool_context,
+            )
+        )
+    if telemetry is not None:
+        for surface in surfaces:
+            _record_stream_surface(telemetry, surface.name)
+    timer = (
+        metrics_recorder.time_ms("stream_metadata_inspection_ms", stream=True)
+        if metrics_recorder is not None
+        else nullcontext()
+    )
+    with timer:
+        return firewall.inspect_surfaces(
+            payload if payload is not None else {},
+            surfaces,
+            # Metadata is always held in static projection space.  Even a
+            # monitor decision must never be applied to a source envelope.
+            transform_filter=lambda _decision: False,
+            reject_filter=lambda _decision: True,
+        )
+
+
+def _stream_tool_contexts(payload: Any) -> set[tuple[int, int]]:
+    """Return semantic indexes of complete function tool deltas."""
+
+    contexts: set[tuple[int, int]] = set()
+    if not isinstance(payload, dict) or not isinstance(payload.get("choices"), list):
+        return contexts
+    for choice_pos, choice in enumerate(payload["choices"]):
+        if not isinstance(choice, dict):
+            continue
+        delta = choice.get("delta")
+        if not isinstance(delta, dict) or not isinstance(delta.get("tool_calls"), list):
+            continue
+        choice_index = _choice_index(choice, choice_pos)
+        for call_pos, tool_call in enumerate(delta["tool_calls"]):
+            if not is_valid_stream_tool_context(payload, choice, tool_call):
+                continue
+            if not isinstance(tool_call, dict) or tool_call.get("type") != "function":
+                continue
+            function = tool_call.get("function")
+            if not isinstance(function, dict):
+                continue
+            if not isinstance(function.get("name"), str) or not function["name"]:
+                continue
+            if not isinstance(function.get("arguments"), str):
+                continue
+            contexts.add((choice_index, _tool_call_index(tool_call, call_pos)))
+    return contexts
+
+
+def _stream_payload_id_error(
+    payload: dict[str, Any],
+    response_id: str | None,
+) -> str | None:
+    """Return a static error state for an invalid or conflicting response ID."""
+
+    if "id" not in payload:
+        return None
+    candidate = payload.get("id")
+    if not isinstance(candidate, str):
+        return "invalid_response_id"
+    if response_id is not None and candidate != response_id:
+        return "response_id_mismatch"
+    return None
+
+
+def _stream_tool_identity_updates(payload: Any) -> list[tuple[tuple[int, int, str], Any]]:
+    """Collect exact streamed tool ID/name fields keyed by semantic indexes."""
+
+    updates: list[tuple[tuple[int, int, str], Any]] = []
+    if not isinstance(payload, dict) or not isinstance(payload.get("choices"), list):
+        return updates
+    for choice_pos, choice in enumerate(payload["choices"]):
+        if not isinstance(choice, dict) or not isinstance(choice.get("delta"), dict):
+            continue
+        delta = choice["delta"]
+        tool_calls = delta.get("tool_calls")
+        if not isinstance(tool_calls, list):
+            continue
+        choice_index = _choice_index(choice, choice_pos)
+        for call_pos, tool_call in enumerate(tool_calls):
+            if not isinstance(tool_call, dict):
+                continue
+            call_index = _tool_call_index(tool_call, call_pos)
+            key_prefix = (choice_index, call_index)
+            if "id" in tool_call:
+                updates.append(((*key_prefix, "id"), tool_call.get("id")))
+            function = tool_call.get("function")
+            if isinstance(function, dict) and "name" in function:
+                updates.append(((*key_prefix, "name"), function.get("name")))
+    return updates
+
+
+def _stream_tool_identity_error(
+    payload: Any,
+    seen: dict[tuple[int, int, str], str],
+) -> str | None:
+    """Reject unassembled nonempty ID/name fragments for one tool call."""
+
+    current: set[tuple[int, int, str]] = set()
+    for key, value in _stream_tool_identity_updates(payload):
+        # Providers may send explicit nulls for omitted continuation fields.
+        # They carry no identity fragment and must not replace remembered IDs.
+        if value is None:
+            continue
+        if not isinstance(value, str):
+            return "invalid_tool_identity"
+        if not value:
+            continue
+        # Tool identity fields are accepted only once for a semantic call.
+        # Some client accumulators concatenate repeated values, so even an
+        # identical second occurrence is outside this bounded stream shape.
+        if key in current or key in seen:
+            return "fragmented_tool_identity"
+        current.add(key)
+    return None
+
+
+def _remember_stream_tool_identity(
+    payload: Any,
+    seen: dict[tuple[int, int, str], str],
+) -> None:
+    for key, value in _stream_tool_identity_updates(payload):
+        if isinstance(value, str) and value:
+            seen.setdefault(key, value)
 
 
 def stream_chat_completion_chunks(
@@ -419,8 +598,32 @@ def _stream_chat_completion_chunks(
 ) -> Iterator[bytes]:
     states: dict[tuple[Any, ...], Any] = {}
     last_templates: dict[tuple[Any, ...], StreamChunkTemplate] = {}
+    validated_tool_context: set[tuple[int, int]] = set()
+    seen_tool_identity: dict[tuple[int, int, str], str] = {}
+    response_id: str | None = None
     try:
         for event in iter_sse_events(upstream_chunks):
+            envelope_result = _inspect_stream_call(
+                _inspect_stream_metadata,
+                firewall,
+                event,
+                metrics_recorder=metrics_recorder,
+                telemetry=telemetry,
+            )
+            _record_stream_decisions(telemetry, envelope_result.decisions)
+            if envelope_result.blocked:
+                blocked_event = _blocked_stream_event(
+                    envelope_result.audit_event,
+                    decisions=envelope_result.decisions,
+                    summary=_stream_summary(telemetry, "blocked"),
+                )
+                _notify_stream_terminal(
+                    telemetry_callback,
+                    telemetry,
+                    error_event=blocked_event,
+                )
+                yield blocked_event
+                return
             if not event.data:
                 continue
             if event.data == "[DONE]":
@@ -460,6 +663,63 @@ def _stream_chat_completion_chunks(
                     telemetry_callback=telemetry_callback,
                 )
                 return
+            payload_context = set(validated_tool_context)
+            payload_context.update(_stream_tool_contexts(payload))
+            metadata_result = _inspect_stream_call(
+                _inspect_stream_metadata,
+                firewall,
+                event,
+                payload,
+                include_envelope=False,
+                validated_tool_context=payload_context,
+                metrics_recorder=metrics_recorder,
+                telemetry=telemetry,
+            )
+            _record_stream_decisions(telemetry, metadata_result.decisions)
+            if metadata_result.blocked:
+                blocked_event = _blocked_stream_event(
+                    metadata_result.audit_event,
+                    decisions=metadata_result.decisions,
+                    summary=_stream_summary(telemetry, "blocked"),
+                )
+                _notify_stream_terminal(
+                    telemetry_callback,
+                    telemetry,
+                    error_event=blocked_event,
+                )
+                yield blocked_event
+                return
+            if isinstance(payload, dict):
+                id_error = _stream_payload_id_error(payload, response_id)
+                if id_error is not None:
+                    error_event = _stream_error_event(
+                        "Upstream SSE response ID was invalid or changed.",
+                        summary=_stream_summary(telemetry, id_error),
+                    )
+                    _notify_stream_terminal(
+                        telemetry_callback,
+                        telemetry,
+                        error_event=error_event,
+                    )
+                    yield error_event
+                    return
+                identity_error = _stream_tool_identity_error(payload, seen_tool_identity)
+                if identity_error is not None:
+                    error_event = _stream_error_event(
+                        "Upstream SSE tool metadata changed or was invalid.",
+                        summary=_stream_summary(telemetry, identity_error),
+                    )
+                    _notify_stream_terminal(
+                        telemetry_callback,
+                        telemetry,
+                        error_event=error_event,
+                    )
+                    yield error_event
+                    return
+                if "id" in payload:
+                    response_id = payload["id"]
+                validated_tool_context.update(_stream_tool_contexts(payload))
+                _remember_stream_tool_identity(payload, seen_tool_identity)
             if not isinstance(payload, dict):
                 yield from _handle_malformed_stream_error(
                     "Malformed upstream SSE payload: expected object",

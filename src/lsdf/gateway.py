@@ -24,6 +24,11 @@ from .metrics import MetricsRecorder
 from .policy import load_effective_policy, load_policy, load_policy_bytes, load_policy_profile
 from .security_ops import verify_policy_signature
 from .streaming import DEFAULT_STREAM_HOLDBACK_CHARS, format_sse_event, stream_chat_completion_chunks
+from .surfaces import (
+    extract_response_content_surfaces,
+    extract_response_metadata_surfaces,
+    response_content_pointers,
+)
 from .types import PolicyEnforcementError
 from .vault import EncryptedSqliteTokenVault
 
@@ -720,6 +725,43 @@ def _try_parse_json(body: bytes) -> Any:
         return None
 
 
+def _is_response_metadata_decision(decision) -> bool:
+    pointer = getattr(getattr(decision, "finding", None), "pointer", ())
+    return bool(pointer) and pointer[0] == "response_metadata"
+
+
+def _inspect_response_payload(
+    payload: Any,
+    firewall: Firewall,
+    *,
+    streaming: bool = False,
+):
+    """Inspect response content and metadata exactly once.
+
+    The metadata surface set uses static indexed pointers and is never passed
+    to the transform engine.  In an enforcing policy, any metadata decision
+    that would otherwise transform or block the field rejects the response so
+    identity/control fields are not rewritten and vault tokenization cannot be
+    triggered for a response that will be withheld.
+    """
+
+    content_surfaces = extract_response_content_surfaces(
+        payload,
+        unknown_surface="output.content",
+    )
+    metadata_surfaces = extract_response_metadata_surfaces(
+        payload,
+        unknown_surface="output.content",
+        excluded_pointers=response_content_pointers(payload, streaming=streaming),
+    )
+    return firewall.inspect_surfaces(
+        payload,
+        [*content_surfaces, *metadata_surfaces],
+        transform_filter=lambda decision: not _is_response_metadata_decision(decision),
+        reject_filter=_is_response_metadata_decision,
+    )
+
+
 def handle_chat_completion(
     payload: Any,
     firewall: Firewall,
@@ -776,22 +818,11 @@ def handle_chat_completion(
     )
     response_payload = _try_parse_json(response_body)
     if not isinstance(response_payload, dict):
-        _write_gateway_audit(
-            audit_sink,
-            {
-                "source": "gateway",
-                "stage": "response_passthrough",
-                "stream": False,
-                "blocked": False,
-                "decision_count": 0,
-                "status": status,
-            },
-        )
-        return status, response_headers, response_body, _decision_headers(False, 0)
+        return _invalid_upstream_response(stream=False, audit_sink=audit_sink, metrics=metrics)
 
     try:
         with metrics.time_ms("response_inspection_ms", stream=False, status=status):
-            response_result = firewall.inspect(response_payload, unknown_surface="output.content")
+            response_result = _inspect_response_payload(response_payload, firewall)
     except Exception as exc:
         return _inspection_failure_response(
             exc, stage="response_inspection", stream=False, audit_sink=audit_sink, metrics=metrics,
@@ -902,7 +933,11 @@ def handle_streaming_chat_completion(
         if isinstance(response_payload, dict):
             try:
                 with metrics.time_ms("response_inspection_ms", stream=True, status=status):
-                    response_result = firewall.inspect(response_payload, unknown_surface="output.content")
+                    response_result = _inspect_response_payload(
+                        response_payload,
+                        firewall,
+                        streaming=False,
+                    )
             except Exception as exc:
                 status, response_headers, body, headers = _inspection_failure_response(
                     exc, stage="stream_response_inspection", stream=True,
@@ -942,16 +977,8 @@ def handle_streaming_chat_completion(
                 [json.dumps(response_result.transformed_payload).encode("utf-8")],
                 headers,
             )
-        _write_gateway_audit(
-            audit_sink,
-            {
-                "source": "gateway",
-                "stage": "stream_response_passthrough",
-                "stream": True,
-                "blocked": False,
-                "decision_count": 0,
-                "status": status,
-            },
+        status, response_headers, response_bytes, headers = _invalid_upstream_response(
+            stream=True, audit_sink=audit_sink, metrics=metrics,
         )
         return status, response_headers, [response_bytes], headers
     return (
@@ -1026,6 +1053,36 @@ def _bounded_stream_chunks(response_body: Iterable[bytes], max_stream_seconds: f
                 close()
             except Exception:
                 pass
+
+
+
+def _invalid_upstream_response(
+    *,
+    stream: bool,
+    audit_sink: JsonlAuditSink | None,
+    metrics: MetricsRecorder,
+) -> tuple[int, dict[str, str], bytes, dict[str, str]]:
+    """Withhold unsupported response framing without returning upstream bytes."""
+    error_type = "invalid_upstream_response"
+    metrics.increment("gateway_upstream_errors_total", error_type=error_type, stream=stream)
+    metrics.increment("gateway_blocks_total", stage="response_validation", stream=stream)
+    _write_gateway_audit(
+        audit_sink,
+        {
+            "source": "gateway",
+            "stage": "response_validation",
+            "stream": stream,
+            "blocked": True,
+            "decision_count": 0,
+            "outcome": "unsupported_response",
+            "error_type": error_type,
+            "status": 502,
+        },
+    )
+    body = json.dumps(
+        {"error": {"message": "Upstream response must be a JSON object; content was withheld.", "type": error_type}}
+    ).encode("utf-8")
+    return 502, {"content-type": "application/json"}, body, _decision_headers(True, 0)
 
 
 def _inspection_failure_response(

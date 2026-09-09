@@ -34,6 +34,10 @@ CREDENTIAL_SPECIALS = set("!@$%^&*+=")
 _ALPHA_HYPHEN_COMPOUND_RE = re.compile(r"^[A-Za-z]+(-[A-Za-z]+)+$")
 _MODEL_IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9]+(?:[.:-][A-Za-z0-9]+)+$")
 _TOOL_CALL_ID_RE = re.compile(r"^chatcmpl-tool-[0-9a-f]{16}$")
+_RESPONSE_ID_RE = re.compile(r"^chatcmpl-[A-Za-z0-9]{8,64}$")
+_SAFE_ROUTING_METADATA_LITERALS = frozenset(
+    {"completion.chunk", "chat.completion", "chat.completion.chunk"}
+)
 _MODEL_ID_PROSE_RE = re.compile(
     r"\b(?:exact\s+)?model\s+(?:(?:id|identifier)\s+is|named)\s*$",
     re.IGNORECASE,
@@ -141,7 +145,11 @@ class EntropySecretScanner:
                 continue
             if surface.routing_metadata and _looks_like_safe_model_identifier(token):
                 continue
+            if surface.routing_metadata and surface.value in _SAFE_ROUTING_METADATA_LITERALS:
+                continue
             if surface.correlation_metadata and _TOOL_CALL_ID_RE.fullmatch(surface.value):
+                continue
+            if surface.response_id_metadata and _RESPONSE_ID_RE.fullmatch(surface.value):
                 continue
             if _looks_like_model_id_prose(token, surface.value, match.start()):
                 continue

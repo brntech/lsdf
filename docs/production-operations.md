@@ -53,6 +53,14 @@ For release validation, regenerate the gate report:
 docker compose --profile optional run --rm optional-cli eval-report --profile broad-pii --profile broad-pii-ml --format markdown
 ```
 
+## Response Metadata Enforcement
+
+Use an image built from the current source for response metadata and parsed tool-argument key inspection. The published v0.3.2 image predates these controls. Enforcing metadata/key findings withhold the JSON response or terminate SSE with a safe error; they never rename control fields. A rejected metadata/key inspection does not create vault records. Content transforms continue for accepted responses. Monitor mode and per-rule overrides still determine enforcement.
+
+Unsupported non-SSE bodies return HTTP 502 `invalid_upstream_response`; audit records `response_validation` and metrics count the upstream error and withheld response. The body is never echoed, even in monitor mode.
+
+Response metadata adds detector work per JSON/SSE event. Measure it with `stream_metadata_inspection_ms` and the existing response timing metrics, particularly when ML detectors are enabled. Stream terminal summaries include the metadata policy surfaces actually inspected. No fresh ML latency claim is implied by dependency-light tests. See [streaming compatibility](streaming-compatibility.md#2-per-chunk-inspection-latency) and the [security model](security-model.md#detector-posture) for bounds and identifier handling.
+
 ## Gateway Health And Metrics
 
 For the source-checkout gateway, create a configuration with both audit and metrics enabled. This example replaces `.lsdf.env`; preserve any existing local settings you need.

@@ -58,6 +58,7 @@ Two duration metrics report the inspection cost per chunk:
 | Metric | Labels | When it fires |
 |---|---|---|
 | `stream_chunk_inspection_ms` | `stream`, `surface` | Per arriving content / reasoning delta that triggers a holdback-window inspection (`StreamingInspectionState.append`), plus one additional observation per surface at the terminal flush (`check_pending` during `[DONE]`). |
+| `stream_metadata_inspection_ms` | `stream` | One envelope preflight per parsed SSE event and one separate metadata preflight per parsed JSON payload. No envelope is scanned twice for the same event. |
 | `stream_tool_call_inspection_ms` | `stream` | At the terminal flush of streaming tool-call argument fragments, once per tool-call surface. The append-side call into `StreamingToolCallArgumentState` does not inspect; argument fragments are reassembled and inspected in full at flush time. |
 
 The aggregate `response_inspection_ms` metric continues to fire only on
@@ -151,21 +152,13 @@ character mid-sequence.
 
 ### Server-Sent Events (Node, Deno, EventSource API)
 
-LSDF inspects recognized text/reasoning fields and assembled tool-call arguments. The surrounding JSON metadata, including response IDs, model names, system fingerprints, tool names/IDs, and unrecognized extensions, passes through without content inspection. An intact metadata field is not evidence that LSDF checked its value. Non-streaming JSON responses instead scan unrecognized string fields as `output.content`, so an opaque ID may be changed by policy. Clients that depend on exact identifiers need to account for this difference.
+The current source gateway inspects recognized text/reasoning fields and assembled tool-call arguments, plus surrounding JSON metadata and SSE envelope values. Metadata is inspected before caching or emission, including on empty-data and `[DONE]` events. Unknown extensions include both scalar values and unknown key names. An enforcing metadata decision emits a safe terminal error and withholds pending content; metadata is preserved only when the policy permits it and is never rewritten. See the [security model](security-model.md#detector-posture) for policy classification and narrow entropy-only identifier rules.
 
-These limits apply to SSE bodies. If a streaming request receives a non-SSE JSON object response, LSDF applies ordinary JSON response inspection. SSE envelope fields (`id:`, `event:`, `retry:`, and comments) also pass through without inspection.
+If a streaming request receives a non-SSE JSON object response, LSDF applies the same JSON metadata rejection and normal content transformation rules. These controls require an image built from the current source; the published v0.3.2 image predates them.
 
-LSDF emits Server-Sent Events (SSE). The SSE envelope-level
-`id:` field (the EventSource `lastEventID`) is copied verbatim from the
-upstream onto each emitted SSE frame. The OpenAI JSON-payload-level
-`id`, `object`, `created`, `model`, and `system_fingerprint` fields are
-preserved when LSDF emits a held-text-flush chunk derived from a
-prior delta template (the typical path); they may be absent on a
-synthesised flush chunk produced before any prior delta has been seen
-for the affected surface (a rare boundary case — e.g. immediate
-preflight rejection followed by terminal drain). EventSource clients
-that pin on event ids see the upstream-derived values on the typical
-path; do not assume they are present on every emitted SSE frame.
+The SSE `id:` field may vary between events and is copied from the inspected upstream envelope when present. The JSON payload `id` must remain unchanged after its first appearance; a conflicting or non-string ID terminates the stream before that frame is emitted. Omitted IDs remain allowed. Flush chunks preserve inspected fields from their prior templates, while synthetic/error chunks can omit identifiers. LSDF does not invent IDs.
+
+A tool call's nonempty ID and function name must each arrive once as a complete value. Later nonempty occurrences, including identical repeats or duplicate semantic indexes within one frame, terminate the stream because some clients concatenate them. Empty, null, or omitted continuations are allowed; other non-string identity values are rejected. Argument fragments are assembled before inspection, including their JSON object keys. This supports the bounded initial-identity/continued-arguments shape, not arbitrary fragmented tool identities.
 
 ## 4. When to disable streaming
 
