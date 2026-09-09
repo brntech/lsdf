@@ -1,10 +1,10 @@
 # Provider Playbook
 
-Updated: 2026-09-08
+Updated: 2026-09-09
 
 LSDF is provider-agnostic on the client side: applications point OpenAI-compatible clients at `http://localhost:8080/v1`, while LSDF forwards to the configured upstream.
 
-Complete [Installation](installation.md) first. The commands below run from a source checkout. Start the real upstream separately and choose a model ID it serves; `init` only writes LSDF configuration. The gateway currently implements `POST /v1/chat/completions`, including streaming, rather than the full OpenAI API.
+Complete [Installation](installation.md) first. The commands below run from a source checkout. Start the real upstream separately and choose a model ID it serves; `init` only writes LSDF configuration. The v0.4.0 gateway implements `POST /v1/chat/completions`, including streaming, rather than the full OpenAI API.
 
 ## Presets
 
@@ -73,7 +73,7 @@ LSDF does not forward arbitrary client headers, including OpenRouter app-attribu
 
 ## DeepInfra
 
-DeepInfra's OpenAI-compatible chat endpoint uses `https://api.deepinfra.com/v1/openai`. Use a current source checkout and the `custom` upstream for this setup; it covers LSDF's `POST /v1/chat/completions` route only.
+DeepInfra's OpenAI-compatible chat endpoint uses `https://api.deepinfra.com/v1/openai`. Use the v0.4.0 release image or a current source checkout and the `custom` upstream for this setup; it covers LSDF's `POST /v1/chat/completions` route only.
 
 ```bash
 docker compose run --rm cli init --upstream custom --upstream-base-url https://api.deepinfra.com/v1/openai --output .lsdf.env --force

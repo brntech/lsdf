@@ -1,6 +1,6 @@
 # Production Operations
 
-Updated: 2026-09-08
+Updated: 2026-09-09
 
 Provider rollout material covers LiteLLM Proxy, OpenRouter, LM Studio, local vLLM, and generic OpenAI-compatible upstreams. Use `docs/provider-playbook.md` for topology choices, and keep the recommended LiteLLM flow as `app -> LSDF gateway -> LiteLLM Proxy -> provider fleet`.
 
@@ -55,7 +55,7 @@ docker compose --profile optional run --rm optional-cli eval-report --profile br
 
 ## Response Metadata Enforcement
 
-Use an image built from the current source for response metadata and parsed tool-argument key inspection. The published v0.3.2 image predates these controls. Enforcing metadata/key findings withhold the JSON response or terminate SSE with a safe error; they never rename control fields. A rejected metadata/key inspection does not create vault records. Content transforms continue for accepted responses. Monitor mode and per-rule overrides still determine enforcement.
+Use the v0.4.0 release image or the v0.4.0 source checkout for response metadata and parsed tool-argument key inspection. Enforcing metadata/key findings withhold the JSON response or terminate SSE with a safe error; they never rename control fields. A rejected metadata/key inspection does not create vault records. Content transforms continue for accepted responses. Monitor mode and per-rule overrides still determine enforcement.
 
 Unsupported non-SSE bodies return HTTP 502 `invalid_upstream_response`; audit records `response_validation` and metrics count the upstream error and withheld response. The body is never echoed, even in monitor mode.
 

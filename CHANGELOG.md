@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.4.0 (2026-09-09)
+
+### Added
+
+- Independent caller authentication and bounded request, concurrency, timeout, and stream-duration controls are included in the release gateway.
+- The Ollama OpenAI-compatible preset and setup path are included alongside the v0.4.0 Compose release and environment examples.
+- Provider path handling avoids duplicating versioned /v1 prefixes, including DeepInfra-style paths, and preserves the bounded exact tool-call ID correlation rule.
+- The coding matrix and reporting distinguish missed detections from unwanted mutations and false positives while keeping reports raw-value-safe.
+- JSON and SSE response metadata is preflighted across the documented Chat Completions surfaces, including SSE envelope values and unknown extension keys/scalars. Audit findings use safe ordinal paths while original source pointers remain internal.
+- Valid response identifiers and complete initial streamed tool identity have narrow structural compatibility rules. JSON payload IDs remain stable; duplicate or fragmented streamed identity is rejected because some clients concatenate those values. Null, empty, or omitted continuation fields are accepted and do not replace stored identities.
+- Parsed JSON tool-argument keys are inspected alongside argument values for requests and responses. Enforcing key findings withhold the affected payload rather than renaming keys, while accepted argument values keep their configured transforms.
+
+### Changed
+
+- SSE envelope fields are checked after frame parsing but before JSON parsing, empty or DONE handling, template caching, or content release. Parsed JSON metadata is checked after JSON parsing and before caching or emission. Enforcing metadata findings return a raw-safe JSON error or terminal SSE error; monitor and per-rule on_fail behavior remains in force.
+- Non-streaming upstream bodies must be JSON objects. Invalid or non-object bodies are withheld with HTTP 502 invalid_upstream_response, including in monitor mode; rejected metadata is never transformed or written to the vault.
+- Release Compose and environment templates default to the v0.4.0 standard and v0.4.0-ml image tags.
+- The release remains scoped to the OpenAI-compatible POST /v1/chat/completions route and its streaming form. Native Anthropic/Responses, broad client/provider, ML latency, and maintained tool/sandbox integrations remain outside this release.
+
+
 ## 0.3.2 (2026-09-08)
 
 ### Fixed

@@ -1,8 +1,8 @@
 # Policy Cookbook
 
-In a current source-built gateway, response metadata uses `output.content` rules; root trace/log metadata retains `logs.traces`. An enforcing transform or block decision on metadata withholds the response instead of altering its fields. Parsed tool-argument keys follow the argument surface policy and also cause rejection when enforcement applies. Normal argument values retain their configured transforms. Monitor mode observes by default; explicit per-rule `on_fail` overrides continue to apply. These controls are newer than the published v0.3.2 image. See the [security model](security-model.md#detector-posture).
+In the v0.4.0 release image and source checkout, response metadata uses `output.content` rules; root trace/log metadata retains `logs.traces`. An enforcing transform or block decision on metadata withholds the response instead of altering its fields. Parsed tool-argument keys follow the argument surface policy and also cause rejection when enforcement applies. Normal argument values retain their configured transforms. Monitor mode observes by default; explicit per-rule `on_fail` overrides continue to apply. These controls are included in v0.4.0. See the [security model](security-model.md#detector-posture).
 
-Recipes recorded: 2026-05-06. Distribution guidance updated: 2026-09-08.
+Recipes recorded: 2026-05-06. Distribution guidance updated: 2026-09-09.
 
 Use these recipes to move from observation to enforcement without surprising application teams. For detector-family trade-offs and measured profile costs, read `docs/detector-composition.md` before creating a custom policy with `detection.adapters` or `detection.entities`.
 
