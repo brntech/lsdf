@@ -1,6 +1,6 @@
 # Policy Cookbook
 
-In the v0.4.0 release image and source checkout, response metadata uses `output.content` rules; root trace/log metadata retains `logs.traces`. An enforcing transform or block decision on metadata withholds the response instead of altering its fields. Parsed tool-argument keys follow the argument surface policy and also cause rejection when enforcement applies. Normal argument values retain their configured transforms. Monitor mode observes by default; explicit per-rule `on_fail` overrides continue to apply. These controls are included in v0.4.0. See the [security model](security-model.md#detector-posture).
+In the v0.4.1 release image and source checkout, response metadata uses `output.content` rules; root trace/log metadata retains `logs.traces`. An enforcing transform or block decision on metadata withholds the response instead of altering its fields. Parsed tool-argument keys follow the argument surface policy and also cause rejection when enforcement applies. Normal argument values retain their configured transforms. Monitor mode observes by default; explicit per-rule `on_fail` overrides continue to apply. These controls are included in v0.4.1. See the [security model](security-model.md#detector-posture).
 
 Recipes recorded: 2026-05-06. Distribution guidance updated: 2026-09-09.
 

@@ -24,7 +24,7 @@ cd lsdf
 docker compose build cli
 ```
 
-Alternatively, download `lsdf-0.4.0-source.zip` from the [v0.4.0 release](https://github.com/brntech/lsdf/releases/tag/v0.4.0), extract it, and open a terminal inside `lsdf-0.4.0`, where `docker-compose.yml` lives. The v0.4.0 source includes the client-token, request-limit, response-metadata, and tool-argument key controls. Run `docker compose build cli` there.
+Alternatively, download `lsdf-0.4.1-source.zip` from the [v0.4.1 release](https://github.com/brntech/lsdf/releases/tag/v0.4.1), extract it, and open a terminal inside `lsdf-0.4.1`, where `docker-compose.yml` lives. The v0.4.1 source includes the client-token, request-limit, response-metadata, and tool-argument key controls. Run `docker compose build cli` there.
 
 The default `docker-compose.yml` builds `lsdf:dev` from source. You do not need to pull a GHCR image for these commands. Run source commands from this directory; a downloaded container image alone does not provide the demo files, evaluation corpora, or Compose configuration.
 
@@ -48,7 +48,7 @@ Use `vllm`, `litellm`, `ollama`, or `openrouter` instead of `lmstudio` as approp
 
 ## Prebuilt release image
 
-Create a directory for the deployment. Download `compose.release.yaml` and `release.env.example` from the [v0.4.0 release assets](https://github.com/brntech/lsdf/releases/tag/v0.4.0) into it. They are also included at the root of the source archive. Copy `release.env.example` to `.lsdf.env`, then edit that file in your text editor.
+Create a directory for the deployment. Download `compose.release.yaml` and `release.env.example` from the [v0.4.1 release assets](https://github.com/brntech/lsdf/releases/tag/v0.4.1) into it. They are also included at the root of the source archive. Copy `release.env.example` to `.lsdf.env`, then edit that file in your text editor.
 
 Set `LSDF_UPSTREAM_BASE_URL` to your running model server. The example uses LM Studio at `http://host.docker.internal:1234`. Add `LSDF_UPSTREAM_API_KEY` if the upstream requires authentication. Keep this file private. The gateway starts with the dependency-light `default` policy.
 
@@ -61,7 +61,7 @@ docker compose --env-file .lsdf.env -f compose.release.yaml up -d
 docker compose --env-file .lsdf.env -f compose.release.yaml logs --tail 50 gateway
 ```
 
-`pull` downloads the selected image; this configuration has no source build or checkout mount. `doctor` checks policy/detector setup, configured client/management auth, and configured limits; its separate reachability row is only checked when an upstream URL is supplied. Its protection row remains unverified because doctor does not send a protected `/v1` request. The v0.4.0 image includes the client-token, request-limit, response-metadata, and tool-argument key controls. Use the live request below to confirm routing.
+`pull` downloads the selected image; this configuration has no source build or checkout mount. `doctor` checks policy/detector setup, configured client/management auth, and configured limits; its separate reachability row is only checked when an upstream URL is supplied. Its protection row remains unverified because doctor does not send a protected `/v1` request. The v0.4.1 image includes the client-token, request-limit, response-metadata, and tool-argument key controls. Use the live request below to confirm routing.
 
 The release configuration stores generated files in a named volume at `/workspace/.lsdf`. For example:
 
@@ -75,12 +75,23 @@ The files remain in the volume, not in the host checkout. To copy them out after
 docker compose --env-file .lsdf.env -f compose.release.yaml cp gateway:/workspace/.lsdf/proof ./proof
 ```
 
+## Upgrading an existing deployment
+
+Download the new `compose.release.yaml` from the release assets. Keep your existing private `.lsdf.env`, credentials, policy selection and volumes. Set `LSDF_IMAGE` in that file to `ghcr.io/brntech/lsdf:v0.4.1`, or `ghcr.io/brntech/lsdf:v0.4.1-ml` if you use the ML variant. An old version or digest in `.lsdf.env` overrides the Compose default, so replacing the Compose file alone does not upgrade it. You may instead use the matching immutable reference in the new `image-digests.txt`.
+
+```bash
+docker compose --env-file .lsdf.env -f compose.release.yaml pull
+docker compose --env-file .lsdf.env -f compose.release.yaml up -d
+```
+
+Repeat the [connection check](#check-the-connection) and your application's protected-request check. To roll back, restore the previous `LSDF_IMAGE` version or digest and repeat `pull` and `up -d`; keep the existing volumes. Source users should check out the desired release tag, or extract its source ZIP, and rebuild the Compose services they use.
+
 ## Which image?
 
 | Image | Purpose |
 | --- | --- |
-| `ghcr.io/brntech/lsdf:v0.4.0` | Lightweight gateway release. |
-| `ghcr.io/brntech/lsdf:v0.4.0-ml` | Same gateway plus ML dependencies and the spaCy model. GLiNER/privacy-filter weights still need preparation. |
+| `ghcr.io/brntech/lsdf:v0.4.1` | Lightweight gateway release. |
+| `ghcr.io/brntech/lsdf:v0.4.1-ml` | Same gateway plus ML dependencies and the spaCy model. GLiNER/privacy-filter weights still need preparation. |
 | `lsdf:dev`, `lsdf:optional`, `lsdf:runtime`, `lsdf:runtime-optional` | Local image names built by the source Compose file. They are not GHCR downloads. |
 
 Both published variants belong to the single `ghcr.io/brntech/lsdf` package and start with `default`. The ML image does not automatically enable an ML policy. Set `LSDF_IMAGE` in `.lsdf.env` to select a versioned image, or pin an immutable reference from the release's `image-digests.txt`. `latest` and `latest-ml` are moving aliases; use a version or digest for repeatable deployments.
@@ -133,7 +144,7 @@ docker compose --profile optional run --rm -e LSDF_GLINER_LOCAL_FILES_ONLY=false
 docker compose --profile optional run --rm -e LSDF_GLINER_LOCAL_FILES_ONLY=true -e LSDF_OPENAI_PRIVACY_FILTER_LOCAL_FILES_ONLY=true optional-cli doctor --profile broad-pii-ml --format json
 ```
 
-For the prebuilt deployment, set `LSDF_IMAGE=ghcr.io/brntech/lsdf:v0.4.0-ml` and `LSDF_PROFILE=broad-pii-ml` in `.lsdf.env`, then use the release service with the same download and offline checks:
+For the prebuilt deployment, set `LSDF_IMAGE=ghcr.io/brntech/lsdf:v0.4.1-ml` and `LSDF_PROFILE=broad-pii-ml` in `.lsdf.env`, then use the release service with the same download and offline checks:
 
 ```bash
 docker compose --env-file .lsdf.env -f compose.release.yaml pull

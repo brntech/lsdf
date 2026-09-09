@@ -2,7 +2,7 @@ name: lsdf-release
 
 services:
   gateway:
-    image: "${LSDF_IMAGE:-ghcr.io/brntech/lsdf:v0.4.0}"
+    image: "${LSDF_IMAGE:-ghcr.io/brntech/lsdf:v0.4.1}"
     platform: linux/amd64
     ports:
       - "127.0.0.1:${LSDF_PORT:-8080}:8080"

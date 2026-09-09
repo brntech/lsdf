@@ -152,9 +152,9 @@ character mid-sequence.
 
 ### Server-Sent Events (Node, Deno, EventSource API)
 
-The v0.4.0 gateway inspects recognized text/reasoning fields and assembled tool-call arguments, plus surrounding JSON metadata and SSE envelope values. Metadata is inspected before caching or emission, including on empty-data and `[DONE]` events. Unknown extensions include both scalar values and unknown key names. An enforcing metadata decision emits a safe terminal error and withholds pending content; metadata is preserved only when the policy permits it and is never rewritten. See the [security model](security-model.md#detector-posture) for policy classification and narrow entropy-only identifier rules.
+The v0.4.1 gateway inspects recognized text/reasoning fields and assembled tool-call arguments, plus surrounding JSON metadata and SSE envelope values. Metadata is inspected before caching or emission, including on empty-data and `[DONE]` events. Unknown extensions include both scalar values and unknown key names. An enforcing metadata decision emits a safe terminal error and withholds pending content; metadata is preserved only when the policy permits it and is never rewritten. See the [security model](security-model.md#detector-posture) for policy classification and narrow entropy-only identifier rules.
 
-If a streaming request receives a non-SSE JSON object response, LSDF applies the same JSON metadata rejection and normal content transformation rules. These controls are included in v0.4.0.
+If a streaming request receives a non-SSE JSON object response, LSDF applies the same JSON metadata rejection and normal content transformation rules. These controls are included in v0.4.1.
 
 The SSE `id:` field may vary between events and is copied from the inspected upstream envelope when present. The JSON payload `id` must remain unchanged after its first appearance; a conflicting or non-string ID terminates the stream before that frame is emitted. Omitted IDs remain allowed. Flush chunks preserve inspected fields from their prior templates, while synthetic/error chunks can omit identifiers. LSDF does not invent IDs.
 

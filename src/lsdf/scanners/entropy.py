@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import json
 import math
 import os
 import re
@@ -133,6 +134,75 @@ def _entropy_deny_substrings() -> tuple[str, ...]:
     return tuple(piece.strip().lower() for piece in raw.split(";") if piece.strip())
 
 
+_PERMISSION_REFUSAL_PREFIX = (
+    "The user has specified a rule which prevents you from using this specific tool call. "
+    "Here are some of the relevant rules "
+)
+_PERMISSION_RULE_VALUE_RE = re.compile(
+    r'"(?P<key>permission|pattern)"\s*:\s*"(?P<value>[^"\\]*)"'
+)
+_CACHE_DIRECTORY_COMPONENT_RE = re.compile(r"[a-z.][a-z.-]{0,31}")
+
+
+def _permission_rule_literal_spans(surface: Surface) -> set[tuple[int, int]]:
+    """Recognize only public literals in a bounded tool permission refusal.
+
+    The error envelope is a compatibility context, not a trusted source. Only
+    selected value spans bypass entropy; all other spans and detectors remain
+    active, including secrets in other rule fields or path components.
+    """
+    source = surface.value
+    if (
+        surface.name != "input.tool_results"
+        or len(source) > 16384
+        or not source.startswith(_PERMISSION_REFUSAL_PREFIX)
+    ):
+        return set()
+    offset = len(_PERMISSION_REFUSAL_PREFIX)
+    encoded_rules = source[offset:]
+
+    def unique_object(pairs):
+        result = dict(pairs)
+        if len(result) != len(pairs):
+            raise ValueError("duplicate permission rule key")
+        return result
+
+    try:
+        rules = json.loads(encoded_rules, object_pairs_hook=unique_object)
+    except (ValueError, TypeError, RecursionError):
+        return set()
+    if not isinstance(rules, list) or not 1 <= len(rules) <= 32:
+        return set()
+    for rule in rules:
+        if (
+            not isinstance(rule, dict)
+            or set(rule) != {"permission", "pattern", "action"}
+            or not all(isinstance(value, str) for value in rule.values())
+            or rule["action"] not in {"allow", "deny", "ask"}
+        ):
+            return set()
+
+    spans = set()
+    for match in _PERMISSION_RULE_VALUE_RE.finditer(encoded_rules):
+        key, value = match.group("key", "value")
+        recognized = key == "permission" and value == "external_directory"
+        if key == "pattern" and value.endswith("/opencode/tool-output/*"):
+            components = value.split("/")
+            parents = components[1:-3]
+            recognized = (
+                value.startswith("/")
+                and 1 <= len(parents) <= 8
+                and all(_CACHE_DIRECTORY_COMPONENT_RE.fullmatch(part) for part in parents)
+                and not any(_looks_like_credential(part) for part in parents)
+                and not _looks_like_credential("".join(parents))
+                and ".." not in value
+                and not _has_code_secret_marker(value)
+            )
+        if recognized:
+            spans.add((offset + match.start("value"), offset + match.end("value")))
+    return spans
+
+
 class EntropySecretScanner:
     """Supplementary credential scanner for high-entropy secret-like values."""
 
@@ -143,11 +213,13 @@ class EntropySecretScanner:
     def scan(self, surface: Surface) -> list[Finding]:
         findings: list[Finding] = []
         deny_substrings = _entropy_deny_substrings()
+        permission_spans = _permission_rule_literal_spans(surface)
         for match in TOKEN_RE.finditer(surface.value):
             raw_token = match.group(0)
             token = raw_token.strip("`.,;:")
             if (
-                not token
+                (match.start(), match.end()) in permission_spans
+                or not token
                 or _looks_like_url_or_path(token)
                 or _looks_like_placeholder(token)
                 or _looks_like_code_reference(token, raw_token)

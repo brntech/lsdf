@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.1 (2026-09-09)
+
+### Fixed
+
+- Recognize the `prompt_token_ids` field name only at the root of a valid Chat Completions response. Its values and unknown keys remain inspected; numeric token IDs are not decoded into text.
+- Avoid entropy false positives on a constrained subset of generated vLLM `system_fingerprint` values at that response root. Other detector families remain active; unknown/custom formats receive normal inspection.
+- Avoid entropy false positives on recognized permission-rule labels and constrained POSIX tool-output cache globs inside bounded coding-tool refusal messages. Other fields, secrets and detector families retain normal inspection. Client execution permissions are unchanged.
+
+### Changed
+
+- Release images, Compose examples, README and installation/reference guidance now target v0.4.1. Existing deployments must update their `LSDF_IMAGE` pin before pulling; the installation guide includes upgrade and rollback steps.
+
 ## 0.4.0 (2026-09-09)
 
 ### Added
