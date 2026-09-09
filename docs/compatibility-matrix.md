@@ -33,3 +33,5 @@ Use Docker Compose for LSDF verification, for example `docker compose run --rm c
 | Demo media kit | Captured transcript and terminal playback | [Captured demo output](../examples/demo-media/golden-demo.captured.txt) and an [asciinema cast](../examples/demo-media/golden-demo.cast) ship alongside the narration script. A GIF/video asset is not included. |
 
 Upgrade note: the historical v0.3.2 release predates the client-token, request-limit, response-metadata and tool-argument key controls. v0.4.0 includes them.
+
+vLLM metadata: the current source recognizes the root `prompt_token_ids` field name when `object` is `chat.completion` or `chat.completion.chunk`, `choices` is a list and no `messages` field is present. Its values and unknown keys remain inspected; other response shapes remain fully inspected. The v0.4.0 images can reject this field name as a secret; use the [source installation](installation.md) if affected. Token IDs can encode recoverable prompt text. LSDF inspects their scalar values but does not decode them, so sensitive text encoded as token IDs is outside its detection coverage.

@@ -116,6 +116,74 @@ class ResponseSurfaceTests(unittest.TestCase):
         self.assertNotIn(RAW_SECRET, json.dumps(result.to_dict()))
 
 
+    def test_prompt_token_ids_json_label_preserves_null_and_numeric_values(self):
+        for value in (None, [11, 22, 33], [100_000 + index for index in range(1024)]):
+            with self.subTest(value=value):
+                payload = {
+                    "object": "chat.completion",
+                    "id": RESPONSE_ID,
+                    "choices": [{"message": {"content": "safe"}}],
+                    "prompt_token_ids": value,
+                }
+                status, _headers, body, response_headers = handle_chat_completion(
+                    {"messages": [{"role": "user", "content": "hello"}]},
+                    self.firewall,
+                    lambda _payload: _json_response(payload),
+                )
+                self.assertEqual(status, 200)
+                self.assertEqual(response_headers["x-lsdf-blocked"], "false")
+                self.assertEqual(json.loads(body), payload)
+
+    def test_prompt_token_ids_label_exception_requires_response_root(self):
+        root = {"object": "chat.completion", "choices": [], "prompt_token_ids": [11, 22, 33]}
+        values = {surface.value for surface in extract_response_metadata_surfaces(root)}
+        self.assertTrue({"11", "22", "33"}.issubset(values))
+        self.assertNotIn("prompt_token_ids", values)
+        payloads = (
+            {"object": "chat.completion", "choices": [], "metadata": {"prompt_token_ids": None}},
+            {"object": "chat.completion", "choices": [], "messages": [], "prompt_token_ids": None},
+            {"object": "not-a-response", "choices": [], "prompt_token_ids": None},
+            {"object": "chat.completion", "prompt_token_ids": None},
+        )
+        for index, payload in enumerate(payloads):
+            with self.subTest(case=index):
+                surfaces = extract_response_metadata_surfaces(payload)
+                self.assertIn("prompt_token_ids", [surface.value for surface in surfaces])
+
+    def test_prompt_token_ids_json_values_and_unknown_keys_remain_inspected(self):
+        extensions = [
+            {"prompt_token_ids": value}
+            for value in (
+                RAW_SECRET,
+                [RAW_SECRET],
+                {"value": RAW_SECRET},
+                [{"value": RAW_SECRET}],
+                {RAW_SECRET: "safe"},
+            )
+        ] + [{"prompt_token_ids": None, RAW_SECRET: "safe"}]
+        for index, extension in enumerate(extensions):
+            with self.subTest(case=index):
+                payload = {
+                    "object": "chat.completion",
+                    "id": RESPONSE_ID,
+                    "choices": [{"message": {"content": "held"}}],
+                    **extension,
+                }
+                result = _inspect_response_payload(payload, self.firewall)
+                self.assertTrue(result.blocked)
+                self.assertIsNone(result.transformed_payload)
+                self.assertNotIn(RAW_SECRET, json.dumps(result.to_dict()))
+                status, _headers, body, response_headers = handle_chat_completion(
+                    {"messages": [{"role": "user", "content": "hello"}]},
+                    self.firewall,
+                    lambda _payload: _json_response(payload),
+                )
+                self.assertEqual(status, 502)
+                self.assertEqual(response_headers["x-lsdf-blocked"], "true")
+                self.assertEqual(json.loads(body)["error"]["type"], "sensitive_data_blocked")
+                self.assertNotIn(RAW_SECRET, body.decode("utf-8"))
+                self.assertNotIn("held", body.decode("utf-8"))
+
     def test_gateway_blocks_metadata_without_rewriting_identity(self):
         payload = {
             "object": "chat.completion",
@@ -260,6 +328,59 @@ class ResponseStreamingMetadataTests(unittest.TestCase):
             lambda _payload: (200, {"content-type": "text/event-stream"}, chunks),
             holdback_chars=holdback,
         )
+
+    def test_prompt_token_ids_sse_label_preserves_null_and_numeric_values(self):
+        for value in (None, [11, 22, 33], [100_000 + index for index in range(1024)]):
+            with self.subTest(value=value):
+                payload = {
+                    "object": "chat.completion.chunk",
+                    "id": RESPONSE_ID,
+                    "choices": [{"index": 0, "delta": {"content": "safe"}}],
+                    "prompt_token_ids": value,
+                }
+                status, _headers, body, _response_headers = self._stream(
+                    [_sse(payload), b"data: [DONE]\n\n"], holdback=0,
+                )
+                events = _events(body)
+                self.assertEqual(status, 200)
+                self.assertEqual(events[-1], "[DONE]")
+                self.assertFalse(any(isinstance(event, dict) and "error" in event for event in events))
+                values = [event["prompt_token_ids"] for event in events
+                          if isinstance(event, dict) and "prompt_token_ids" in event]
+                self.assertEqual(values, [value])
+                content = "".join(choice.get("delta", {}).get("content", "")
+                                  for event in events if isinstance(event, dict)
+                                  for choice in event.get("choices", []))
+                self.assertEqual(content, "safe")
+
+    def test_prompt_token_ids_sse_values_and_unknown_keys_remain_inspected(self):
+        extensions = [
+            {"prompt_token_ids": value}
+            for value in (
+                RAW_SECRET,
+                [RAW_SECRET],
+                {"value": RAW_SECRET},
+                [{"value": RAW_SECRET}],
+                {RAW_SECRET: "safe"},
+            )
+        ] + [{"prompt_token_ids": None, RAW_SECRET: "safe"}]
+        for index, extension in enumerate(extensions):
+            with self.subTest(case=index):
+                payload = {
+                    "object": "chat.completion.chunk",
+                    "id": RESPONSE_ID,
+                    "choices": [{"index": 0, "delta": {"content": "held"}}],
+                    **extension,
+                }
+                status, _headers, body, _response_headers = self._stream(
+                    [_sse(payload), b"data: [DONE]\n\n"], holdback=0,
+                )
+                events = _events(body)
+                self.assertEqual(status, 200)
+                self.assertEqual(len(events), 1)
+                self.assertEqual(events[0]["error"]["type"], "sensitive_data_blocked")
+                self.assertNotIn(RAW_SECRET, json.dumps(events))
+                self.assertNotIn("held", json.dumps(events))
 
     def test_metadata_block_precedes_emission_and_drops_held_content(self):
         chunks = [

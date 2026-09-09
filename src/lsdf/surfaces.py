@@ -233,7 +233,11 @@ def extract_response_metadata_surfaces(
                 if _pointer_excluded(child_pointer, excluded):
                     continue
                 key_surface_name = _metadata_surface_name(child_pointer, unknown_surface)
-                if isinstance(key, str) and key not in _KNOWN_STRUCTURAL_KEYS:
+                if (
+                    isinstance(key, str)
+                    and key not in _KNOWN_STRUCTURAL_KEYS
+                    and not (response_envelope and child_pointer == ("prompt_token_ids",))
+                ):
                     append_value(key, child_pointer, surface_name=key_surface_name)
                 if (
                     isinstance(child, str)
