@@ -9,7 +9,8 @@ Use Docker Compose for LSDF verification, for example `docker compose run --rm c
 | Standalone gateway image | Supported Docker path | `runtime` starts the gateway without a source mount; `runtime-optional` adds explicit heavy dependencies and requires model readiness checks. |
 | Release image architecture | `linux/amd64` | The released image builds and checks cover this platform only. Native ARM64 release images are unverified. This is a container-platform statement, not a host-OS support matrix. |
 | OpenAI-compatible chat completions | Supported | `/v1/chat/completions` proxy path. |
-| Non-streaming responses | Supported | Request preflight plus response inspection. |
+| Non-streaming responses | Supported | Request preflight plus response inspection. Policy actions may change opaque response IDs and other metadata; see [metadata coverage](security-model.md). |
+| Streaming response metadata | Passthrough | Envelope metadata, tool names/IDs, and unrecognized extensions are outside content inspection; do not treat them as detector-cleared. See [streaming compatibility](streaming-compatibility.md#server-sent-events-node-deno-eventsource-api). |
 | Streaming content/reasoning | Supported | Rolling holdback inspection; final deltas preserve text order, including a delta carrying its finish reason. SDK timing notes and per-chunk metric reference: `streaming-compatibility.md`. |
 | Streamed tool-call arguments | Supported | Arguments are assembled before release. |
 | Observability traces/logs/spans | Supported | Shape-based `logs.traces` sanitizer. |

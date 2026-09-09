@@ -22,6 +22,8 @@ The default runtime stays dependency-light with regex, entropy, lightweight medi
 
 Known tool correlation IDs (`chatcmpl-tool-` followed by 16 lowercase hexadecimal characters) in valid assistant function-call ID fields and tool reply ID fields are exempt from the supplementary entropy heuristic. Other detectors still inspect these fields. The same text in messages, tool arguments, and tool results is scanned normally. This avoids blocking a tool conversation solely because its generated ID resembles a secret. This format-based exception does not authenticate an ID or prove that it contains no encoded sensitive data.
 
+JSON responses and streaming responses have different metadata coverage. In JSON responses, unrecognized string fields, including top-level `id` and `system_fingerprint`, are inspected under `output.content`. Policy actions can change those values, so opaque response IDs are not guaranteed to remain unchanged. In streaming responses, envelope metadata, tool names/IDs, and unrecognized extensions pass through without content inspection; recognized text/reasoning and assembled tool arguments are inspected. Sensitive data in those streaming metadata fields is outside the inspected boundary. See [streaming compatibility](streaming-compatibility.md#server-sent-events-node-deno-eventsource-api).
+
 The built-in `medical-regex` detector is not full HIPAA de-identification. It is a small pattern scanner for selected clinical strings; regulated healthcare deployments should add dedicated medical NER, domain fixtures, and compliance review.
 
 ## Vault

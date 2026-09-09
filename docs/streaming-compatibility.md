@@ -151,7 +151,11 @@ character mid-sequence.
 
 ### Server-Sent Events (Node, Deno, EventSource API)
 
-The wire format conforms to RFC 9110-style SSE. The SSE envelope-level
+LSDF inspects recognized text/reasoning fields and assembled tool-call arguments. The surrounding JSON metadata, including response IDs, model names, system fingerprints, tool names/IDs, and unrecognized extensions, passes through without content inspection. An intact metadata field is not evidence that LSDF checked its value. Non-streaming JSON responses instead scan unrecognized string fields as `output.content`, so an opaque ID may be changed by policy. Clients that depend on exact identifiers need to account for this difference.
+
+These limits apply to SSE bodies. If a streaming request receives a non-SSE JSON object response, LSDF applies ordinary JSON response inspection. SSE envelope fields (`id:`, `event:`, `retry:`, and comments) also pass through without inspection.
+
+LSDF emits Server-Sent Events (SSE). The SSE envelope-level
 `id:` field (the EventSource `lastEventID`) is copied verbatim from the
 upstream onto each emitted SSE frame. The OpenAI JSON-payload-level
 `id`, `object`, `created`, `model`, and `system_fingerprint` fields are
