@@ -670,3 +670,192 @@ class ResponseStreamingMetadataTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class VllmFingerprintTests(unittest.TestCase):
+    fingerprint = "vllm-0.12.0rc1.dev42+gabcdef123456-0123abcd"
+
+    def setUp(self):
+        self.firewall = Firewall(load_policy("policies/default.yaml"))
+
+    @staticmethod
+    def _payload(value, *, stream=False):
+        return {
+            "object": "chat.completion.chunk" if stream else "chat.completion",
+            "id": RESPONSE_ID,
+            "choices": [{"index": 0, "delta" if stream else "message": {"content": "held"}}],
+            "system_fingerprint": value,
+        }
+
+    def _json(self, payload, firewall=None):
+        return handle_chat_completion(
+            {"messages": [{"role": "user", "content": "hello"}]},
+            firewall or self.firewall,
+            lambda _payload: _json_response(payload),
+        )
+
+    def _stream(self, payload, firewall=None):
+        return handle_streaming_chat_completion(
+            {"stream": True, "messages": [{"role": "user", "content": "hello"}]},
+            firewall or self.firewall,
+            lambda _payload: (200, {"content-type": "text/event-stream"},
+                             [_sse(payload), b"data: [DONE]\n\n"]),
+            holdback_chars=0,
+        )
+
+    def test_generated_fingerprints_are_preserved_in_json_and_sse(self):
+        from lsdf.scanners.entropy import EntropySecretScanner
+        from lsdf.surfaces import Surface
+
+        fingerprints = (
+            "vllm-0.12.0-0123abcd",
+            self.fingerprint,
+            "vllm-0.12.0a1-0123abcd",
+            "vllm-0.12.0b2-0123abcd",
+            "vllm-0.12.0.post1+cu128-nohash",
+            "vllm-0.12.0.dev42+gabcdef123456.d20260909.cu128-tp2-pp4-dp8-ep-0123abcd",
+            "vllm-0.12.0-tp2-0123abcd",
+            "vllm-0.12.0-pp2-0123abcd",
+            "vllm-0.12.0-dp2-0123abcd",
+            "vllm-0.12.0-ep-0123abcd",
+            "vllm-dev-nohash",
+            None,
+        )
+        for index, value in enumerate(fingerprints):
+            with self.subTest(case=index):
+                if value in (fingerprints[4], fingerprints[5]):
+                    scanner = EntropySecretScanner()
+                    ordinary = Surface("output.content", ("response_metadata", 0), value)
+                    marked = Surface("output.content", ("response_metadata", 0), value,
+                                     provider_version_metadata=True)
+                    self.assertTrue(scanner.scan(ordinary))
+                    self.assertFalse(scanner.scan(marked))
+                payload = self._payload(value)
+                status, _headers, body, response_headers = self._json(payload)
+                self.assertEqual(status, 200)
+                self.assertEqual(response_headers["x-lsdf-blocked"], "false")
+                self.assertEqual(json.loads(body), payload)
+                status, _headers, body, _response_headers = self._stream(self._payload(value, stream=True))
+                events = _events(body)
+                self.assertEqual(status, 200)
+                self.assertEqual(events[-1], "[DONE]")
+                self.assertFalse(any(isinstance(event, dict) and "error" in event for event in events))
+                self.assertEqual([event["system_fingerprint"] for event in events
+                                  if isinstance(event, dict) and "system_fingerprint" in event], [value])
+                content = "".join(choice.get("delta", {}).get("content", "")
+                                  for event in events if isinstance(event, dict)
+                                  for choice in event.get("choices", []))
+                self.assertEqual(content, "held")
+
+    def test_fingerprint_marker_is_limited_to_a_valid_response_root(self):
+        from lsdf.scanners.entropy import EntropySecretScanner
+
+        scanner = EntropySecretScanner()
+        for extractor in (extract_surfaces, extract_response_metadata_surfaces):
+            root = self._payload(self.fingerprint)
+            values = [surface for surface in extractor(root) if surface.value == self.fingerprint]
+            self.assertEqual(len(values), 1)
+            self.assertTrue(values[0].provider_version_metadata)
+            self.assertFalse(scanner.scan(values[0]))
+            invalid = (
+                {"object": "chat.completion", "choices": [], "metadata": {"system_fingerprint": self.fingerprint}},
+                {"messages": [], "system_fingerprint": self.fingerprint},
+                {"object": "chat.completion", "choices": [], "messages": [], "system_fingerprint": self.fingerprint},
+                {"object": "invalid", "choices": [], "system_fingerprint": self.fingerprint},
+                {"object": "chat.completion", "system_fingerprint": self.fingerprint},
+            )
+            for index, payload in enumerate(invalid):
+                with self.subTest(extractor=extractor.__name__, case=index):
+                    values = [surface for surface in extractor(payload) if surface.value == self.fingerprint]
+                    self.assertEqual(len(values), 1)
+                    self.assertFalse(values[0].provider_version_metadata)
+                    self.assertTrue(scanner.scan(values[0]))
+
+    def test_noncanonical_fingerprints_get_normal_entropy_inspection(self):
+        from lsdf.scanners.entropy import EntropySecretScanner
+        from lsdf.surfaces import Surface
+
+        values = (
+            self.fingerprint + "!",
+            " " + self.fingerprint,
+            self.fingerprint + " ",
+            self.fingerprint.replace("-0123abcd", "-tp1-0123abcd"),
+            self.fingerprint.replace("-0123abcd", "-tp0-0123abcd"),
+            self.fingerprint.replace("-0123abcd", "-tp02-0123abcd"),
+            self.fingerprint.replace("-0123abcd", "-pp2-tp4-0123abcd"),
+            self.fingerprint.replace("-0123abcd", "-ep-dp2-0123abcd"),
+            self.fingerprint.replace("-0123abcd", "-ABCD1234"),
+            self.fingerprint.replace("+gabcdef123456", "+customabcdef123456"),
+            self.fingerprint.replace("0.12.0", "０.12.0"),
+            "opaque-" + self.fingerprint,
+            self.fingerprint + "x" * 193,
+        )
+        scanner = EntropySecretScanner()
+        for index, value in enumerate(values):
+            with self.subTest(case=index):
+                ordinary = Surface("output.content", ("response_metadata", 0), value)
+                marked = Surface("output.content", ("response_metadata", 0), value,
+                                 provider_version_metadata=True)
+                expected = scanner.scan(ordinary)
+                self.assertTrue(expected)
+                self.assertEqual(scanner.scan(marked), expected)
+
+    def test_secret_and_nonstring_fingerprints_remain_blocked(self):
+        for index, value in enumerate((RAW_SECRET, [RAW_SECRET], {"value": RAW_SECRET}, {RAW_SECRET: "safe"})):
+            with self.subTest(case=index):
+                payload = self._payload(value)
+                result = _inspect_response_payload(payload, self.firewall)
+                self.assertTrue(result.blocked)
+                self.assertNotIn(RAW_SECRET, json.dumps(result.to_dict()))
+                status, _headers, body, response_headers = self._json(payload)
+                self.assertEqual(status, 502)
+                self.assertEqual(response_headers["x-lsdf-blocked"], "true")
+                self.assertEqual(json.loads(body)["error"]["type"], "sensitive_data_blocked")
+                self.assertNotIn(RAW_SECRET, body.decode("utf-8"))
+                self.assertNotIn("held", body.decode("utf-8"))
+                _status, _headers, body, _response_headers = self._stream(self._payload(value, stream=True))
+                events = _events(body)
+                self.assertEqual(len(events), 1)
+                self.assertEqual(events[0]["error"]["type"], "sensitive_data_blocked")
+                self.assertNotIn(RAW_SECRET, json.dumps(events))
+                self.assertNotIn("held", json.dumps(events))
+
+    def test_another_detector_still_inspects_generated_fingerprints(self):
+        import re
+        from lsdf.scanners.entropy import EntropySecretScanner
+        from lsdf.scanners.regex import PatternRecognizer, RegexScanner
+
+        scanner = RegexScanner([PatternRecognizer("API_KEY", re.compile(re.escape(self.fingerprint)), 1.0)])
+        firewall = Firewall(load_policy("policies/default.yaml"), scanner=scanner)
+        payload = self._payload(self.fingerprint)
+        surface = next(surface for surface in extract_response_metadata_surfaces(payload)
+                       if surface.value == self.fingerprint)
+        self.assertTrue(surface.provider_version_metadata)
+        self.assertFalse(EntropySecretScanner().scan(surface))
+        self.assertTrue(scanner.scan(surface))
+        result = _inspect_response_payload(payload, firewall)
+        self.assertTrue(result.blocked)
+        self.assertNotIn(self.fingerprint, json.dumps(result.to_dict()))
+        status, _headers, body, _response_headers = self._json(payload, firewall)
+        self.assertEqual(status, 502)
+        self.assertNotIn(self.fingerprint, body.decode("utf-8"))
+        _status, _headers, body, _response_headers = self._stream(self._payload(self.fingerprint, stream=True), firewall)
+        events = _events(body)
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["error"]["type"], "sensitive_data_blocked")
+        self.assertNotIn(self.fingerprint, json.dumps(events))
+
+    def test_fingerprint_exception_does_not_skip_other_metadata(self):
+        for stream in (False, True):
+            with self.subTest(stream=stream):
+                payload = self._payload(self.fingerprint, stream=stream)
+                payload["metadata"] = {RAW_SECRET: "safe"}
+                if stream:
+                    _status, _headers, body, _response_headers = self._stream(payload)
+                    events = _events(body)
+                    self.assertEqual(events[0]["error"]["type"], "sensitive_data_blocked")
+                else:
+                    status, _headers, body, _response_headers = self._json(payload)
+                    self.assertEqual(status, 502)
+                self.assertNotIn(RAW_SECRET, body.decode("utf-8") if isinstance(body, bytes) else json.dumps(events))
+                self.assertNotIn("held", body.decode("utf-8") if isinstance(body, bytes) else json.dumps(events))

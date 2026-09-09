@@ -35,6 +35,18 @@ _ALPHA_HYPHEN_COMPOUND_RE = re.compile(r"^[A-Za-z]+(-[A-Za-z]+)+$")
 _MODEL_IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9]+(?:[.:-][A-Za-z0-9]+)+$")
 _TOOL_CALL_ID_RE = re.compile(r"^chatcmpl-tool-[0-9a-f]{16}$")
 _RESPONSE_ID_RE = re.compile(r"^chatcmpl-[A-Za-z0-9]{8,64}$")
+# Bounded approximation of vLLM's generated fingerprint, not arbitrary custom
+# fingerprints or arbitrary PEP 440 local labels. Version, parallelism order
+# and config-hash suffix follow vLLM's serve/utils/fingerprint.py contract.
+_VLLM_FINGERPRINT_RE = re.compile(
+    r"vllm-(?:dev|[0-9]{1,4}\.[0-9]{1,4}\.[0-9]{1,4}"
+    r"(?:(?:a|b|rc)[0-9]{1,6})?(?:\.post[0-9]{1,6})?(?:\.dev[0-9]{1,8})?"
+    r"(?:\+(?:g[0-9a-f]{7,40}(?:\.d[0-9]{8})?(?:\.cu[0-9]{2,4})?|cu[0-9]{2,4}))?)"
+    r"(?:-tp(?:[2-9]|[1-9][0-9]{1,5}))?"
+    r"(?:-pp(?:[2-9]|[1-9][0-9]{1,5}))?"
+    r"(?:-dp(?:[2-9]|[1-9][0-9]{1,5}))?(?:-ep)?"
+    r"-(?:[0-9a-f]{8}|nohash)"
+)
 _SAFE_ROUTING_METADATA_LITERALS = frozenset(
     {"completion.chunk", "chat.completion", "chat.completion.chunk"}
 )
@@ -150,6 +162,12 @@ class EntropySecretScanner:
             if surface.correlation_metadata and _TOOL_CALL_ID_RE.fullmatch(surface.value):
                 continue
             if surface.response_id_metadata and _RESPONSE_ID_RE.fullmatch(surface.value):
+                continue
+            if (
+                surface.provider_version_metadata
+                and len(surface.value) <= 192
+                and _VLLM_FINGERPRINT_RE.fullmatch(surface.value)
+            ):
                 continue
             if _looks_like_model_id_prose(token, surface.value, match.start()):
                 continue

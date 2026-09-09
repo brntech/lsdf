@@ -32,6 +32,10 @@ class Surface:
     # member path remains available on value surfaces for internal transforms.
     argument_key_metadata: bool = False
     safe_json_pointer: tuple[str | int, ...] | None = None
+    # Only a root response fingerprint gets this context. All detectors still
+    # inspect the value; the entropy scanner additionally requires its narrow
+    # generated-provider-version grammar before suppressing that heuristic.
+    provider_version_metadata: bool = False
 
 
 def extract_surfaces(
@@ -196,6 +200,7 @@ def extract_response_metadata_surfaces(
         response_id: bool = False,
         routing: bool = False,
         correlation: bool = False,
+        provider_version: bool = False,
         surface_name: str | None = None,
     ) -> None:
         nonlocal metadata_index
@@ -208,6 +213,7 @@ def extract_response_metadata_surfaces(
                     response_id_metadata=response_id,
                     routing_metadata=routing,
                     correlation_metadata=correlation,
+                    provider_version_metadata=provider_version,
                 )
             )
             metadata_index += 1
@@ -245,6 +251,12 @@ def extract_response_metadata_surfaces(
                     and response_envelope
                 ):
                     append_value(child, child_pointer, response_id=True, surface_name=key_surface_name)
+                elif (
+                    isinstance(child, str)
+                    and child_pointer == ("system_fingerprint",)
+                    and response_envelope
+                ):
+                    append_value(child, child_pointer, provider_version=True, surface_name=key_surface_name)
                 elif (
                     isinstance(child, str)
                     and child_pointer == ("model",)
@@ -529,6 +541,15 @@ def _extract_openai_response(
                 pointer=("id",),
                 value=payload["id"],
                 response_id_metadata=True,
+            )
+        )
+    if _is_response_envelope(payload) and isinstance(payload.get("system_fingerprint"), str):
+        surfaces.append(
+            Surface(
+                name=unknown_surface,
+                pointer=("system_fingerprint",),
+                value=payload["system_fingerprint"],
+                provider_version_metadata=True,
             )
         )
     for choice_idx, choice in enumerate(payload.get("choices", [])):
