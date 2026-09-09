@@ -16,6 +16,7 @@ from lsdf.gateway import (
     LSDFGatewayHandler,
     GatewayConfigError,
     _check_upstream_health,
+    _join_upstream_url,
     forward_upstream,
     forward_upstream_stream,
     handle_chat_completion,
@@ -1724,6 +1725,38 @@ class UpstreamForwardingTests(unittest.TestCase):
 
         self.assertEqual(status, 200)
         self.assertEqual(captured["url"], "https://openrouter.ai/api/v1/chat/completions")
+
+    def test_versioned_provider_prefix_with_openai_suffix_does_not_duplicate_v1(self):
+        config = GatewayConfig(
+            policy_path=None,
+            policy_profile="default",
+            upstream_base_url="https://api.deepinfra.com/v1/openai",
+        )
+        captured = {}
+
+        def fake_urlopen(request, timeout):
+            captured["url"] = request.full_url
+            return _FakeUrlopenResponse(
+                200,
+                {"content-type": "application/json"},
+                b'{"choices":[{"message":{"content":"ok"}}]}',
+            )
+
+        with patch("lsdf.gateway.urllib.request.urlopen", fake_urlopen):
+            status, _headers, _body = forward_upstream(
+                {"messages": [{"role": "user", "content": "hi"}]},
+                "/v1/chat/completions",
+                config,
+            )
+
+        self.assertEqual(status, 200)
+        self.assertEqual(captured["url"], "https://api.deepinfra.com/v1/openai/chat/completions")
+
+    def test_v1_in_hostname_is_not_treated_as_a_versioned_base_path(self):
+        self.assertEqual(
+            _join_upstream_url("https://v1.example", "/v1/chat/completions"),
+            "https://v1.example/v1/chat/completions",
+        )
 
     def test_openai_style_base_url_join_applies_to_stream_forwarding(self):
         config = GatewayConfig(

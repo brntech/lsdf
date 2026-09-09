@@ -37,7 +37,7 @@ For `demo`, also start the upstream with `docker compose up -d demo-upstream` be
 
 Supply `LSDF_UPSTREAM_API_KEY` through your shell or an uncommitted env file when the provider requires authentication. A client's bearer token is not forwarded upstream; LSDF uses the configured upstream key. `LSDF_MANAGEMENT_TOKEN` protects management endpoints and `LSDF_CLIENT_TOKEN` independently protects client chat requests. Shared deployments need separate ingress authentication and TLS.
 
-An upstream URL may be its service root or a prefix ending in `/v1`; LSDF avoids duplicating `/v1` when forwarding. For example, the OpenRouter preset forwards chat to `/api/v1/chat/completions`.
+An upstream URL may be its service root or a path prefix containing a `/v1` segment; LSDF avoids duplicating the incoming `/v1` route when forwarding. For example, the OpenRouter preset forwards chat to `/api/v1/chat/completions`, and the DeepInfra setup below forwards to `/v1/openai/chat/completions`.
 
 Gateway policy precedence is explicit `--policy`, `LSDF_POLICY`, explicit `--profile`, `LSDF_PROFILE`, then `default`. Domain packs apply when selecting a profile, not an explicit policy file. Host shell variables override values supplied by Compose's `--env-file`; check existing `LSDF_POLICY` and `LSDF_PROFILE` settings when changing profiles. Other CLI commands should select their profile explicitly.
 
@@ -70,6 +70,22 @@ http://localhost:8080/v1
 ```
 
 LSDF does not forward arbitrary client headers, including OpenRouter app-attribution headers. If attribution is required, add it in an upstream proxy that sends requests to OpenRouter. Setting it only on the client that calls LSDF has no effect.
+
+## DeepInfra
+
+DeepInfra's OpenAI-compatible chat endpoint uses `https://api.deepinfra.com/v1/openai`. Use a current source checkout and the `custom` upstream for this setup; it covers LSDF's `POST /v1/chat/completions` route only.
+
+```bash
+docker compose run --rm cli init --upstream custom --upstream-base-url https://api.deepinfra.com/v1/openai --output .lsdf.env --force
+```
+
+Set `LSDF_UPSTREAM_API_KEY` in the uncommitted `.lsdf.env`, then start the gateway:
+
+```bash
+docker compose --env-file .lsdf.env up --build -d gateway
+```
+
+Point an OpenAI-compatible client at `http://localhost:8080/v1` and choose a model available to your DeepInfra account. Keep the provider key in LSDF's upstream configuration; client requests use any configured `LSDF_CLIENT_TOKEN`.
 
 ## LiteLLM Proxy
 

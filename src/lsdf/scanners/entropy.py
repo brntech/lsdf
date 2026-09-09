@@ -33,6 +33,7 @@ CREDENTIAL_SPECIALS = set("!@$%^&*+=")
 # of CREDENTIAL_SPECIALS — neither of which appears in these compounds.
 _ALPHA_HYPHEN_COMPOUND_RE = re.compile(r"^[A-Za-z]+(-[A-Za-z]+)+$")
 _MODEL_IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9]+(?:[.:-][A-Za-z0-9]+)+$")
+_TOOL_CALL_ID_RE = re.compile(r"^chatcmpl-tool-[0-9a-f]{16}$")
 _MODEL_ID_PROSE_RE = re.compile(
     r"\b(?:exact\s+)?model\s+(?:(?:id|identifier)\s+is|named)\s*$",
     re.IGNORECASE,
@@ -139,6 +140,8 @@ class EntropySecretScanner:
             ):
                 continue
             if surface.routing_metadata and _looks_like_safe_model_identifier(token):
+                continue
+            if surface.correlation_metadata and _TOOL_CALL_ID_RE.fullmatch(surface.value):
                 continue
             if _looks_like_model_id_prose(token, surface.value, match.start()):
                 continue

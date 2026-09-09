@@ -20,6 +20,8 @@ Audit events, metrics, reports, demos, explanations, protection reports, and SIE
 
 The default runtime stays dependency-light with regex, entropy, lightweight medical-pattern detectors, and contextual-anchored patterns. `balanced` adds dependency-light generic output redaction. `broad-pii` is the release-gated local posture: regex, entropy, medical-regex, contextual PII, GLiNER, inbound generic identity/PHI redaction, and broad-pii output surface containment when contextual evidence appears. `broad-pii-ml` uses the same local broad-pii stack and adds OpenAI privacy-filter only when that reference model is loadable. Custom detectors use the same adapter contract and must preserve raw-value-safe reporting.
 
+Known tool correlation IDs (`chatcmpl-tool-` followed by 16 lowercase hexadecimal characters) in valid assistant function-call ID fields and tool reply ID fields are exempt from the supplementary entropy heuristic. Other detectors still inspect these fields. The same text in messages, tool arguments, and tool results is scanned normally. This avoids blocking a tool conversation solely because its generated ID resembles a secret. This format-based exception does not authenticate an ID or prove that it contains no encoded sensitive data.
+
 The built-in `medical-regex` detector is not full HIPAA de-identification. It is a small pattern scanner for selected clinical strings; regulated healthcare deployments should add dedicated medical NER, domain fixtures, and compliance review.
 
 ## Vault

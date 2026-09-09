@@ -17,6 +17,11 @@ class Surface:
     # narrow context marker to avoid treating a provider model name as a
     # credential.  It is intentionally not inferred from arbitrary text.
     routing_metadata: bool = False
+    # Correlation fields such as OpenAI tool-call IDs are still scanned by
+    # normal recognizers, but supplementary heuristics may use this narrow
+    # context marker to avoid treating a provider correlation token as a
+    # credential.  It is intentionally not inferred from arbitrary text.
+    correlation_metadata: bool = False
 
 
 def extract_surfaces(
@@ -26,14 +31,16 @@ def extract_surfaces(
 ) -> list[Surface]:
     surfaces: list[Surface] = []
     if isinstance(payload, dict):
-        _extract_openai_request(payload, surfaces)
-        _extract_openai_response(payload, surfaces)
+        _extract_openai_request(payload, surfaces, unknown_surface)
+        _extract_openai_response(payload, surfaces, unknown_surface)
     claimed = {surface.pointer for surface in surfaces}
     _walk_unknown(payload, (), surfaces, claimed, unknown_surface)
     return _dedupe_surfaces(surfaces)
 
 
-def _extract_openai_request(payload: dict[str, Any], surfaces: list[Surface]) -> None:
+def _extract_openai_request(
+    payload: dict[str, Any], surfaces: list[Surface], unknown_surface: str
+) -> None:
     for idx, message in enumerate(payload.get("messages", [])):
         if not isinstance(message, dict):
             continue
@@ -63,11 +70,34 @@ def _extract_openai_request(payload: dict[str, Any], surfaces: list[Surface]) ->
                 ),
                 tool_call,
             )
+            if role == "assistant" and _is_function_tool_call(tool_call):
+                _append_tool_call_id_surface(
+                    surfaces,
+                    unknown_surface,
+                    (
+                        "messages",
+                        idx,
+                        "tool_calls",
+                        call_idx,
+                        "id",
+                    ),
+                    tool_call,
+                )
+        if role == "tool":
+            _append_tool_call_id_surface(
+                surfaces,
+                unknown_surface,
+                ("messages", idx, "tool_call_id"),
+                message,
+                field="tool_call_id",
+            )
     for idx, chunk in enumerate(payload.get("rag_context", [])):
         _append_content_surfaces(surfaces, "input.rag_context", ("rag_context", idx), chunk)
 
 
-def _extract_openai_response(payload: dict[str, Any], surfaces: list[Surface]) -> None:
+def _extract_openai_response(
+    payload: dict[str, Any], surfaces: list[Surface], unknown_surface: str
+) -> None:
     for choice_idx, choice in enumerate(payload.get("choices", [])):
         if not isinstance(choice, dict):
             continue
@@ -108,6 +138,20 @@ def _extract_openai_response(payload: dict[str, Any], surfaces: list[Surface]) -
                     ),
                     tool_call,
                 )
+                if message.get("role") == "assistant" and _is_function_tool_call(tool_call):
+                    _append_tool_call_id_surface(
+                        surfaces,
+                        unknown_surface,
+                        (
+                            "choices",
+                            choice_idx,
+                            "message",
+                            "tool_calls",
+                            call_idx,
+                            "id",
+                        ),
+                        tool_call,
+                    )
     _extract_trace_payloads(payload, surfaces)
 
 
@@ -141,6 +185,39 @@ def _append_tool_call_argument_surfaces(
     function = tool_call.get("function", {}) if isinstance(tool_call, dict) else {}
     arguments = function.get("arguments") if isinstance(function, dict) else None
     _append_content_surfaces(surfaces, name, pointer, arguments, parse_json_string=True)
+
+
+def _append_tool_call_id_surface(
+    surfaces: list[Surface],
+    name: str,
+    pointer: tuple[str | int, ...],
+    payload: Any,
+    *,
+    field: str = "id",
+) -> None:
+    if not isinstance(payload, dict):
+        return
+    value = payload.get(field)
+    if isinstance(value, str):
+        surfaces.append(
+            Surface(
+                name=name,
+                pointer=pointer,
+                value=value,
+                correlation_metadata=True,
+            )
+        )
+
+
+def _is_function_tool_call(tool_call: Any) -> bool:
+    if not isinstance(tool_call, dict) or tool_call.get("type") != "function":
+        return False
+    function = tool_call.get("function")
+    if not isinstance(function, dict):
+        return False
+    name = function.get("name")
+    arguments = function.get("arguments")
+    return isinstance(name, str) and bool(name) and isinstance(arguments, str)
 
 
 def _append_json_string_surfaces(

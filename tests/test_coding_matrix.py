@@ -258,6 +258,176 @@ class CodingMatrixTests(unittest.TestCase):
         result = self.firewall.inspect({"messages": [{"role": "system", "content": declared}]})
         self.assertFalse(result.findings)
 
+    def test_openai_tool_correlation_ids_are_narrow_and_schema_bound(self):
+        tool_id = "chatcmpl-tool-0123456789abcdef"
+
+        def function_call(call_id, **overrides):
+            call = {
+                "id": call_id,
+                "type": "function",
+                "function": {"name": "lookup", "arguments": "{}"},
+            }
+            call.update(overrides)
+            return call
+
+        request = {
+            "messages": [
+                {
+                    "role": "assistant",
+                    "tool_calls": [function_call(tool_id)],
+                },
+                {"role": "tool", "tool_call_id": tool_id, "content": "tool result"},
+            ]
+        }
+        request_surfaces = extract_surfaces(request)
+        marked_request = [
+            surface
+            for surface in request_surfaces
+            if surface.value == tool_id and surface.correlation_metadata
+        ]
+        self.assertEqual(
+            {surface.pointer for surface in marked_request},
+            {
+                ("messages", 0, "tool_calls", 0, "id"),
+                ("messages", 1, "tool_call_id"),
+            },
+        )
+        self.assertEqual(
+            {surface.name for surface in marked_request},
+            {"input.messages"},
+        )
+        self.assertFalse(self.firewall.inspect(request).findings)
+
+        response = {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "tool_calls": [function_call(tool_id)],
+                    }
+                }
+            ]
+        }
+        response_surfaces = extract_surfaces(response, unknown_surface="output.content")
+        marked_response = [
+            surface
+            for surface in response_surfaces
+            if surface.value == tool_id and surface.correlation_metadata
+        ]
+        self.assertEqual(
+            [surface.pointer for surface in marked_response],
+            [("choices", 0, "message", "tool_calls", 0, "id")],
+        )
+        self.assertEqual({surface.name for surface in marked_response}, {"output.content"})
+        self.assertFalse(self.firewall.inspect(response).findings)
+
+        text_payloads = (
+            {"messages": [{"role": "user", "content": tool_id}]},
+            {"messages": [{"role": "tool", "content": f"returned {tool_id}"}]},
+            {
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "tool_calls": [
+                            function_call(tool_id, function={"name": "lookup", "arguments": json.dumps({"id": tool_id})})
+                        ],
+                    }
+                ]
+            },
+        )
+        for payload in text_payloads:
+            with self.subTest(payload=payload):
+                result = self.firewall.inspect(payload)
+                self.assertTrue(result.blocked)
+                self.assertIn("OTHER_SECRET", {finding.entity for finding in result.findings})
+
+        invalid_payloads = (
+            # The grammar is exact: length and case changes are not exempt.
+            {
+                "messages": [
+                    {"role": "assistant", "tool_calls": [function_call("chatcmpl-tool-0123456789abcde")]}
+                ]
+            },
+            {
+                "messages": [
+                    {"role": "tool", "tool_call_id": "chatcmpl-tool-0123456789ABCDEF", "content": "ok"}
+                ]
+            },
+            # IDs on the wrong message role or in an invalid call shape remain scanned.
+            {
+                "messages": [
+                    {"role": "user", "tool_calls": [function_call(tool_id)]}
+                ]
+            },
+            {
+                "messages": [
+                    {"role": "assistant", "tool_calls": [function_call(tool_id, type="custom")]}
+                ]
+            },
+            {
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "tool_calls": [
+                            function_call(tool_id, function={"name": "lookup"})
+                        ],
+                    }
+                ]
+            },
+            {"messages": [{"role": "assistant", "tool_call_id": tool_id, "content": "ok"}]},
+            {"messages": [{"role": "user", "tool_call_id": tool_id, "content": "ok"}]},
+            {
+                "choices": [
+                    {
+                        "message": {
+                            "role": "user",
+                            "tool_calls": [function_call(tool_id)],
+                        }
+                    }
+                ]
+            },
+            {
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "tool_calls": [
+                            {
+                                **function_call(tool_id),
+                                "metadata": {"id": tool_id},
+                            }
+                        ],
+                    }
+                ]
+            },
+            {
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "tool_calls": [function_call("chatcmpl-tool-api_fixture0000000001")],
+                    }
+                ]
+            },
+        )
+        for payload in invalid_payloads[:-1]:
+            with self.subTest(payload=payload):
+                result = self.firewall.inspect(payload)
+                self.assertTrue(result.findings)
+                self.assertIn("OTHER_SECRET", {finding.entity for finding in result.findings})
+
+        credential_result = self.firewall.inspect(invalid_payloads[-1])
+        self.assertTrue(credential_result.findings)
+        self.assertIn("API_KEY", {finding.entity for finding in credential_result.findings})
+
+        custom_surface = extract_surfaces(request, unknown_surface="logs.traces")
+        self.assertEqual(
+            {
+                surface.name
+                for surface in custom_surface
+                if surface.value == tool_id and surface.correlation_metadata
+            },
+            {"logs.traces"},
+        )
+
     def test_code_reference_lexemes_are_narrowly_exempt_but_secrets_remain_scanned(self):
         public_code = (
             "Use `file_path:line_number`, `src/components/**/*.tsx`, "

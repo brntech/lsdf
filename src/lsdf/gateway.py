@@ -1492,11 +1492,17 @@ def _validate_tool_calls(tool_calls: Any) -> None:
 
 
 def _join_upstream_url(base_url: str, path: str) -> str:
-    base = base_url.rstrip("/")
+    parsed_base = urllib.parse.urlsplit(base_url)
+    base_path = parsed_base.path.rstrip("/")
     request_path = path if path.startswith("/") else f"/{path}"
-    if base.endswith("/v1") and request_path.startswith("/v1/"):
-        request_path = request_path[len("/v1") :]
-    return f"{base}{request_path}"
+    base_path_segments = {segment for segment in base_path.split("/") if segment}
+    if (
+        (request_path == "/v1" or request_path.startswith("/v1/"))
+        and "v1" in base_path_segments
+    ):
+        request_path = request_path[len("/v1") :] or "/"
+    joined_path = f"{base_path}{request_path}"
+    return urllib.parse.urlunsplit(parsed_base._replace(path=joined_path))
 
 
 def _resolve_stream_holdback_chars(env: dict[str, str]) -> int:
